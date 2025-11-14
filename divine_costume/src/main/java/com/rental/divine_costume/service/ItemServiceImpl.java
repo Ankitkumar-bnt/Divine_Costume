@@ -138,6 +138,10 @@ public class ItemServiceImpl implements ItemService {
         // ---------- 5️⃣ Save Images ----------
         if (requestDto.getImages() != null) {
             for (CostumeImageRequestDto imgDto : requestDto.getImages()) {
+                // Skip empty or null image URLs
+                if (imgDto.getImageUrl() == null || imgDto.getImageUrl().trim().isEmpty()) {
+                    continue;
+                }
                 CostumeImage img = imageMapper.toEntity(imgDto);
                 img.setCostumeVariant(variant);
                 imageRepository.save(img);
@@ -292,6 +296,10 @@ public class ItemServiceImpl implements ItemService {
             
             // Add new images
             for (CostumeImageRequestDto imgDto : requestDto.getImages()) {
+                // Skip empty or null image URLs
+                if (imgDto.getImageUrl() == null || imgDto.getImageUrl().trim().isEmpty()) {
+                    continue;
+                }
                 CostumeImage img = imageMapper.toEntity(imgDto);
                 img.setCostumeVariant(variant);
                 imageRepository.save(img);

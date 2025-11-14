@@ -143,6 +143,84 @@ import Swal from 'sweetalert2';
           </div>
         </div>
       </div>
+
+      <!-- Edit Modal -->
+      <div class="modal fade" [class.show]="isEditModalOpen" [style.display]="isEditModalOpen ? 'block' : 'none'" *ngIf="isEditModalOpen">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Edit Product</h5>
+              <button type="button" class="btn-close" (click)="closeEditModal()"></button>
+            </div>
+            <div class="modal-body">
+              <form *ngIf="editForm">
+                <!-- Basic Info -->
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Product Name</label>
+                    <input type="text" class="form-control" [(ngModel)]="editForm.variant.variantDescription" name="variantDescription">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Style</label>
+                    <input type="text" class="form-control" [(ngModel)]="editForm.variant.style" name="style">
+                  </div>
+                </div>
+
+                <!-- Colors -->
+                <div class="row g-3 mb-3">
+                  <div class="col-md-4">
+                    <label class="form-label">Primary Color</label>
+                    <input type="text" class="form-control" [(ngModel)]="editForm.variant.primaryColor" name="primaryColor">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Secondary Color</label>
+                    <input type="text" class="form-control" [(ngModel)]="editForm.variant.secondaryColor" name="secondaryColor">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Tertiary Color</label>
+                    <input type="text" class="form-control" [(ngModel)]="editForm.variant.tertiaryColor" name="tertiaryColor">
+                  </div>
+                </div>
+
+                <!-- Pricing -->
+                <div class="row g-3 mb-3">
+                  <div class="col-md-4">
+                    <label class="form-label">Rental Price/Day (₹)</label>
+                    <input type="number" class="form-control" [(ngModel)]="editForm.costume.rentalPricePerDay" name="rentalPricePerDay">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Deposit (₹)</label>
+                    <input type="number" class="form-control" [(ngModel)]="editForm.costume.deposit" name="deposit">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Purchase Price (₹)</label>
+                    <input type="number" class="form-control" [(ngModel)]="editForm.costume.purchasePrice" name="purchasePrice">
+                  </div>
+                </div>
+
+                <!-- Inventory -->
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" class="form-control" [(ngModel)]="editForm.costume.numberOfItems" name="numberOfItems">
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-check form-switch mt-4">
+                      <input class="form-check-input" type="checkbox" [(ngModel)]="editForm.costume.isRentable" name="isRentable">
+                      <label class="form-check-label">Available for Rent</label>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Cancel</button>
+              <button type="button" class="btn btn-primary" (click)="saveEdit()">Save Changes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-backdrop fade" [class.show]="isEditModalOpen" *ngIf="isEditModalOpen"></div>
     </div>
   `,
   styles: [`
@@ -292,6 +370,51 @@ import Swal from 'sweetalert2';
     .btn-primary:hover {
       background: linear-gradient(135deg, #4a1515 0%, #6a1e1e 100%);
     }
+
+    /* Modal Styles */
+    .modal {
+      z-index: 1050;
+    }
+
+    .modal-backdrop {
+      z-index: 1040;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+      background: linear-gradient(135deg, #5c1a1a 0%, #7d2424 100%);
+      color: #fff;
+      border-radius: 12px 12px 0 0;
+      border-bottom: none;
+    }
+
+    .modal-title {
+      font-weight: 600;
+    }
+
+    .btn-close {
+      filter: invert(1);
+    }
+
+    .modal-body {
+      padding: 2rem;
+    }
+
+    .modal-footer {
+      border-top: 1px solid #e9ecef;
+      padding: 1rem 2rem;
+    }
+
+    .form-check-input:checked {
+      background-color: #5c1a1a;
+      border-color: #5c1a1a;
+    }
   `]
 })
 export class ViewProductsComponent implements OnInit {
@@ -302,6 +425,11 @@ export class ViewProductsComponent implements OnInit {
   filterSize = '';
   categories: string[] = [];
   sizes: string[] = [];
+  
+  // Edit functionality
+  isEditModalOpen = false;
+  editingProduct: ItemResponseDto | null = null;
+  editForm: any = {};
 
   constructor(
     private itemService: ItemService,
@@ -384,13 +512,70 @@ export class ViewProductsComponent implements OnInit {
   }
 
   editProduct(product: ItemResponseDto): void {
-    Swal.fire({
-      title: 'Edit Product',
-      text: 'Edit functionality will be implemented here.',
-      icon: 'info',
-      confirmButtonColor: '#5c1a1a'
+    this.editingProduct = product;
+    this.editForm = {
+      category: {
+        categoryName: product.categoryName,
+        categoryDescription: product.categoryDescription
+      },
+      variant: {
+        variantDescription: product.variantDescription,
+        style: product.style,
+        primaryColor: product.primaryColor,
+        secondaryColor: product.secondaryColor,
+        tertiaryColor: product.tertiaryColor
+      },
+      costume: {
+        numberOfItems: product.numberOfItems,
+        size: product.size,
+        serialNumber: product.serialNumber,
+        purchasePrice: product.purchasePrice,
+        rentalPricePerDay: product.rentalPricePerDay,
+        deposit: product.deposit,
+        isRentable: product.isRentable
+      },
+      items: product.items?.map(item => ({
+        itemName: item.itemName,
+        rentalPricePerDay: item.rentalPricePerDay,
+        deposit: item.deposit,
+        imageUrl: item.imageUrl
+      })) || [],
+      images: product.images?.map(img => ({
+        imageUrl: img.imageUrl
+      })) || []
+    };
+    this.isEditModalOpen = true;
+  }
+
+  closeEditModal(): void {
+    this.isEditModalOpen = false;
+    this.editingProduct = null;
+    this.editForm = {};
+  }
+
+  saveEdit(): void {
+    if (!this.editingProduct) return;
+
+    this.itemService.updateFullCostume(this.editingProduct.costumeId, this.editForm).subscribe({
+      next: (response) => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Updated Successfully!',
+          text: 'Product has been updated.',
+          confirmButtonColor: '#5c1a1a'
+        });
+        this.closeEditModal();
+        this.loadProducts();
+      },
+      error: (err) => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Update Failed',
+          text: err.error?.message || 'Failed to update product.',
+          confirmButtonColor: '#5c1a1a'
+        });
+      }
     });
-    // TODO: Implement edit functionality
   }
 
   deleteProduct(product: ItemResponseDto): void {

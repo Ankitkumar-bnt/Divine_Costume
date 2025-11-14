@@ -92,12 +92,12 @@ export class ItemService {
     return this.http.post<ItemResponseDto>(`${this.apiUrl}/add-full`, item);
   }
 
-  updateFullCostume(costumeId: number, item: ItemRequestDto): Observable<ItemResponseDto> {
-    return this.http.put<ItemResponseDto>(`${this.apiUrl}/update/${costumeId}`, item);
+  updateFullCostume(costumeId: number, item: ItemRequestDto): Observable<MessageResponse<ItemResponseDto>> {
+    return this.http.put<MessageResponse<ItemResponseDto>>(`${this.apiUrl}/update-full/${costumeId}`, item);
   }
 
   deleteCostume(costumeId: number): Observable<MessageResponse<string>> {
-    return this.http.delete<MessageResponse<string>>(`${this.apiUrl}/delete/${costumeId}`);
+    return this.http.delete<MessageResponse<string>>(`${this.apiUrl}/costume/${costumeId}`);
   }
 
   getAllItems(): Observable<ItemResponseDto[]> {
@@ -114,5 +114,13 @@ export class ItemService {
     const { categoryName, primaryColor, secondaryColor = '', tertiaryColor = '', size } = params;
     const url = `${this.apiUrl}/next-serial?categoryName=${encodeURIComponent(categoryName)}&primaryColor=${encodeURIComponent(primaryColor)}&secondaryColor=${encodeURIComponent(secondaryColor)}&tertiaryColor=${encodeURIComponent(tertiaryColor)}&size=${encodeURIComponent(size)}`;
     return this.http.get<number>(url);
+  }
+
+  uploadImages(files: File[]): Observable<MessageResponse<string[]>> {
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+    return this.http.post<MessageResponse<string[]>>('http://localhost:8080/api/files/upload-images', formData);
   }
 }

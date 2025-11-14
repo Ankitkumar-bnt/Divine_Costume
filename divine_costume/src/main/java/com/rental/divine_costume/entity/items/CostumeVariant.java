@@ -3,6 +3,9 @@ package com.rental.divine_costume.entity.items;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "costume_variant")
 @Data
@@ -29,4 +32,8 @@ public class CostumeVariant extends BaseEntity {
 
     @Column(name = "tertiary_color", columnDefinition = "TEXT")
     private String tertiaryColor;
+
+    @OneToMany(mappedBy = "costumeVariant", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<CostumeImage> images = new ArrayList<>();
 }

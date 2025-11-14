@@ -551,17 +551,57 @@ export class AddProductComponent {
   }
 
   onSubmit(): void {
-    // Parse image URLs into DTO.images
-    if (this.imagesText.trim()) {
-      this.product.images = this.imagesText
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0)
-        .map(url => ({ imageUrl: url }));
-    } else {
-      this.product.images = [];
-    }
+    // First, upload any selected files
+    if (this.productImageFiles.length > 0) {
+      // Show loading
+      Swal.fire({
+        title: 'Uploading Images...',
+        text: 'Please wait while we upload your images.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
 
+      this.itemService.uploadImages(this.productImageFiles).subscribe({
+        next: (response) => {
+          // Add uploaded URLs to existing text URLs
+          const uploadedUrls = response.data || [];
+          const textUrls = this.imagesText.trim() 
+            ? this.imagesText.split(',').map(url => url.trim()).filter(url => url.length > 0)
+            : [];
+          
+          const allUrls = [...textUrls, ...uploadedUrls];
+          this.product.images = allUrls.map(url => ({ imageUrl: url }));
+          
+          Swal.close();
+          this.submitProduct();
+        },
+        error: (err) => {
+          Swal.fire({
+            icon: 'error',
+            title: 'Image Upload Failed',
+            text: err.error?.message || 'Failed to upload images. Please try again.',
+            confirmButtonColor: '#5c1a1a'
+          });
+        }
+      });
+    } else {
+      // No files to upload, just use text URLs
+      if (this.imagesText.trim()) {
+        this.product.images = this.imagesText
+          .split(',')
+          .map(url => url.trim())
+          .filter(url => url.length > 0)
+          .map(url => ({ imageUrl: url }));
+      } else {
+        this.product.images = [];
+      }
+      this.submitProduct();
+    }
+  }
+
+  private submitProduct(): void {
     this.itemService.addFullCostume(this.product).subscribe({
       next: (response) => {
         Swal.fire({
