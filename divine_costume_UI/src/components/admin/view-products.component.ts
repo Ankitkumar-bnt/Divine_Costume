@@ -76,10 +76,15 @@ import Swal from 'sweetalert2';
               <tbody>
                 <tr *ngFor="let product of filteredProducts">
                   <td>
-                    <img 
-                      [src]="product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : 'https://via.placeholder.com/60'" 
-                      alt="{{ product.variantDescription }}"
-                      class="product-img">
+                    <div class="thumbs" *ngIf="product.images?.length; else noImg">
+                      <ng-container *ngFor="let img of product.images | slice:0:4; let i = index">
+                        <img [src]="img.imageUrl" [alt]="product.variantDescription + ' ' + i">
+                      </ng-container>
+                      <span class="more" *ngIf="product.images.length > 4">+{{ product.images.length - 4 }}</span>
+                    </div>
+                    <ng-template #noImg>
+                      <img src="https://via.placeholder.com/60" alt="no image" class="product-img">
+                    </ng-template>
                   </td>
                   <td>
                     <strong>{{ product.variantDescription }}</strong>
@@ -93,10 +98,10 @@ import Swal from 'sweetalert2';
                   <td class="text-primary fw-bold">₹{{ product.rentalPricePerDay }}</td>
                   <td>
                     <span class="badge" [ngClass]="{
-                      'bg-success': product.numberOfItemsAvailable > 5,
-                      'bg-warning': product.numberOfItemsAvailable > 0 && product.numberOfItemsAvailable <= 5,
-                      'bg-danger': product.numberOfItemsAvailable === 0
-                    }">{{ product.numberOfItemsAvailable }}</span>
+                      'bg-success': product.numberOfItems > 5,
+                      'bg-warning': product.numberOfItems > 0 && product.numberOfItems <= 5,
+                      'bg-danger': product.numberOfItems === 0
+                    }">{{ product.numberOfItems }}</span>
                   </td>
                   <td>
                     <span class="badge" [ngClass]="{
@@ -226,6 +231,10 @@ import Swal from 'sweetalert2';
       border-radius: 8px;
       border: 1px solid #dee2e6;
     }
+
+    .thumbs { display: flex; align-items: center; gap: 6px; }
+    .thumbs img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid #dee2e6; }
+    .thumbs .more { font-size: 0.8rem; color: #6c757d; background: #f1f3f5; border: 1px solid #dee2e6; border-radius: 6px; padding: 0.25rem 0.5rem; }
 
     .badge {
       padding: 0.375rem 0.75rem;
@@ -362,10 +371,10 @@ export class ViewProductsComponent implements OnInit {
           <p><strong>Colors:</strong> ${product.primaryColor}, ${product.secondaryColor || 'N/A'}, ${product.tertiaryColor || 'N/A'}</p>
           <p><strong>Size:</strong> ${product.size}</p>
           <p><strong>Serial Number:</strong> ${product.serialNumber}</p>
-          <p><strong>Available Quantity:</strong> ${product.numberOfItemsAvailable}</p>
+          <p><strong>Available Quantity:</strong> ${product.numberOfItems}</p>
           <p><strong>Purchase Price:</strong> ₹${product.purchasePrice}</p>
           <p><strong>Rental Price/Day:</strong> ₹${product.rentalPricePerDay}</p>
-          <p><strong>Deposit Amount:</strong> ₹${product.depositAmount}</p>
+          <p><strong>Deposit Amount:</strong> ₹${product.deposit}</p>
           <p><strong>Status:</strong> ${product.isRentable ? 'Available for Rent' : 'Not Available'}</p>
         </div>
       `,

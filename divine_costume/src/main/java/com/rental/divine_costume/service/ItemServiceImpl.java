@@ -302,6 +302,17 @@ public class ItemServiceImpl implements ItemService {
         return fullMapper.toItemDto(costume);
     }
 
+    @Override
+    public Integer getNextSerialNumber(String categoryName, String primaryColor, String secondaryColor, String tertiaryColor, String size) {
+        String sec = secondaryColor == null ? "" : secondaryColor;
+        String ter = tertiaryColor == null ? "" : tertiaryColor;
+        Integer max = costumeRepository.findMaxSerialNumber(categoryName, primaryColor, sec, ter, size);
+        if (max == null || max <= 0) {
+            return 1;
+        }
+        return max + 1;
+    }
+
     /**
      * Save parsed Excel data into DB
      */

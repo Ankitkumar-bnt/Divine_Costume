@@ -64,6 +64,18 @@ public class ItemController {
         return ResponseEntity.ok(itemService.getAllCostumeDetails());
     }
 
+    @GetMapping("/next-serial")
+    public ResponseEntity<Integer> getNextSerial(
+            @RequestParam String categoryName,
+            @RequestParam String primaryColor,
+            @RequestParam(required = false) String secondaryColor,
+            @RequestParam(required = false) String tertiaryColor,
+            @RequestParam String size
+    ) {
+        Integer next = itemService.getNextSerialNumber(categoryName, primaryColor, secondaryColor, tertiaryColor, size);
+        return ResponseEntity.ok(next);
+    }
+
     // ========== CATEGORY ENDPOINTS ==========
     
     @RequestMapping(value = "/category/{id}", method = {RequestMethod.PUT, RequestMethod.PATCH})

@@ -58,4 +58,7 @@ public interface ItemService {
 
     List<ItemResponseDto> parseExcel(MultipartFile file) throws Exception;
 
+    // ---------- UTIL ----------
+    Integer getNextSerialNumber(String categoryName, String primaryColor, String secondaryColor, String tertiaryColor, String size);
+
 }

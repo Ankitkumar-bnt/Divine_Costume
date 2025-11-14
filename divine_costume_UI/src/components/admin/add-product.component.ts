@@ -27,7 +27,7 @@ import Swal from 'sweetalert2';
                   <input 
                     type="text" 
                     class="form-control" 
-                    [(ngModel)]="product.categoryName"
+                    [(ngModel)]="product.category.categoryName"
                     name="categoryName"
                     required
                     placeholder="e.g., Wedding, Traditional, Kids">
@@ -37,7 +37,7 @@ import Swal from 'sweetalert2';
                   <input 
                     type="text" 
                     class="form-control" 
-                    [(ngModel)]="product.categoryDescription"
+                    [(ngModel)]="product.category.categoryDescription"
                     name="categoryDescription"
                     placeholder="Brief description of category">
                 </div>
@@ -55,7 +55,7 @@ import Swal from 'sweetalert2';
                   <input 
                     type="text" 
                     class="form-control" 
-                    [(ngModel)]="product.variantDescription"
+                    [(ngModel)]="product.variant.variantDescription"
                     name="variantDescription"
                     required
                     placeholder="e.g., Royal Sherwani - Gold Embroidery">
@@ -65,7 +65,7 @@ import Swal from 'sweetalert2';
                   <input 
                     type="text" 
                     class="form-control" 
-                    [(ngModel)]="product.style"
+                    [(ngModel)]="product.variant.style"
                     name="style"
                     required
                     placeholder="e.g., Traditional, Modern, Fusion">
@@ -75,7 +75,7 @@ import Swal from 'sweetalert2';
                   <input 
                     type="text" 
                     class="form-control" 
-                    [(ngModel)]="product.primaryColor"
+                    [(ngModel)]="product.variant.primaryColor"
                     name="primaryColor"
                     required
                     placeholder="e.g., Gold">
@@ -85,7 +85,7 @@ import Swal from 'sweetalert2';
                   <input 
                     type="text" 
                     class="form-control" 
-                    [(ngModel)]="product.secondaryColor"
+                    [(ngModel)]="product.variant.secondaryColor"
                     name="secondaryColor"
                     placeholder="e.g., Red">
                 </div>
@@ -94,9 +94,40 @@ import Swal from 'sweetalert2';
                   <input 
                     type="text" 
                     class="form-control" 
-                    [(ngModel)]="product.tertiaryColor"
+                    [(ngModel)]="product.variant.tertiaryColor"
                     name="tertiaryColor"
                     placeholder="e.g., White">
+                </div>
+              </div>
+            </div>
+
+            <!-- Item Details Section -->
+            <div class="form-section">
+              <h6 class="section-title">
+                <i class="bi bi-list-check"></i> Item Details
+              </h6>
+              <div class="row g-3" *ngFor="let it of product.items; let i = index">
+                <div class="col-md-3">
+                  <label class="form-label">Item Name *</label>
+                  <input type="text" class="form-control" [(ngModel)]="product.items[i].itemName" name="itemName{{i}}" required placeholder="e.g., Turban" />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Rental / Day (₹)</label>
+                  <input type="number" class="form-control" [(ngModel)]="product.items[i].rentalPricePerDay" name="itemRent{{i}}" min="0" />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Deposit (₹)</label>
+                  <input type="number" class="form-control" [(ngModel)]="product.items[i].deposit" name="itemDeposit{{i}}" min="0" />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Image URL</label>
+                  <input type="text" class="form-control mb-2" [(ngModel)]="product.items[i].imageUrl" name="itemImg{{i}}" placeholder="https://..." />
+                  <input type="file" class="form-control" accept="image/*" (change)="onItemImageSelect(i, $event)" />
+                  <small class="text-muted">Choose an image or paste a URL</small>
+                </div>
+                <div class="col-12 d-flex gap-2">
+                  <button type="button" class="btn btn-outline-primary" (click)="addItem()"><i class="bi bi-plus-circle"></i> Add Item</button>
+                  <button type="button" class="btn btn-outline-danger" (click)="removeItem(i)" [disabled]="product.items.length === 1"><i class="bi bi-trash"></i> Remove</button>
                 </div>
               </div>
             </div>
@@ -112,37 +143,44 @@ import Swal from 'sweetalert2';
                   <input 
                     type="number" 
                     class="form-control" 
-                    [(ngModel)]="product.numberOfItemsAvailable"
-                    name="numberOfItemsAvailable"
+                    [(ngModel)]="product.costume.numberOfItems"
+                    name="numberOfItems"
                     required
                     min="0"
                     placeholder="e.g., 5">
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Size *</label>
-                  <select 
-                    class="form-select" 
-                    [(ngModel)]="product.size"
+                  <input 
+                    class="form-control"
+                    list="sizeOptions"
+                    [(ngModel)]="product.costume.size"
                     name="size"
-                    required>
-                    <option value="">Select Size</option>
-                    <option value="Kids-Small">Kids - Small</option>
-                    <option value="Kids-Medium">Kids - Medium</option>
-                    <option value="Kids-Large">Kids - Large</option>
-                    <option value="Adult-S">Adult - S</option>
-                    <option value="Adult-M">Adult - M</option>
-                    <option value="Adult-L">Adult - L</option>
-                    <option value="Adult-XL">Adult - XL</option>
-                    <option value="Adult-XXL">Adult - XXL</option>
-                    <option value="Free Size">Free Size</option>
-                  </select>
+                    required
+                    placeholder="e.g., 36+">
+                  <datalist id="sizeOptions">
+                    <option value="24"></option>
+                    <option value="26"></option>
+                    <option value="28"></option>
+                    <option value="30"></option>
+                    <option value="32"></option>
+                    <option value="34"></option>
+                    <option value="36"></option>
+                    <option value="36+"></option>
+                    <option value="38"></option>
+                    <option value="40"></option>
+                    <option value="40+"></option>
+                    <option value="40++"></option>
+                    <option value="42"></option>
+                    <option value="42+"></option>
+                  </datalist>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Serial Number *</label>
                   <input 
                     type="text" 
                     class="form-control" 
-                    [(ngModel)]="product.serialNumber"
+                    [(ngModel)]="product.costume.serialNumber"
                     name="serialNumber"
                     required
                     placeholder="e.g., DC-001">
@@ -152,7 +190,7 @@ import Swal from 'sweetalert2';
                   <input 
                     type="number" 
                     class="form-control" 
-                    [(ngModel)]="product.purchasePrice"
+                    [(ngModel)]="product.costume.purchasePrice"
                     name="purchasePrice"
                     required
                     min="0"
@@ -163,7 +201,7 @@ import Swal from 'sweetalert2';
                   <input 
                     type="number" 
                     class="form-control" 
-                    [(ngModel)]="product.rentalPricePerDay"
+                    [(ngModel)]="product.costume.rentalPricePerDay"
                     name="rentalPricePerDay"
                     required
                     min="0"
@@ -174,8 +212,8 @@ import Swal from 'sweetalert2';
                   <input 
                     type="number" 
                     class="form-control" 
-                    [(ngModel)]="product.depositAmount"
-                    name="depositAmount"
+                    [(ngModel)]="product.costume.deposit"
+                    name="deposit"
                     required
                     min="0"
                     placeholder="e.g., 5000">
@@ -185,7 +223,7 @@ import Swal from 'sweetalert2';
                     <input 
                       class="form-check-input" 
                       type="checkbox" 
-                      [(ngModel)]="product.isRentable"
+                      [(ngModel)]="product.costume.isRentable"
                       name="isRentable"
                       id="isRentable">
                     <label class="form-check-label" for="isRentable">
@@ -205,12 +243,18 @@ import Swal from 'sweetalert2';
                 <div class="col-md-12">
                   <label class="form-label">Image URLs (comma-separated)</label>
                   <textarea 
-                    class="form-control" 
-                    [(ngModel)]="imageUrlsText"
-                    name="imageUrls"
+                    class="form-control mb-2" 
+                    [(ngModel)]="imagesText"
+                    name="imagesText"
                     rows="3"
                     placeholder="Enter image URLs separated by commas&#10;e.g., https://example.com/image1.jpg, https://example.com/image2.jpg"></textarea>
-                  <small class="text-muted">Enter multiple image URLs separated by commas</small>
+                  <input 
+                    type="file" 
+                    class="form-control"
+                    accept="image/*"
+                    multiple
+                    (change)="onProductImagesSelect($event)" />
+                  <small class="text-muted">Choose one or more images or paste URLs above</small>
                 </div>
               </div>
             </div>
@@ -417,25 +461,36 @@ import Swal from 'sweetalert2';
 })
 export class AddProductComponent {
   product: ItemRequestDto = {
-    categoryName: '',
-    categoryDescription: '',
-    variantDescription: '',
-    style: '',
-    primaryColor: '',
-    secondaryColor: '',
-    tertiaryColor: '',
-    numberOfItemsAvailable: 0,
-    size: '',
-    serialNumber: '',
-    purchasePrice: 0,
-    rentalPricePerDay: 0,
-    depositAmount: 0,
-    isRentable: true,
-    imageUrls: []
+    category: {
+      categoryName: '',
+      categoryDescription: ''
+    },
+    variant: {
+      variantDescription: '',
+      style: '',
+      primaryColor: '',
+      secondaryColor: '',
+      tertiaryColor: ''
+    },
+    costume: {
+      numberOfItems: 0,
+      size: '',
+      serialNumber: 0,
+      purchasePrice: 0,
+      rentalPricePerDay: 0,
+      deposit: 0,
+      isRentable: true
+    },
+    items: [
+      { itemName: '', rentalPricePerDay: 0, deposit: 0, imageUrl: '' }
+    ],
+    images: []
   };
 
-  imageUrlsText = '';
+  imagesText = '';
   selectedFile: File | null = null;
+  itemImageFiles: (File | null)[] = [null];
+  productImageFiles: File[] = [];
 
   constructor(private itemService: ItemService) {}
 
@@ -478,13 +533,33 @@ export class AddProductComponent {
     });
   }
 
+  // Handle single item image file selection
+  onItemImageSelect(index: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files && input.files[0] ? input.files[0] : null;
+    while (this.itemImageFiles.length < this.product.items.length) {
+      this.itemImageFiles.push(null);
+    }
+    this.itemImageFiles[index] = file;
+  }
+
+  // Handle multiple product images selection
+  onProductImagesSelect(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = input.files ? Array.from(input.files) : [];
+    this.productImageFiles = files;
+  }
+
   onSubmit(): void {
-    // Parse image URLs
-    if (this.imageUrlsText.trim()) {
-      this.product.imageUrls = this.imageUrlsText
+    // Parse image URLs into DTO.images
+    if (this.imagesText.trim()) {
+      this.product.images = this.imagesText
         .split(',')
         .map(url => url.trim())
-        .filter(url => url.length > 0);
+        .filter(url => url.length > 0)
+        .map(url => ({ imageUrl: url }));
+    } else {
+      this.product.images = [];
     }
 
     this.itemService.addFullCostume(this.product).subscribe({
@@ -492,7 +567,7 @@ export class AddProductComponent {
         Swal.fire({
           icon: 'success',
           title: 'Product Added Successfully! ✅',
-          text: `${this.product.variantDescription} has been added to inventory.`,
+          text: `${this.product.variant.variantDescription} has been added to inventory.`,
           confirmButtonColor: '#5c1a1a'
         });
         this.resetForm();
@@ -510,23 +585,27 @@ export class AddProductComponent {
 
   resetForm(): void {
     this.product = {
-      categoryName: '',
-      categoryDescription: '',
-      variantDescription: '',
-      style: '',
-      primaryColor: '',
-      secondaryColor: '',
-      tertiaryColor: '',
-      numberOfItemsAvailable: 0,
-      size: '',
-      serialNumber: '',
-      purchasePrice: 0,
-      rentalPricePerDay: 0,
-      depositAmount: 0,
-      isRentable: true,
-      imageUrls: []
+      category: { categoryName: '', categoryDescription: '' },
+      variant: { variantDescription: '', style: '', primaryColor: '', secondaryColor: '', tertiaryColor: '' },
+      costume: { numberOfItems: 0, size: '', serialNumber: 0, purchasePrice: 0, rentalPricePerDay: 0, deposit: 0, isRentable: true },
+      items: [ { itemName: '', rentalPricePerDay: 0, deposit: 0, imageUrl: '' } ],
+      images: []
     };
-    this.imageUrlsText = '';
+    this.imagesText = '';
     this.selectedFile = null;
+    this.itemImageFiles = [null];
+    this.productImageFiles = [];
+  }
+
+  addItem(): void {
+    this.product.items.push({ itemName: '', rentalPricePerDay: 0, deposit: 0, imageUrl: '' });
+    this.itemImageFiles.push(null);
+  }
+
+  removeItem(index: number): void {
+    if (this.product.items.length > 1) {
+      this.product.items.splice(index, 1);
+      this.itemImageFiles.splice(index, 1);
+    }
   }
 }

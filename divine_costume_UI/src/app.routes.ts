@@ -24,7 +24,19 @@ export const routes: Routes = [
       },
       {
         path: 'add-product',
-        loadComponent: () => import('./components/admin/add-product.component').then(m => m.AddProductComponent)
+        loadComponent: () => import('./components/admin/add-product-landing.component').then(m => m.AddProductLandingComponent)
+      },
+      {
+        path: 'add-product/costume',
+        loadComponent: () => import('./components/admin/costume-options.component').then(m => m.CostumeOptionsComponent)
+      },
+      {
+        path: 'add-product/costume/new',
+        loadComponent: () => import('./components/admin/new-costume.component').then(m => m.NewCostumeComponent)
+      },
+      {
+        path: 'add-product/costume/bulk-insert',
+        loadComponent: () => import('./components/admin/bulk-insert.component').then(m => m.BulkInsertComponent)
       },
       {
         path: 'view-products',

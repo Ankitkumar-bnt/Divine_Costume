@@ -235,6 +235,9 @@ export class AdminLayoutComponent {
   getPageTitle(): string {
     const route = this.router.url;
     if (route.includes('dashboard')) return 'Dashboard';
+    if (route.includes('add-product/costume/bulk-insert')) return 'Bulk Insert';
+    if (route.includes('add-product/costume/new')) return 'New Costume';
+    if (route.includes('add-product/costume')) return 'Costume Options';
     if (route.includes('add-product')) return 'Add Product';
     if (route.includes('view-products')) return 'View Products';
     if (route.includes('bookings')) return 'Bookings / Rentals';
