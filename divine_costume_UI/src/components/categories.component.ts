@@ -1,10 +1,21 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+
+type CategoryKey = 'costumes' | 'ornaments';
+interface Category {
+  key: CategoryKey;
+  title: string;
+  description: string;
+  image: string;
+  buttonText: string;
+}
 
 @Component({
   selector: 'app-categories',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <section class="categories-section">
       <div class="container">
@@ -25,7 +36,7 @@ import { CommonModule } from '@angular/common';
               <div class="card-content">
                 <h3 class="card-title">{{ category.title }}</h3>
                 <p class="card-description">{{ category.description }}</p>
-                <button class="btn btn-view-more">
+                <button class="btn btn-view-more" (click)="openDateModal(category.key)">
                   {{ category.buttonText }}
                   <span class="arrow">→</span>
                 </button>
@@ -35,6 +46,29 @@ import { CommonModule } from '@angular/common';
         </div>
       </div>
     </section>
+
+    <div class="modal-backdrop" *ngIf="showDateModal">
+      <div class="modal-card" role="dialog" aria-modal="true">
+        <h3 class="modal-title">Select Dates (Optional)</h3>
+        <div class="modal-body">
+          <div class="form-row">
+            <label for="pickupDate">Pickup date</label>
+            <input id="pickupDate" type="date" [(ngModel)]="pickupDate">
+          </div>
+          <div class="form-row">
+            <label for="returnDate">Return date</label>
+            <input id="returnDate" type="date" [(ngModel)]="returnDate">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-skip" (click)="skip()">Skip</button>
+          <button class="btn btn-show" (click)="show()">
+            {{ selectedCategory === 'costumes' ? 'Show Costumes' : 'Show Ornaments' }}
+          </button>
+        </div>
+        <button class="btn btn-close" (click)="closeDateModal()" aria-label="Close">×</button>
+      </div>
+    </div>
   `,
   styles: [`
     .categories-section {
@@ -169,6 +203,90 @@ import { CommonModule } from '@angular/common';
       transform: translateX(5px);
     }
 
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1rem;
+    }
+    .modal-card {
+      position: relative;
+      width: 100%;
+      max-width: 520px;
+      background: #FFFDF9;
+      border: 2px solid #D4AF37;
+      border-radius: 16px;
+      box-shadow: 0 12px 24px rgba(212,175,55,0.3);
+      padding: 1.5rem;
+    }
+    .modal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: #7A1F2A;
+      margin: 0 0 1rem 0;
+      text-align: center;
+    }
+    .modal-body {
+      display: grid;
+      gap: 1rem;
+    }
+    .form-row {
+      display: grid;
+      gap: 0.5rem;
+    }
+    .form-row label {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      color: #7A1F2A;
+    }
+    .form-row input[type="date"] {
+      font-family: 'Poppins', sans-serif;
+      border: 2px solid #D4AF37;
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+      background: #fff;
+      color: #1B1B1B;
+    }
+    .modal-actions {
+      margin-top: 1rem;
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+    }
+    .btn-skip {
+      background: transparent;
+      color: #7A1F2A;
+      border: 2px solid #D4AF37;
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-show {
+      background: #D4AF37;
+      color: #7A1F2A;
+      border: 2px solid #D4AF37;
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .btn-close {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      background: transparent;
+      border: none;
+      font-size: 1.25rem;
+      cursor: pointer;
+      color: #7A1F2A;
+    }
+
     @media (max-width: 991px) {
       .categories-section {
         padding: 3rem 0;
@@ -220,18 +338,56 @@ import { CommonModule } from '@angular/common';
   `]
 })
 export class CategoriesComponent {
-  categories = [
+  categories: Category[] = [
     {
+      key: 'costumes',
       title: 'Costumes',
       description: 'Classical dance costumes for Bharatanatyam, Mohiniyattam, Kathak, Kuchipudi and more.',
       image: 'https://images.pexels.com/photos/8923478/pexels-photo-8923478.jpeg?auto=compress&cs=tinysrgb&w=800',
       buttonText: 'View Costumes'
     },
     {
+      key: 'ornaments',
       title: 'Ornaments',
       description: 'Authentic traditional jewellery and accessories that complete the divine look.',
       image: 'https://images.pexels.com/photos/2697787/pexels-photo-2697787.jpeg?auto=compress&cs=tinysrgb&w=800',
       buttonText: 'View Ornaments'
     }
   ];
+
+  showDateModal = false;
+  selectedCategory: CategoryKey | null = null;
+  pickupDate: string | null = null;
+  returnDate: string | null = null;
+
+  constructor(private router: Router) {}
+
+  openDateModal(categoryKey: CategoryKey) {
+    this.selectedCategory = categoryKey;
+    this.showDateModal = true;
+  }
+
+  closeDateModal() {
+    this.showDateModal = false;
+  }
+
+  private navigateToListing(withDates: boolean) {
+    if (!this.selectedCategory) return;
+    const path = this.selectedCategory === 'costumes' ? '/costumes' : '/ornaments';
+    const queryParams: any = {};
+    if (withDates) {
+      if (this.pickupDate) queryParams.pickupDate = this.pickupDate;
+      if (this.returnDate) queryParams.returnDate = this.returnDate;
+    }
+    this.closeDateModal();
+    this.router.navigate([path], Object.keys(queryParams).length ? { queryParams } : undefined);
+  }
+
+  skip() {
+    this.navigateToListing(false);
+  }
+
+  show() {
+    this.navigateToListing(true);
+  }
 }

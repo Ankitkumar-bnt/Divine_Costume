@@ -6,6 +6,14 @@ export const routes: Routes = [
     loadComponent: () => import('./components/home.component').then(m => m.HomeComponent)
   },
   {
+    path: 'costumes',
+    loadComponent: () => import('./components/costumes-list.component').then(m => m.CostumesListComponent)
+  },
+  {
+    path: 'ornaments',
+    loadComponent: () => import('./components/ornaments-list.component').then(m => m.OrnamentsListComponent)
+  },
+  {
     path: 'login',
     loadComponent: () => import('./components/login.component').then(m => m.LoginComponent)
   },
