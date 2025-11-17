@@ -11,7 +11,9 @@ import { Router, RouterModule } from '@angular/router';
       <!-- Sidebar -->
       <aside class="sidebar">
         <div class="sidebar-header">
-          <h3>Divine Costume</h3>
+          <div class="brand-logo">
+            <img src="/assets/logo.png" alt="Divine Costume" class="logo-image">
+          </div>
           <p class="text-muted">Admin Panel</p>
         </div>
         <nav class="sidebar-nav">
@@ -92,6 +94,24 @@ import { Router, RouterModule } from '@angular/router';
     .sidebar-header {
       padding: 2rem 1.5rem;
       border-bottom: 1px solid rgba(255,215,0,0.2);
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+
+    .logo-image {
+      height: 60px;
+      width: auto;
+      object-fit: contain;
+      transition: transform 0.3s ease;
+    }
+
+    .brand-logo:hover .logo-image {
+      transform: scale(1.05);
     }
 
     .sidebar-header h3 {
@@ -212,6 +232,10 @@ import { Router, RouterModule } from '@angular/router';
       .sidebar-header .text-muted,
       .nav-item span {
         display: none;
+      }
+
+      .logo-image {
+        height: 40px;
       }
 
       .nav-item {

@@ -10,7 +10,7 @@ import { Router } from '@angular/router';
     <nav class="navbar navbar-expand-lg navbar-light sticky-top">
       <div class="container-fluid px-4">
         <a class="navbar-brand brand-logo" href="#">
-          Divine Costume
+          <img src="/assets/logo.png" alt="Divine Costume" class="logo-image">
         </a>
 
         <button
@@ -53,16 +53,20 @@ import { Router } from '@angular/router';
     }
 
     .brand-logo {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: #7A1F2A;
+      display: flex;
+      align-items: center;
       text-decoration: none;
-      letter-spacing: 0.5px;
     }
 
-    .brand-logo:hover {
-      color: #D4AF37;
+    .logo-image {
+      height: 60px;
+      width: auto;
+      object-fit: contain;
+      transition: transform 0.3s ease;
+    }
+
+    .brand-logo:hover .logo-image {
+      transform: scale(1.05);
     }
 
     .nav-center {
@@ -147,6 +151,16 @@ import { Router } from '@angular/router';
 
       .btn-login {
         width: 100%;
+      }
+
+      .logo-image {
+        height: 50px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .logo-image {
+        height: 45px;
       }
     }
   `]
