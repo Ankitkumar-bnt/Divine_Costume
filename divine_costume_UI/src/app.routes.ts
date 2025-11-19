@@ -10,6 +10,10 @@ export const routes: Routes = [
     loadComponent: () => import('./components/costumes-list.component').then(m => m.CostumesListComponent)
   },
   {
+    path: 'costumes/:id',
+    loadComponent: () => import('./components/costume-detail.component').then(m => m.CostumeDetailComponent)
+  },
+  {
     path: 'ornaments',
     loadComponent: () => import('./components/ornaments-list.component').then(m => m.OrnamentsListComponent)
   },

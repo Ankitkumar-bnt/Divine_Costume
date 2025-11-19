@@ -12,6 +12,7 @@ interface OrnamentProduct {
   category: string;
   size: string;
   color: string;
+  material: string;
   gender: 'men' | 'women' | 'unisex';
   rentedCount: number;
   createdAt: string; // ISO date
@@ -47,36 +48,73 @@ interface OrnamentProduct {
         <div class="layout">
           <aside class="sidebar" [class.open]="mobileFiltersOpen">
             <div class="filter-group">
-              <h4>Category</h4>
-              <label *ngFor="let c of categories">
-                <input type="checkbox" [ngModel]="selectedCategories.has(c)" (ngModelChange)="toggleCategory(c, $event)"> {{ c }}
-              </label>
-            </div>
-            <div class="filter-group">
-              <h4>Price range</h4>
-              <div class="price-row">
-                <input type="number" placeholder="Min" [(ngModel)]="priceMin" (ngModelChange)="applyFilters()">
-                <span>—</span>
-                <input type="number" placeholder="Max" [(ngModel)]="priceMax" (ngModelChange)="applyFilters()">
+              <h4 class="filter-header" (click)="togglePanel('category')">
+                Category <span class="chev">{{ panelsOpen.category ? '▾' : '▸' }}</span>
+              </h4>
+              <div class="filter-body" *ngIf="panelsOpen.category">
+                <label *ngFor="let c of categories">
+                  <input type="checkbox" [ngModel]="selectedCategories.has(c)" (ngModelChange)="toggleCategory(c, $event)"> {{ c }}
+                </label>
               </div>
             </div>
             <div class="filter-group">
-              <h4>Size</h4>
-              <label *ngFor="let s of sizes">
-                <input type="checkbox" [ngModel]="selectedSizes.has(s)" (ngModelChange)="toggleSize(s, $event)"> {{ s }}
-              </label>
+              <h4 class="filter-header" (click)="togglePanel('price')">
+                Price range <span class="chev">{{ panelsOpen.price ? '▾' : '▸' }}</span>
+              </h4>
+              <div class="filter-body" *ngIf="panelsOpen.price">
+                <div class="price-row">
+                  <input type="number" min="0" step="1" inputmode="numeric" placeholder="Min" [(ngModel)]="priceMin" (ngModelChange)="applyFilters()">
+                  <span>—</span>
+                  <input type="number" min="0" step="1" inputmode="numeric" placeholder="Max" [(ngModel)]="priceMax" (ngModelChange)="applyFilters()">
+                </div>
+              </div>
             </div>
             <div class="filter-group">
-              <h4>Color</h4>
-              <label *ngFor="let col of colors">
-                <input type="checkbox" [ngModel]="selectedColors.has(col)" (ngModelChange)="toggleColor(col, $event)"> {{ col }}
-              </label>
+              <h4 class="filter-header" (click)="togglePanel('material')">
+                Material <span class="chev">{{ panelsOpen.material ? '▾' : '▸' }}</span>
+              </h4>
+              <div class="filter-body" *ngIf="panelsOpen.material">
+                <label *ngFor="let m of materialOptions">
+                  <input type="checkbox" [ngModel]="selectedMaterials.has(m)" (ngModelChange)="toggleMaterial(m, $event)"> {{ m }}
+                </label>
+                <ng-container *ngIf="showMoreMaterial">
+                  <label *ngFor="let m of materialExtraOptions">
+                    <input type="checkbox" [ngModel]="selectedMaterials.has(m)" (ngModelChange)="toggleMaterial(m, $event)"> {{ m }}
+                  </label>
+                </ng-container>
+                <button type="button" class="more-link" *ngIf="!showMoreMaterial" (click)="showMoreMaterial = true">{{ materialExtraOptions.length }} MORE</button>
+                <button type="button" class="more-link" *ngIf="showMoreMaterial" (click)="showMoreMaterial = false">Show less</button>
+              </div>
             </div>
             <div class="filter-group">
-              <h4>For</h4>
-              <label><input type="radio" name="gender" value="all" [(ngModel)]="gender" (ngModelChange)="applyFilters()"> All</label>
-              <label><input type="radio" name="gender" value="women" [(ngModel)]="gender" (ngModelChange)="applyFilters()"> Women</label>
-              <label><input type="radio" name="gender" value="men" [(ngModel)]="gender" (ngModelChange)="applyFilters()"> Men</label>
+              <h4 class="filter-header" (click)="togglePanel('size')">
+                Size <span class="chev">{{ panelsOpen.size ? '▾' : '▸' }}</span>
+              </h4>
+              <div class="filter-body" *ngIf="panelsOpen.size">
+                <label *ngFor="let s of sizes">
+                  <input type="checkbox" [ngModel]="selectedSizes.has(s)" (ngModelChange)="toggleSize(s, $event)"> {{ s }}
+                </label>
+              </div>
+            </div>
+            <div class="filter-group">
+              <h4 class="filter-header" (click)="togglePanel('color')">
+                Color <span class="chev">{{ panelsOpen.color ? '▾' : '▸' }}</span>
+              </h4>
+              <div class="filter-body" *ngIf="panelsOpen.color">
+                <label *ngFor="let col of colors">
+                  <input type="checkbox" [ngModel]="selectedColors.has(col)" (ngModelChange)="toggleColor(col, $event)"> {{ col }}
+                </label>
+              </div>
+            </div>
+            <div class="filter-group">
+              <h4 class="filter-header" (click)="togglePanel('gender')">
+                For <span class="chev">{{ panelsOpen.gender ? '▾' : '▸' }}</span>
+              </h4>
+              <div class="filter-body" *ngIf="panelsOpen.gender">
+                <label><input type="radio" name="gender" value="all" [(ngModel)]="gender" (ngModelChange)="applyFilters()"> All</label>
+                <label><input type="radio" name="gender" value="women" [(ngModel)]="gender" (ngModelChange)="applyFilters()"> Women</label>
+                <label><input type="radio" name="gender" value="men" [(ngModel)]="gender" (ngModelChange)="applyFilters()"> Men</label>
+              </div>
             </div>
             <button class="btn-clear" (click)="clearFilters()">Clear all</button>
           </aside>
@@ -94,10 +132,7 @@ interface OrnamentProduct {
                 <div class="content">
                   <h3 class="name">{{ p.name }}</h3>
                   <p class="desc">{{ p.description }}</p>
-                  <div class="meta">
-                    <span class="price">₹{{ p.pricePerDay }}/day</span>
-                    <span class="tags">{{ p.category }} • {{ p.color }}</span>
-                  </div>
+                  <div class="price">₹{{ p.pricePerDay }}/day</div>
                 </div>
               </div>
             </div>
@@ -126,11 +161,12 @@ interface OrnamentProduct {
     .layout { display: grid; grid-template-columns: 260px 1fr; gap: 1rem; }
     .sidebar { background: #FFFDF9; border: 2px solid #D4AF37; border-radius: 12px; padding: 1rem; height: max-content; }
     .filter-group { display: grid; gap: .5rem; margin-bottom: 1rem; }
-    .filter-group h4 { margin: 0 0 .25rem; color: #7A1F2A; font-size: 1rem; }
+    .filter-group h4 { margin: 0 0 .25rem; color: #7A1F2A; font-size: 1rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
     .filter-group label { display: flex; align-items: center; gap: .5rem; font-size: .95rem; color: #1B1B1B; }
     .price-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: .5rem; align-items: center; }
-    .price-row input { border: 2px solid #D4AF37; background: #fff; border-radius: 8px; padding: .4rem .5rem; }
+    .price-row input { border: 2px solid #D4AF37; background: #fff; border-radius: 8px; padding: .4rem .5rem; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; }
     .btn-clear { width: 100%; border: 2px solid #D4AF37; background: transparent; color: #7A1F2A; border-radius: 8px; padding: .5rem .8rem; cursor: pointer; font-weight: 700; }
+    .more-link { background: transparent; border: none; color: #7A1F2A; font-weight: 700; cursor: pointer; padding: 0; text-decoration: underline; justify-self: start; }
 
     .results { min-width: 0; }
     .results-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; color: #7A1F2A; font-weight: 600; }
@@ -143,11 +179,11 @@ interface OrnamentProduct {
     .img-secondary { opacity: 0; transform: scale(1.05); }
     .card:hover .img-primary { opacity: 0; transform: scale(1.05); }
     .card:hover .img-secondary { opacity: 1; transform: scale(1.0); }
-    .content { padding: .75rem .9rem; display: grid; gap: .35rem; }
-    .name { margin: 0; color: #7A1F2A; font-size: 1.05rem; }
-    .desc { margin: 0; color: #1B1B1B; opacity: .8; font-size: .9rem; }
-    .meta { display: flex; align-items: center; justify-content: space-between; margin-top: .25rem; }
-    .price { color: #7A1F2A; font-weight: 700; }
+    .content { padding: .75rem .9rem; display: grid; grid-template-rows: auto 1fr auto; gap: .3rem; min-height: 132px; }
+    .name { margin: 0; color: #7A1F2A; font-size: 1.05rem; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
+    .desc { margin: 0; color: #1B1B1B; opacity: .8; font-size: .9rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
+    .meta { display: none; }
+    .price { color: #7A1F2A; font-weight: 700; margin-top: .25rem; }
     .tags { color: #1B1B1B; opacity: .7; font-size: .85rem; }
     .empty { text-align: center; color: #7A1F2A; padding: 2rem; border: 2px dashed #D4AF37; border-radius: 12px; background: #FFFDF9; }
 
@@ -159,7 +195,7 @@ interface OrnamentProduct {
       .sidebar.open { display: block; }
       .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
-    @media (max-width: 575px) { .grid { grid-template-columns: 1fr; } .thumb { height: 200px; } }
+    @media (max-width: 575px) { .grid { grid-template-columns: 1fr; } .thumb { height: 200px; } .content { min-height: 120px; } }
   `]
 })
 export class OrnamentsListComponent implements OnInit {
@@ -195,6 +231,7 @@ export class OrnamentsListComponent implements OnInit {
       category: 'Necklace Set',
       size: 'One Size',
       color: 'Gold',
+      material: 'Gold Plated',
       gender: 'women',
       rentedCount: 312,
       createdAt: '2025-10-23'
@@ -211,6 +248,7 @@ export class OrnamentsListComponent implements OnInit {
       category: 'Waist Belt',
       size: 'One Size',
       color: 'Gold',
+      material: 'Brass',
       gender: 'women',
       rentedCount: 189,
       createdAt: '2025-09-12'
@@ -227,6 +265,7 @@ export class OrnamentsListComponent implements OnInit {
       category: 'Earrings',
       size: 'One Size',
       color: 'Gold',
+      material: 'Alloy',
       gender: 'women',
       rentedCount: 402,
       createdAt: '2025-08-05'
@@ -243,6 +282,7 @@ export class OrnamentsListComponent implements OnInit {
       category: 'Bangles',
       size: 'M',
       color: 'Gold',
+      material: 'Brass',
       gender: 'women',
       rentedCount: 221,
       createdAt: '2025-07-21'
@@ -259,6 +299,7 @@ export class OrnamentsListComponent implements OnInit {
       category: 'Anklets',
       size: 'One Size',
       color: 'Silver',
+      material: 'Silver Tone',
       gender: 'women',
       rentedCount: 168,
       createdAt: '2025-06-16'
@@ -275,6 +316,7 @@ export class OrnamentsListComponent implements OnInit {
       category: 'Headpiece',
       size: 'One Size',
       color: 'Gold',
+      material: 'Gold Plated',
       gender: 'women',
       rentedCount: 287,
       createdAt: '2025-05-03'
@@ -291,6 +333,7 @@ export class OrnamentsListComponent implements OnInit {
       category: 'Armlet',
       size: 'One Size',
       color: 'Gold',
+      material: 'Alloy',
       gender: 'women',
       rentedCount: 96,
       createdAt: '2025-04-02'
@@ -307,6 +350,7 @@ export class OrnamentsListComponent implements OnInit {
       category: 'Hair Accessories',
       size: 'One Size',
       color: 'Multi',
+      material: 'Mixed',
       gender: 'women',
       rentedCount: 145,
       createdAt: '2025-03-11'
@@ -323,6 +367,7 @@ export class OrnamentsListComponent implements OnInit {
       category: 'Necklace',
       size: 'One Size',
       color: 'White',
+      material: 'Pearl',
       gender: 'unisex',
       rentedCount: 101,
       createdAt: '2025-02-14'
@@ -339,6 +384,7 @@ export class OrnamentsListComponent implements OnInit {
       category: 'Waist Belt',
       size: 'One Size',
       color: 'Gold',
+      material: 'Gold Plated',
       gender: 'women',
       rentedCount: 187,
       createdAt: '2025-01-29'
@@ -355,6 +401,7 @@ export class OrnamentsListComponent implements OnInit {
       category: 'Headpiece',
       size: 'One Size',
       color: 'Gold',
+      material: 'Kundan',
       gender: 'women',
       rentedCount: 233,
       createdAt: '2024-12-12'
@@ -371,6 +418,7 @@ export class OrnamentsListComponent implements OnInit {
       category: 'Bangles',
       size: 'S',
       color: 'Red',
+      material: 'Mixed',
       gender: 'women',
       rentedCount: 75,
       createdAt: '2025-11-02'
@@ -422,6 +470,8 @@ export class OrnamentsListComponent implements OnInit {
     this.selectedCategories.clear();
     this.selectedSizes.clear();
     this.selectedColors.clear();
+    this.selectedMaterials.clear();
+    this.showMoreMaterial = false;
     this.priceMin = null;
     this.priceMax = null;
     this.gender = 'all';
@@ -430,6 +480,10 @@ export class OrnamentsListComponent implements OnInit {
   }
 
   applyFilters() {
+    const min = this.priceMin != null ? Math.max(0, this.priceMin) : null;
+    const max = this.priceMax != null ? Math.max(0, this.priceMax) : null;
+    this.priceMin = min;
+    this.priceMax = max;
     let res = this.allProducts.slice();
 
     if (this.selectedCategories.size) {
@@ -441,14 +495,17 @@ export class OrnamentsListComponent implements OnInit {
     if (this.selectedColors.size) {
       res = res.filter(p => this.selectedColors.has(p.color));
     }
+    if (this.selectedMaterials.size) {
+      res = res.filter(p => this.selectedMaterials.has(p.material));
+    }
     if (this.gender !== 'all') {
       res = res.filter(p => p.gender === this.gender || p.gender === 'unisex');
     }
-    if (this.priceMin != null) {
-      res = res.filter(p => p.pricePerDay >= this.priceMin!);
+    if (min != null) {
+      res = res.filter(p => p.pricePerDay >= min);
     }
-    if (this.priceMax != null) {
-      res = res.filter(p => p.pricePerDay <= this.priceMax!);
+    if (max != null) {
+      res = res.filter(p => p.pricePerDay <= max);
     }
 
     switch (this.sortBy) {
@@ -467,4 +524,27 @@ export class OrnamentsListComponent implements OnInit {
   }
 
   trackById(_: number, item: OrnamentProduct) { return item.id; }
+
+  // collapsible + material state
+  panelsOpen: Record<'category' | 'price' | 'material' | 'size' | 'color' | 'gender', boolean> = {
+    category: false,
+    price: false,
+    material: false,
+    size: false,
+    color: false,
+    gender: false
+  };
+  materialOptions: string[] = ['Gold Plated', 'Alloy', 'Brass', 'Silver Tone', 'Pearl', 'Mixed'];
+  materialExtraOptions: string[] = ['Kundan', 'Meenakari', 'Oxidized'];
+  selectedMaterials = new Set<string>();
+  showMoreMaterial = false;
+
+  togglePanel(section: 'category' | 'price' | 'material' | 'size' | 'color' | 'gender') {
+    this.panelsOpen[section] = !this.panelsOpen[section];
+  }
+
+  toggleMaterial(m: string, checked: boolean) {
+    checked ? this.selectedMaterials.add(m) : this.selectedMaterials.delete(m);
+    this.applyFilters();
+  }
 }

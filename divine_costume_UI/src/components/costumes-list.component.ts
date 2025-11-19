@@ -12,6 +12,7 @@ interface CostumeProduct {
   category: string;
   size: string;
   color: string;
+  fabric: string;
   gender: 'men' | 'women' | 'unisex';
   rentedCount: number;
   createdAt: string; // ISO date
@@ -27,66 +28,105 @@ interface CostumeProduct {
         <header class="plp-header">
           <div class="title-group">
             <h1 class="title">Costumes</h1>
-            <div class="dates" *ngIf="pickupDate || returnDate">
-              <span *ngIf="pickupDate"><strong>Pickup:</strong> {{ pickupDate }}</span>
-              <span *ngIf="returnDate"><strong>Return:</strong> {{ returnDate }}</span>
-            </div>
           </div>
           <div class="actions">
             <button class="btn-filters" (click)="mobileFiltersOpen = !mobileFiltersOpen">Filters</button>
-            <select class="sort" [(ngModel)]="sortBy" (ngModelChange)="applyFilters()">
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-              <option value="newest">Newest</option>
-              <option value="most_rented">Most rented</option>
-            </select>
-            <a routerLink="/" class="back-link">← Home</a>
           </div>
         </header>
 
         <div class="layout">
           <aside class="sidebar" [class.open]="mobileFiltersOpen">
             <div class="filter-group">
-              <h4>Category</h4>
-              <label *ngFor="let c of categories">
-                <input type="checkbox" [ngModel]="selectedCategories.has(c)" (ngModelChange)="toggleCategory(c, $event)"> {{ c }}
-              </label>
+              <h4 class="filter-header" (click)="togglePanel('category')">
+                Category <span class="chev">{{ panelsOpen.category ? '▾' : '▸' }}</span>
+              </h4>
+              <div class="filter-body" *ngIf="panelsOpen.category">
+                <label *ngFor="let c of categories">
+                  <input type="checkbox" [ngModel]="selectedCategories.has(c)" (ngModelChange)="toggleCategory(c, $event)"> {{ c }}
+                </label>
+              </div>
             </div>
-            <div class="filter-group">
-              <h4>Price range</h4>
-              <div class="price-row">
-                <input type="number" placeholder="Min" [(ngModel)]="priceMin" (ngModelChange)="applyFilters()">
-                <span>—</span>
-                <input type="number" placeholder="Max" [(ngModel)]="priceMax" (ngModelChange)="applyFilters()">
+            <div class="filter-group price-block">
+              <div class="price-header">
+                <span class="price-title">PRICE</span>
+                <button type="button" class="btn-price-clear" (click)="clearPrice()">CLEAR</button>
+              </div>
+              <div class="range-container">
+                <input type="range" class="range" [min]="sliderMin" [max]="sliderMax" [step]="sliderStep" [(ngModel)]="sliderMinValue" (input)="onMinRangeInput()" [style.background]="priceTrackBackground">
+                <input type="range" class="range range-max" [min]="sliderMin" [max]="sliderMax" [step]="sliderStep" [(ngModel)]="sliderMaxValue" (input)="onMaxRangeInput()" [style.background]="priceTrackBackground">
+              </div>
+              <div class="range-inputs">
+                <select class="price-select" [(ngModel)]="priceMinSelectValue" (ngModelChange)="onPriceSelectChange('min', $event)">
+                  <option [ngValue]="null">Min</option>
+                  <option *ngFor="let v of priceOptions" [ngValue]="v">₹{{ v }}</option>
+                </select>
+                <select class="price-select" [(ngModel)]="priceMaxSelectValue" (ngModelChange)="onPriceSelectChange('max', $event)">
+                  <option *ngFor="let v of priceOptions" [ngValue]="v">₹{{ v }}</option>
+                </select>
               </div>
             </div>
             <div class="filter-group">
-              <h4>Size</h4>
-              <label *ngFor="let s of sizes">
-                <input type="checkbox" [ngModel]="selectedSizes.has(s)" (ngModelChange)="toggleSize(s, $event)"> {{ s }}
-              </label>
+              <h4 class="filter-header" (click)="togglePanel('size')">
+                Size <span class="chev">{{ panelsOpen.size ? '▾' : '▸' }}</span>
+              </h4>
+              <div class="filter-body" *ngIf="panelsOpen.size">
+                <label *ngFor="let s of sizes">
+                  <input type="checkbox" [ngModel]="selectedSizes.has(s)" (ngModelChange)="toggleSize(s, $event)"> {{ s }}
+                </label>
+              </div>
             </div>
             <div class="filter-group">
-              <h4>Color</h4>
-              <label *ngFor="let col of colors">
-                <input type="checkbox" [ngModel]="selectedColors.has(col)" (ngModelChange)="toggleColor(col, $event)"> {{ col }}
-              </label>
+              <h4 class="filter-header" (click)="togglePanel('color')">
+                Color <span class="chev">{{ panelsOpen.color ? '▾' : '▸' }}</span>
+              </h4>
+              <div class="filter-body" *ngIf="panelsOpen.color">
+                <label *ngFor="let col of colors">
+                  <input type="checkbox" [ngModel]="selectedColors.has(col)" (ngModelChange)="toggleColor(col, $event)"> {{ col }}
+                </label>
+              </div>
             </div>
             <div class="filter-group">
-              <h4>For</h4>
-              <label><input type="radio" name="gender" value="all" [(ngModel)]="gender" (ngModelChange)="applyFilters()"> All</label>
-              <label><input type="radio" name="gender" value="women" [(ngModel)]="gender" (ngModelChange)="applyFilters()"> Women</label>
-              <label><input type="radio" name="gender" value="men" [(ngModel)]="gender" (ngModelChange)="applyFilters()"> Men</label>
+              <h4 class="filter-header" (click)="togglePanel('gender')">
+                For <span class="chev">{{ panelsOpen.gender ? '▾' : '▸' }}</span>
+              </h4>
+              <div class="filter-body" *ngIf="panelsOpen.gender">
+                <label><input type="radio" name="gender" value="all" [(ngModel)]="gender" (ngModelChange)="applyFilters()"> All</label>
+                <label><input type="radio" name="gender" value="women" [(ngModel)]="gender" (ngModelChange)="applyFilters()"> Women</label>
+                <label><input type="radio" name="gender" value="men" [(ngModel)]="gender" (ngModelChange)="applyFilters()"> Men</label>
+              </div>
             </div>
             <button class="btn-clear" (click)="clearFilters()">Clear all</button>
           </aside>
 
           <main class="results">
             <div class="results-bar">
-              <span>{{ filtered.length }} results</span>
+              <div class="results-left">{{ filtered.length }} results</div>
+              <div class="results-center">
+                <div class="date-group">
+                  <span class="date-label">Dates</span>
+                  <div class="date-input">
+                    <span class="icon">📅</span>
+                    <input type="date" [(ngModel)]="pickupDate" (change)="onDateFilterChange(pickupDate, returnDate)" placeholder="Pickup" [title]="formatDate(pickupDate)"/>
+                    <small class="date-display" *ngIf="pickupDate">{{ formatDate(pickupDate) }}</small>
+                  </div>
+                  <div class="date-input">
+                    <span class="icon">📅</span>
+                    <input type="date" [(ngModel)]="returnDate" (change)="onDateFilterChange(pickupDate, returnDate)" placeholder="Return" [title]="formatDate(returnDate)"/>
+                    <small class="date-display" *ngIf="returnDate">{{ formatDate(returnDate) }}</small>
+                  </div>
+                </div>
+              </div>
+              <div class="results-right">
+                <select class="sort" [(ngModel)]="sortBy" (ngModelChange)="applyFilters()">
+                  <option value="price_asc">Price: Low to High</option>
+                  <option value="price_desc">Price: High to Low</option>
+                  <option value="newest">Newest</option>
+                  <option value="most_rented">Most rented</option>
+                </select>
+              </div>
             </div>
             <div class="grid" *ngIf="filtered.length; else empty">
-              <div class="card" *ngFor="let p of filtered; trackBy: trackById">
+              <div class="card" *ngFor="let p of filtered; trackBy: trackById" [routerLink]="['/costumes', p.id]">
                 <div class="thumb">
                   <img class="img-primary" [src]="p.images[0]" [alt]="p.name">
                   <img class="img-secondary" [src]="p.images[1] || p.images[0]" [alt]="p.name">
@@ -94,10 +134,7 @@ interface CostumeProduct {
                 <div class="content">
                   <h3 class="name">{{ p.name }}</h3>
                   <p class="desc">{{ p.description }}</p>
-                  <div class="meta">
-                    <span class="price">₹{{ p.pricePerDay }}/day</span>
-                    <span class="tags">{{ p.category }} • {{ p.size }} • {{ p.color }}</span>
-                  </div>
+                  <div class="price">₹{{ p.pricePerDay }}/day</div>
                 </div>
               </div>
             </div>
@@ -123,31 +160,51 @@ interface CostumeProduct {
     .btn-filters { display: none; background: #D4AF37; color: #7A1F2A; border: 2px solid #D4AF37; padding: .5rem .9rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
     .sort { border: 2px solid #D4AF37; background: #FFFDF9; border-radius: 8px; padding: .5rem .6rem; color: #7A1F2A; font-weight: 600; }
 
-    .layout { display: grid; grid-template-columns: 260px 1fr; gap: 1rem; }
-    .sidebar { background: #FFFDF9; border: 2px solid #D4AF37; border-radius: 12px; padding: 1rem; height: max-content; }
+    .layout { display: grid; grid-template-columns: 280px 1fr; gap: 1rem; }
+    .sidebar { background: #fff; border: 1px solid rgba(212,175,55,0.25); border-radius: 14px; padding: 1rem; height: max-content; box-shadow: 0 6px 16px rgba(0,0,0,0.06); }
     .filter-group { display: grid; gap: .5rem; margin-bottom: 1rem; }
-    .filter-group h4 { margin: 0 0 .25rem; color: #7A1F2A; font-size: 1rem; }
-    .filter-group label { display: flex; align-items: center; gap: .5rem; font-size: .95rem; color: #1B1B1B; }
-    .price-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: .5rem; align-items: center; }
-    .price-row input { border: 2px solid #D4AF37; background: #fff; border-radius: 8px; padding: .4rem .5rem; }
-    .btn-clear { width: 100%; border: 2px solid #D4AF37; background: transparent; color: #7A1F2A; border-radius: 8px; padding: .5rem .8rem; cursor: pointer; font-weight: 700; }
+    .filter-group h4 { margin: 0 0 .25rem; color: #7A1F2A; font-size: .95rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-weight: 700; }
+    .filter-group label { display: flex; align-items: center; gap: .5rem; font-size: .95rem; color: #1B1B1B; padding: .15rem .25rem; border-radius: 8px; }
+    .filter-group label:hover { background: rgba(212,175,55,0.08); }
+    .price-header { display: flex; align-items: center; justify-content: space-between; }
+    .price-title { color: #7A1F2A; font-weight: 800; }
+    .btn-price-clear { background: transparent; border: none; color: #7A1F2A; font-weight: 700; cursor: pointer; padding: 0; }
+    .range-container { position: relative; height: 28px; margin-top: .25rem; }
+    .range-container .range { position: absolute; left: 0; right: 0; top: 8px; height: 6px; border-radius: 4px; outline: none; -webkit-appearance: none; background: #e0e0e0; pointer-events: none; }
+    .range-container .range::-webkit-slider-thumb { -webkit-appearance: none; pointer-events: all; width: 16px; height: 16px; border-radius: 50%; background: #7A1F2A; border: 2px solid #D4AF37; cursor: pointer; }
+    .range-container .range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #7A1F2A; border: 2px solid #D4AF37; cursor: pointer; }
+    .range-container .range::-webkit-slider-runnable-track { height: 6px; border-radius: 4px; }
+    .range-container .range::-moz-range-track { height: 6px; border-radius: 4px; background: transparent; }
+    .range-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-top: .5rem; }
+    .price-select { border: 2px solid #D4AF37; background: #fff; border-radius: 8px; padding: .4rem .5rem; color: #7A1F2A; font-weight: 600; }
+    .btn-clear { width: 100%; border: 1px solid rgba(212,175,55,0.6); background: #fff; color: #7A1F2A; border-radius: 999px; padding: .6rem .9rem; cursor: pointer; font-weight: 700; box-shadow: 0 3px 8px rgba(0,0,0,0.05); }
+    .btn-clear:hover { background: rgba(212,175,55,0.12); }
+    .more-link { background: transparent; border: none; color: #7A1F2A; font-weight: 700; cursor: pointer; padding: 0; text-decoration: underline; justify-self: start; }
 
     .results { min-width: 0; }
-    .results-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; color: #7A1F2A; font-weight: 600; }
+    .results-bar { display: grid; grid-template-columns: 1fr auto auto; gap: .75rem; align-items: center; margin-bottom: .75rem; }
+    .results-left { color: #7A1F2A; font-weight: 700; }
+    .results-right .sort { border: 1px solid rgba(212,175,55,0.6); background: #fff; border-radius: 999px; padding: .5rem .8rem; color: #7A1F2A; font-weight: 600; box-shadow: 0 3px 8px rgba(0,0,0,0.05); }
+    .date-group { display: flex; align-items: center; gap: .5rem; background: rgba(212,175,55,0.08); padding: .4rem .6rem; border-radius: 999px; }
+    .date-label { font-weight: 700; color: #7A1F2A; margin-right: .25rem; }
+    .date-input { position: relative; display: flex; align-items: center; gap: .25rem; background: #fff; border: 1px solid rgba(212,175,55,0.6); border-radius: 999px; padding: .25rem .5rem; box-shadow: 0 3px 8px rgba(0,0,0,0.05); }
+    .date-input .icon { font-size: .9rem; }
+    .date-input input[type="date"] { border: none; outline: none; background: transparent; color: #1B1B1B; padding: .25rem; font-weight: 600; }
+    .date-input .date-display { position: absolute; bottom: -1.1rem; left: .75rem; font-size: .75rem; color: #7A1F2A; }
     .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
 
-    .card { background: #FFFDF9; border: 2px solid #D4AF37; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; transition: box-shadow .2s ease, transform .2s ease; }
+    .card { background: #fff; border: 1px solid rgba(212,175,55,0.25); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; transition: box-shadow .2s ease, transform .2s ease; box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
     .card:hover { box-shadow: 0 8px 20px rgba(212, 175, 55, 0.25); transform: translateY(-2px); }
     .thumb { position: relative; height: 220px; overflow: hidden; background: #f6efe0; }
     .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .3s ease, transform .3s ease; }
     .img-secondary { opacity: 0; transform: scale(1.05); }
     .card:hover .img-primary { opacity: 0; transform: scale(1.05); }
     .card:hover .img-secondary { opacity: 1; transform: scale(1.0); }
-    .content { padding: .75rem .9rem; display: grid; gap: .35rem; }
-    .name { margin: 0; color: #7A1F2A; font-size: 1.05rem; }
-    .desc { margin: 0; color: #1B1B1B; opacity: .8; font-size: .9rem; }
-    .meta { display: flex; align-items: center; justify-content: space-between; margin-top: .25rem; }
-    .price { color: #7A1F2A; font-weight: 700; }
+    .content { padding: .75rem .9rem; display: grid; grid-template-rows: auto 1fr auto; gap: .3rem; min-height: 132px; }
+    .name { margin: 0; color: #7A1F2A; font-size: 1.05rem; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
+    .desc { margin: 0; color: #1B1B1B; opacity: .8; font-size: .9rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
+    .meta { display: none; }
+    .price { color: #7A1F2A; font-weight: 800; margin-top: .25rem; }
     .tags { color: #1B1B1B; opacity: .7; font-size: .85rem; }
     .empty { text-align: center; color: #7A1F2A; padding: 2rem; border: 2px dashed #D4AF37; border-radius: 12px; background: #FFFDF9; }
 
@@ -158,8 +215,10 @@ interface CostumeProduct {
       .sidebar { display: none; }
       .sidebar.open { display: block; }
       .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .results-bar { grid-template-columns: 1fr; }
+      .results-right { justify-self: start; }
     }
-    @media (max-width: 575px) { .grid { grid-template-columns: 1fr; } .thumb { height: 200px; } }
+    @media (max-width: 575px) { .grid { grid-template-columns: 1fr; } .thumb { height: 200px; } .content { min-height: 120px; } }
   `]
 })
 export class CostumesListComponent implements OnInit {
@@ -180,6 +239,21 @@ export class CostumesListComponent implements OnInit {
   gender: 'all' | 'men' | 'women' = 'all';
   sortBy: 'price_asc' | 'price_desc' | 'newest' | 'most_rented' = 'newest';
   mobileFiltersOpen = false;
+  panelsOpen: Record<'category' | 'size' | 'color' | 'gender', boolean> = {
+    category: false,
+    size: false,
+    color: false,
+    gender: false
+  };
+  // PRICE slider state
+  sliderMin = 0;
+  sliderMax = 10000;
+  sliderStep = 250;
+  sliderMinValue = this.sliderMin;
+  sliderMaxValue = this.sliderMax;
+  priceOptions: number[] = [0, 250, 500, 750, 1000, 1500, 2000, 5000, 10000];
+  priceMinSelectValue: number | null = null; // null => "Min"
+  priceMaxSelectValue: number = this.sliderMax;
 
   // data
   allProducts: CostumeProduct[] = [
@@ -195,6 +269,7 @@ export class CostumesListComponent implements OnInit {
       category: 'Bharatanatyam',
       size: 'M',
       color: 'Red',
+      fabric: 'Silk Blend',
       gender: 'women',
       rentedCount: 132,
       createdAt: '2025-10-22'
@@ -211,6 +286,7 @@ export class CostumesListComponent implements OnInit {
       category: 'Kathak',
       size: 'L',
       color: 'Pink',
+      fabric: 'Viscose Rayon',
       gender: 'women',
       rentedCount: 98,
       createdAt: '2025-09-18'
@@ -227,6 +303,7 @@ export class CostumesListComponent implements OnInit {
       category: 'Kuchipudi',
       size: 'S',
       color: 'Green',
+      fabric: 'Brocade',
       gender: 'women',
       rentedCount: 185,
       createdAt: '2025-07-10'
@@ -243,6 +320,7 @@ export class CostumesListComponent implements OnInit {
       category: 'Mohiniyattam',
       size: 'M',
       color: 'Gold',
+      fabric: 'Silk Blend',
       gender: 'women',
       rentedCount: 74,
       createdAt: '2025-06-05'
@@ -259,6 +337,7 @@ export class CostumesListComponent implements OnInit {
       category: 'Bharatanatyam',
       size: 'XL',
       color: 'Blue',
+      fabric: 'Pure Cotton',
       gender: 'women',
       rentedCount: 221,
       createdAt: '2025-08-01'
@@ -275,6 +354,7 @@ export class CostumesListComponent implements OnInit {
       category: 'Kathak',
       size: 'L',
       color: 'White',
+      fabric: 'Cotton Blend',
       gender: 'men',
       rentedCount: 65,
       createdAt: '2025-05-15'
@@ -291,6 +371,7 @@ export class CostumesListComponent implements OnInit {
       category: 'Bharatanatyam',
       size: 'M',
       color: 'Purple',
+      fabric: 'Silk Blend',
       gender: 'women',
       rentedCount: 142,
       createdAt: '2025-10-10'
@@ -307,6 +388,7 @@ export class CostumesListComponent implements OnInit {
       category: 'Kuchipudi',
       size: 'S',
       color: 'Green',
+      fabric: 'Cotton Blend',
       gender: 'women',
       rentedCount: 31,
       createdAt: '2025-03-28'
@@ -323,6 +405,7 @@ export class CostumesListComponent implements OnInit {
       category: 'Mohiniyattam',
       size: 'L',
       color: 'Gold',
+      fabric: 'Cotton Rayon',
       gender: 'men',
       rentedCount: 27,
       createdAt: '2025-04-12'
@@ -339,6 +422,7 @@ export class CostumesListComponent implements OnInit {
       category: 'Practice',
       size: 'M',
       color: 'Black',
+      fabric: 'Polyester',
       gender: 'unisex',
       rentedCount: 312,
       createdAt: '2025-11-01'
@@ -355,6 +439,7 @@ export class CostumesListComponent implements OnInit {
       category: 'Bharatanatyam',
       size: 'S',
       color: 'Yellow',
+      fabric: 'Silk Blend',
       gender: 'women',
       rentedCount: 202,
       createdAt: '2025-09-01'
@@ -371,6 +456,7 @@ export class CostumesListComponent implements OnInit {
       category: 'Kathak',
       size: 'XL',
       color: 'Beige',
+      fabric: 'Silk Blend',
       gender: 'men',
       rentedCount: 51,
       createdAt: '2025-01-22'
@@ -430,6 +516,10 @@ export class CostumesListComponent implements OnInit {
   }
 
   applyFilters() {
+    const min = this.priceMin != null ? Math.max(0, this.priceMin) : null;
+    const max = this.priceMax != null ? Math.max(0, this.priceMax) : null;
+    this.priceMin = min;
+    this.priceMax = max;
     let res = this.allProducts.slice();
 
     if (this.selectedCategories.size) {
@@ -444,11 +534,11 @@ export class CostumesListComponent implements OnInit {
     if (this.gender !== 'all') {
       res = res.filter(p => p.gender === this.gender || p.gender === 'unisex');
     }
-    if (this.priceMin != null) {
-      res = res.filter(p => p.pricePerDay >= this.priceMin!);
+    if (min != null) {
+      res = res.filter(p => p.pricePerDay >= min);
     }
-    if (this.priceMax != null) {
-      res = res.filter(p => p.pricePerDay <= this.priceMax!);
+    if (max != null) {
+      res = res.filter(p => p.pricePerDay <= max);
     }
 
     switch (this.sortBy) {
@@ -467,4 +557,86 @@ export class CostumesListComponent implements OnInit {
   }
 
   trackById(_: number, item: CostumeProduct) { return item.id; }
+
+  togglePanel(section: 'category' | 'size' | 'color' | 'gender') {
+    this.panelsOpen[section] = !this.panelsOpen[section];
+  }
+
+  // PRICE handlers
+  private clampPriceValues() {
+    if (this.sliderMinValue > this.sliderMaxValue) {
+      this.sliderMinValue = this.sliderMaxValue;
+    }
+    if (this.sliderMinValue < this.sliderMin) this.sliderMinValue = this.sliderMin;
+    if (this.sliderMaxValue > this.sliderMax) this.sliderMaxValue = this.sliderMax;
+  }
+
+  get priceTrackBackground(): string {
+    const range = this.sliderMax - this.sliderMin;
+    const minPct = ((this.sliderMinValue - this.sliderMin) / range) * 100;
+    const maxPct = ((this.sliderMaxValue - this.sliderMin) / range) * 100;
+    return `linear-gradient(to right, #e0e0e0 ${minPct}%, #0d6efd ${minPct}%, #0d6efd ${maxPct}%, #e0e0e0 ${maxPct}%)`;
+  }
+
+  onMinRangeInput() {
+    if (this.sliderMinValue > this.sliderMaxValue) {
+      this.sliderMinValue = this.sliderMaxValue;
+    }
+    this.priceMinSelectValue = this.sliderMinValue === this.sliderMin ? null : this.sliderMinValue;
+    this.onPriceChange(this.sliderMinValue, this.sliderMaxValue);
+  }
+
+  onMaxRangeInput() {
+    if (this.sliderMaxValue < this.sliderMinValue) {
+      this.sliderMaxValue = this.sliderMinValue;
+    }
+    this.priceMaxSelectValue = this.sliderMaxValue;
+    this.onPriceChange(this.sliderMinValue, this.sliderMaxValue);
+  }
+
+  onPriceSelectChange(which: 'min' | 'max', value: number | null) {
+    if (which === 'min') {
+      this.sliderMinValue = value == null ? this.sliderMin : value;
+      if (this.sliderMinValue > this.sliderMaxValue) {
+        this.sliderMaxValue = this.sliderMinValue;
+      }
+      this.priceMinSelectValue = value;
+    } else {
+      this.sliderMaxValue = value == null ? this.sliderMax : Number(value);
+      if (this.sliderMaxValue < this.sliderMinValue) {
+        this.sliderMinValue = this.sliderMaxValue;
+      }
+      this.priceMaxSelectValue = this.sliderMaxValue;
+    }
+    this.onPriceChange(this.sliderMinValue, this.sliderMaxValue);
+  }
+
+  clearPrice() {
+    this.sliderMinValue = this.sliderMin;
+    this.sliderMaxValue = this.sliderMax;
+    this.priceMinSelectValue = null;
+    this.priceMaxSelectValue = this.sliderMax;
+    this.onPriceChange(this.sliderMinValue, this.sliderMaxValue);
+  }
+
+  onPriceChange(min: number, max: number) {
+    // Hook point for external filtering if needed
+    const full = min === this.sliderMin && max === this.sliderMax;
+    this.priceMin = full ? null : min;
+    this.priceMax = full ? null : max;
+    this.applyFilters();
+  }
+
+  onDateFilterChange(pickup: string | null, ret: string | null) {
+    this.pickupDate = pickup;
+    this.returnDate = ret;
+    this.applyFilters();
+  }
+
+  formatDate(dateStr: string | null): string {
+    if (!dateStr) return '';
+    const [y, m, d] = dateStr.split('-');
+    if (!y || !m || !d) return dateStr;
+    return `${d}-${m}-${y}`;
+  }
 }
