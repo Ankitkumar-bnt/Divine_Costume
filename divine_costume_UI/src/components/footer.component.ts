@@ -8,49 +8,51 @@ import { CommonModule } from '@angular/common';
   template: `
     <footer class="footer" id="contact">
       <div class="container">
-        <div class="grid">
-          <div class="col about">
-            <h5 class="footer-heading">About</h5>
-            <div class="footer-content">
-              <h6 class="brand-name">Divine Costumes</h6>
-              <p class="footer-text">
-                We at "Divine Costumes" design and supply costumes for various drama and dance activities for School & College programs.
+        <div class="single-card">
+          <div class="card-grid">
+            <section class="about">
+              <h5 class="footer-heading">About</h5>
+              <div class="footer-content">
+                <h6 class="brand-name">Divine Costumes</h6>
+                <p class="footer-text">
+                  We at "Divine Costumes" design and supply costumes for various drama and dance activities for School & College programs.
+                </p>
+                <p class="footer-text">
+                  We provide one-stop solution for dance needs including brand new custom-stitched costumes and all types of Ornaments, Ghungroos, and Dance Accessories.
+                </p>
+              </div>
+            </section>
+
+            <section class="links">
+              <h5 class="footer-heading">Information</h5>
+              <ul class="footer-links">
+                <li><a href="#about">About Us</a></li>
+                <li><a href="#products">Products</a></li>
+                <li><a href="#contact">Contact Us</a></li>
+                <li><a href="#gallery">Divine Gallery</a></li>
+              </ul>
+            </section>
+
+            <section class="contact">
+              <h5 class="footer-heading">Contact</h5>
+              <ul class="contact-list">
+                <li><span class="icon">☎</span> <a href="tel:+919850884455">+91 9850884455</a></li>
+                <li><span class="icon">✉</span> <a href="mailto:thedancecostumes&#64;gmail.com">thedancecostumes&#64;gmail.com</a></li>
+              </ul>
+            </section>
+
+            <section class="address">
+              <h5 class="footer-heading">Address</h5>
+              <p class="footer-text address-text">
+                <strong>Divine Costumes</strong><br>
+                1st Floor, Shankar Parvati Building,<br>
+                Pimpri Chinchwad Link Road,<br>
+                Above Samarth Pushpalay,<br>
+                Opp Dr Nitin Chowkar, Tanaji Nagar,<br>
+                Chinchwad, Near Elpro Mall,<br>
+                Maharashtra 411033
               </p>
-              <p class="footer-text">
-                We provide one-stop solution for dance needs including brand new custom-stitched costumes and all types of Ornaments, Ghungroos, and Dance Accessories.
-              </p>
-            </div>
-          </div>
-
-          <div class="col links">
-            <h5 class="footer-heading">Information</h5>
-            <ul class="footer-links">
-              <li><a href="#about">About Us</a></li>
-              <li><a href="#products">Products</a></li>
-              <li><a href="#contact">Contact Us</a></li>
-              <li><a href="#gallery">Divine Gallery</a></li>
-            </ul>
-          </div>
-
-          <div class="col contact">
-            <h5 class="footer-heading">Contact</h5>
-            <ul class="contact-list">
-              <li><span class="icon">☎</span> <a href="tel:+919850884455">+91 9850884455</a></li>
-              <li><span class="icon">✉</span> <a href="mailto:thedancecostumes&#64;gmail.com">thedancecostumes&#64;gmail.com</a></li>
-            </ul>
-          </div>
-
-          <div class="col address">
-            <h5 class="footer-heading">Address</h5>
-            <p class="footer-text address-text">
-              <strong>Divine Costumes</strong><br>
-              1st Floor, Shankar Parvati Building,<br>
-              Pimpri Chinchwad Link Road,<br>
-              Above Samarth Pushpalay,<br>
-              Opp Dr Nitin Chowkar, Tanaji Nagar,<br>
-              Chinchwad, Near Elpro Mall,<br>
-              Maharashtra 411033
-            </p>
+            </section>
           </div>
         </div>
 
@@ -76,9 +78,8 @@ import { CommonModule } from '@angular/common';
   styles: [`
     .footer { background: linear-gradient(180deg, var(--pastel-lavender), var(--pastel-mint)); padding: 3.5rem 0 1.5rem; color: #0f172a; border-top: 1px solid rgba(15,23,42,.08); }
     .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
-    .grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 2rem; }
-    .col { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1.25rem; backdrop-filter: blur(6px); box-shadow: var(--soft-shadow); }
-    .about { grid-column: span 1; }
+    .single-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1.25rem; backdrop-filter: blur(6px); box-shadow: var(--soft-shadow); }
+    .card-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 2rem; }
 
     .footer-heading { font-family: 'Space Grotesk', 'Playfair Display', serif; font-size: 1.15rem; font-weight: 700; margin: 0 0 .75rem; color: #0f172a; }
     .brand-name { font-family: 'Space Grotesk', 'Playfair Display', serif; font-weight: 700; font-size: 1.05rem; color: #111827; margin-bottom: .5rem; }
@@ -102,11 +103,11 @@ import { CommonModule } from '@angular/common';
     .social { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; color: #0f172a; background: var(--glass-bg); border: 1px solid var(--glass-border); transition: transform .2s ease, box-shadow .2s ease; }
     .social:hover { transform: translateY(-2px); box-shadow: var(--soft-shadow); }
 
-    @media (max-width: 1024px) { .grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+    @media (max-width: 1024px) { .card-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
     @media (max-width: 640px) {
       .footer { padding: 2.5rem 0 1rem; }
-      .grid { grid-template-columns: 1fr; }
-      .col { padding: 1rem; }
+      .card-grid { grid-template-columns: 1fr; }
+      .single-card { padding: 1rem; }
       .footer-bottom { flex-direction: column; align-items: flex-start; }
     }
   `]

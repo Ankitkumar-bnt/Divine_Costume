@@ -24,7 +24,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       </div>
 
       <nav class="main-nav">
-        <div class="container nav-shell">
+        <div class="container">
           <a routerLink="/" class="brand">
             <img *ngIf="logoOk" src="/assets/logo.png" alt="Divine Costume" class="logo" (error)="logoOk=false" />
           </a>
@@ -37,11 +37,11 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 
           <ul class="links" [class.open]="menuOpen">
             <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeMenu()">Home</a></li>
-            <li><a href="#about" (click)="closeMenu()">About Us</a></li>
             <li><a routerLink="/costumes" routerLinkActive="active" (click)="closeMenu()">Costumes</a></li>
             <li><a routerLink="/ornaments" routerLinkActive="active" (click)="closeMenu()">Ornaments</a></li>
-            <li><a href="#gallery" (click)="closeMenu()">Divine Gallery</a></li>
-            <li><a href="#contact" (click)="closeMenu()">Contact Us</a></li>
+            <li><a routerLink="/" fragment="gallery" (click)="closeMenu()">Divine Gallery</a></li>
+            <li><a routerLink="/" fragment="about" (click)="closeMenu()">About Us</a></li>
+            <li><a routerLink="/" fragment="contact" (click)="closeMenu()">Contact Us</a></li>
           </ul>
         </div>
       </nav>
@@ -50,7 +50,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   styles: [`
     :host { display: block; }
 
-    .header-wrapper { backdrop-filter: none; }
+    .header-wrapper { position: sticky; top: 0; z-index: 1000; backdrop-filter: none; }
 
     .topbar {
       background: linear-gradient(90deg, var(--pastel-lavender), var(--pastel-mint));
@@ -69,7 +69,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
     .top-link { display: inline-flex; align-items: center; gap: .5rem; color: #334155; font-size: .85rem; text-decoration: none; padding: .25rem .5rem; background: rgba(255,255,255,0.6); border-radius: 999px; }
     .top-link .icon { opacity: .7; }
 
-    .main-nav { background: transparent; }
+    .main-nav { background: transparent; position: relative; }
     .container {
       width: 100%;
       margin: 0;
@@ -78,15 +78,6 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       align-items: center;
       justify-content: space-between;
       position: relative;
-    }
-
-    .nav-shell {
-      background: transparent;
-      border: none;
-      backdrop-filter: none;
-      border-radius: 0;
-      box-shadow: none;
-      margin: 0;
     }
 
     .brand { display: inline-flex; align-items: center; gap: .5rem; text-decoration: none; }

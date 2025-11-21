@@ -22,7 +22,7 @@ import { Router } from '@angular/router';
           <span class="navbar-toggler-icon"></span>
         </button>
 
-        <div class="collapse navbar-collapse" [class.show]="isMenuOpen" id="navbarNav">
+        <div class="collapse navbar-collapse w-100" [class.show]="isMenuOpen" id="navbarNav">
           <ul class="navbar-nav mx-auto nav-center">
             <li class="nav-item">
               <a class="nav-link" href="#about">About Us</a>
@@ -38,7 +38,7 @@ import { Router } from '@angular/router';
             </li>
           </ul>
 
-          <div class="d-flex">
+          <div class="d-flex ms-auto">
             <button class="btn btn-login" type="button" (click)="onLoginClick()">Login</button>
           </div>
         </div>
@@ -131,6 +131,18 @@ import { Router } from '@angular/router';
 
     .navbar-toggler-icon {
       background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%237A1F2A' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+
+    /* Center menu on desktop */
+    @media (min-width: 992px) {
+      .navbar-collapse {
+        position: relative;
+      }
+      .nav-center {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+      }
     }
 
     @media (max-width: 991px) {
