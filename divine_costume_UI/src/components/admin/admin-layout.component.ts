@@ -87,6 +87,10 @@ import { Router, RouterModule } from '@angular/router';
             <i class="bi bi-bar-chart"></i>
             <span>Reports</span>
           </a>
+          <a routerLink="/admin/rental-inventory-report" routerLinkActive="active" class="nav-item">
+            <i class="bi bi-clipboard-data"></i>
+            <span>Rental Inventory</span>
+          </a>
           <a routerLink="/admin/settings" routerLinkActive="active" class="nav-item">
             <i class="bi bi-gear"></i>
             <span>Settings</span>
@@ -390,7 +394,7 @@ import { Router, RouterModule } from '@angular/router';
 export class AdminLayoutComponent {
   private openDropdowns = new Set<string>();
 
-  constructor(private router: Router) {}
+  constructor(private router: Router) { }
 
   toggleDropdown(dropdownName: string): void {
     if (this.openDropdowns.has(dropdownName)) {
@@ -420,6 +424,7 @@ export class AdminLayoutComponent {
     if (route.includes('view-products')) return 'View Products';
     if (route.includes('bookings')) return 'Bookings / Rentals';
     if (route.includes('customers')) return 'Customers';
+    if (route.includes('rental-inventory-report')) return 'Rental Inventory Status';
     if (route.includes('reports')) return 'Reports';
     if (route.includes('settings')) return 'Settings';
     return 'Admin Panel';

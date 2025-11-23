@@ -75,6 +75,10 @@ export const routes: Routes = [
         loadComponent: () => import('./components/admin/reports.component').then(m => m.ReportsComponent)
       },
       {
+        path: 'rental-inventory-report',
+        loadComponent: () => import('./components/admin/rental-inventory-report.component').then(m => m.RentalInventoryReportComponent)
+      },
+      {
         path: 'settings',
         loadComponent: () => import('./components/admin/settings.component').then(m => m.SettingsComponent)
       }
