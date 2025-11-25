@@ -25,6 +25,25 @@ import java.util.stream.Collectors;
 public class ItemServiceImpl implements ItemService {
 
     // Inject all repositories
+     // Inject all repositories
+    private final CostumeCategoryRepository categoryRepository;
+    private final CostumeVariantRepository variantRepository;
+    private final CostumeRepository costumeRepository;
+    private final CostumeItemRepository itemRepository;
+    private final CostumeImageRepository imageRepository;
+
+    // Inject all mappers
+    private final CostumeCategoryMapper categoryMapper;
+    private final CostumeVariantMapper variantMapper;
+    private final CostumeMapper costumeMapper;
+    private final CostumeItemMapper itemMapper;
+    private final CostumeImageMapper imageMapper;
+    private final ItemMapper fullMapper;
+
+    // ---------- CATEGORY ----------
+    @Override
+    public CostumeCategoryResponseDto addCategory(CostumeCategoryRequestDto dto) {
+        CostumeCategory entity = categoryMapper.toEntity(dto);
         return categoryMapper.toResponseDto(categoryRepository.save(entity));
     }
 
