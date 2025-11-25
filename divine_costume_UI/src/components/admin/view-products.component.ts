@@ -112,22 +112,22 @@ import Swal from 'sweetalert2';
                   <td>
                     <div class="action-buttons">
                       <button 
-                        class="btn btn-sm btn-outline-primary"
+                        class="btn btn-icon view"
                         (click)="viewDetails(product)"
                         title="View Details">
-                        <i class="bi bi-eye"></i>
+                        <i class="bi bi-eye-fill"></i>
                       </button>
                       <button 
-                        class="btn btn-sm btn-outline-warning"
+                        class="btn btn-icon edit"
                         (click)="editProduct(product)"
                         title="Edit">
-                        <i class="bi bi-pencil"></i>
+                        <i class="bi bi-pencil-square"></i>
                       </button>
                       <button 
-                        class="btn btn-sm btn-outline-danger"
+                        class="btn btn-icon delete"
                         (click)="deleteProduct(product)"
                         title="Delete">
-                        <i class="bi bi-trash"></i>
+                        <i class="bi bi-trash3-fill"></i>
                       </button>
                     </div>
                   </td>
@@ -149,67 +149,170 @@ import Swal from 'sweetalert2';
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">Edit Product</h5>
+              <div>
+                <h5 class="modal-title">Edit Product</h5>
+                <div class="id-chips" *ngIf="editingProduct">
+                  <span class="chip">Category ID: {{ editingProduct.categoryId }}</span>
+                  <span class="chip">Variant ID: {{ editingProduct.variantId }}</span>
+                  <span class="chip">Costume ID: {{ editingProduct.costumeId }}</span>
+                </div>
+              </div>
               <button type="button" class="btn-close" (click)="closeEditModal()"></button>
             </div>
             <div class="modal-body">
               <form *ngIf="editForm">
-                <!-- Basic Info -->
-                <div class="row g-3 mb-3">
-                  <div class="col-md-6">
-                    <label class="form-label">Product Name</label>
-                    <input type="text" class="form-control" [(ngModel)]="editForm.variant.variantDescription" name="variantDescription">
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Style</label>
-                    <input type="text" class="form-control" [(ngModel)]="editForm.variant.style" name="style">
-                  </div>
-                </div>
-
-                <!-- Colors -->
-                <div class="row g-3 mb-3">
-                  <div class="col-md-4">
-                    <label class="form-label">Primary Color</label>
-                    <input type="text" class="form-control" [(ngModel)]="editForm.variant.primaryColor" name="primaryColor">
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">Secondary Color</label>
-                    <input type="text" class="form-control" [(ngModel)]="editForm.variant.secondaryColor" name="secondaryColor">
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">Tertiary Color</label>
-                    <input type="text" class="form-control" [(ngModel)]="editForm.variant.tertiaryColor" name="tertiaryColor">
-                  </div>
-                </div>
-
-                <!-- Pricing -->
-                <div class="row g-3 mb-3">
-                  <div class="col-md-4">
-                    <label class="form-label">Rental Price/Day (₹)</label>
-                    <input type="number" class="form-control" [(ngModel)]="editForm.costume.rentalPricePerDay" name="rentalPricePerDay">
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">Deposit (₹)</label>
-                    <input type="number" class="form-control" [(ngModel)]="editForm.costume.deposit" name="deposit">
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">Purchase Price (₹)</label>
-                    <input type="number" class="form-control" [(ngModel)]="editForm.costume.purchasePrice" name="purchasePrice">
-                  </div>
-                </div>
-
-                <!-- Inventory -->
-                <div class="row g-3 mb-3">
-                  <div class="col-md-6">
-                    <label class="form-label">Quantity</label>
-                    <input type="number" class="form-control" [(ngModel)]="editForm.costume.numberOfItems" name="numberOfItems">
-                  </div>
-                  <div class="col-md-6">
-                    <div class="form-check form-switch mt-4">
-                      <input class="form-check-input" type="checkbox" [(ngModel)]="editForm.costume.isRentable" name="isRentable">
-                      <label class="form-check-label">Available for Rent</label>
+                <div class="modal-section">
+                  <div class="section-title">
+                    <i class="bi bi-bookmark-fill"></i>
+                    <div>
+                      <h6>Category Information</h6>
+                      <small>Update category metadata</small>
                     </div>
                   </div>
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label class="form-label">Category Name</label>
+                      <input type="text" class="form-control" [(ngModel)]="editForm.category.categoryName" name="categoryName">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Category Description</label>
+                      <input type="text" class="form-control" [(ngModel)]="editForm.category.categoryDescription" name="categoryDescription">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="modal-section">
+                  <div class="section-title">
+                    <i class="bi bi-person-vcard"></i>
+                    <div>
+                      <h6>Variant Details</h6>
+                      <small>Primary product information</small>
+                    </div>
+                  </div>
+                  <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label">Product Name</label>
+                      <input type="text" class="form-control" [(ngModel)]="editForm.variant.variantDescription" name="variantDescription">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Style</label>
+                      <input type="text" class="form-control" [(ngModel)]="editForm.variant.style" name="style">
+                    </div>
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <label class="form-label">Primary Color</label>
+                      <input type="text" class="form-control" [(ngModel)]="editForm.variant.primaryColor" name="primaryColor">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Secondary Color</label>
+                      <input type="text" class="form-control" [(ngModel)]="editForm.variant.secondaryColor" name="secondaryColor">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Tertiary Color</label>
+                      <input type="text" class="form-control" [(ngModel)]="editForm.variant.tertiaryColor" name="tertiaryColor">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="modal-section">
+                  <div class="section-title">
+                    <i class="bi bi-box-seam"></i>
+                    <div>
+                      <h6>Costume & Pricing</h6>
+                      <small>Inventory and financials</small>
+                    </div>
+                  </div>
+                  <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                      <label class="form-label">Size</label>
+                      <input type="text" class="form-control" [(ngModel)]="editForm.costume.size" name="size">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Serial Number</label>
+                      <input type="text" class="form-control" [(ngModel)]="editForm.costume.serialNumber" name="serialNumber">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Quantity</label>
+                      <input type="number" class="form-control" [(ngModel)]="editForm.costume.numberOfItems" name="numberOfItems">
+                    </div>
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <label class="form-label">Rental Price/Day (₹)</label>
+                      <input type="number" class="form-control" [(ngModel)]="editForm.costume.rentalPricePerDay" name="rentalPricePerDay">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Deposit (₹)</label>
+                      <input type="number" class="form-control" [(ngModel)]="editForm.costume.deposit" name="deposit">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Purchase Price (₹)</label>
+                      <input type="number" class="form-control" [(ngModel)]="editForm.costume.purchasePrice" name="purchasePrice">
+                    </div>
+                  </div>
+                  <div class="form-check form-switch mt-3">
+                    <input class="form-check-input" type="checkbox" [(ngModel)]="editForm.costume.isRentable" name="isRentable">
+                    <label class="form-check-label">Available for Rent</label>
+                  </div>
+                </div>
+
+                <div class="modal-section">
+                  <div class="section-title">
+                    <i class="bi bi-tools"></i>
+                    <div>
+                      <h6>Costume Parts</h6>
+                      <small *ngIf="editForm.items?.length">{{ editForm.items.length }} parts</small>
+                    </div>
+                  </div>
+                  <ng-container *ngIf="editForm.items?.length; else noParts">
+                    <div class="item-grid">
+                      <div class="item-card" *ngFor="let item of editForm.items; let idx = index">
+                        <div class="row g-2">
+                          <div class="col-md-6">
+                            <label class="form-label">Part Name</label>
+                            <input type="text" class="form-control" [(ngModel)]="item.itemName" [name]="'itemName' + idx">
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label">Image URL</label>
+                            <input type="text" class="form-control" [(ngModel)]="item.imageUrl" [name]="'itemImage' + idx">
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label">Rental Price/Day</label>
+                            <input type="number" class="form-control" [(ngModel)]="item.rentalPricePerDay" [name]="'itemRentalPrice' + idx">
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label">Deposit</label>
+                            <input type="number" class="form-control" [(ngModel)]="item.deposit" [name]="'itemDeposit' + idx">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </ng-container>
+                  <ng-template #noParts>
+                    <p class="muted-text">No costume parts linked to this product.</p>
+                  </ng-template>
+                </div>
+
+                <div class="modal-section">
+                  <div class="section-title">
+                    <i class="bi bi-images"></i>
+                    <div>
+                      <h6>Gallery</h6>
+                      <small *ngIf="editForm.images?.length">{{ editForm.images.length }} images</small>
+                    </div>
+                  </div>
+                  <ng-container *ngIf="editForm.images?.length; else noImages">
+                    <div class="image-grid">
+                      <div class="image-card" *ngFor="let image of editForm.images; let ix = index">
+                        <img [src]="image.imageUrl || 'https://via.placeholder.com/120'" alt="Costume image">
+                        <input type="text" class="form-control" [(ngModel)]="image.imageUrl" [name]="'imageUrl' + ix" placeholder="Image URL">
+                      </div>
+                    </div>
+                  </ng-container>
+                  <ng-template #noImages>
+                    <p class="muted-text">No images uploaded for this costume.</p>
+                  </ng-template>
                 </div>
               </form>
             </div>
@@ -329,6 +432,43 @@ import Swal from 'sweetalert2';
       padding: 0.375rem 0.625rem;
       font-size: 0.875rem;
       border-radius: 6px;
+    }
+
+    .btn-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      padding: 0;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .btn-icon.view {
+      background: rgba(13, 110, 253, 0.15);
+      color: #0d6efd;
+      border: 1px solid rgba(13, 110, 253, 0.25);
+    }
+
+    .btn-icon.edit {
+      background: rgba(255, 193, 7, 0.15);
+      color: #c28100;
+      border: 1px solid rgba(255, 193, 7, 0.35);
+    }
+
+    .btn-icon.delete {
+      background: rgba(220, 53, 69, 0.15);
+      color: #b3182a;
+      border: 1px solid rgba(220, 53, 69, 0.3);
+    }
+
+    .btn-icon:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15);
+      background: rgba(0, 0, 0, 0.05);
     }
 
     .btn-outline-primary {
@@ -490,24 +630,82 @@ export class ViewProductsComponent implements OnInit {
   }
 
   viewDetails(product: ItemResponseDto): void {
+    const colors = [product.primaryColor, product.secondaryColor, product.tertiaryColor]
+      .filter(color => !!color && color.trim().length)
+      .join(', ') || 'N/A';
+
+    const itemsHtml = product.items?.length ? `
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:0.5rem;">
+        <thead>
+          <tr style="background:#f1f3f5;">
+            <th style="padding:6px;border:1px solid #e2e8f0;">#</th>
+            <th style="padding:6px;border:1px solid #e2e8f0;">Part</th>
+            <th style="padding:6px;border:1px solid #e2e8f0;">Rental/Day</th>
+            <th style="padding:6px;border:1px solid #e2e8f0;">Deposit</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${product.items.map((item, index) => `
+            <tr>
+              <td style="padding:6px;border:1px solid #e2e8f0;text-align:center;">${index + 1}</td>
+              <td style="padding:6px;border:1px solid #e2e8f0;">${item.itemName}</td>
+              <td style="padding:6px;border:1px solid #e2e8f0;">₹${this.formatCurrency(item.rentalPricePerDay)}</td>
+              <td style="padding:6px;border:1px solid #e2e8f0;">₹${this.formatCurrency(item.deposit)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    ` : '<p style="color:#6c757d;margin:0;">No costume parts added.</p>';
+
+    const imagesHtml = product.images?.length ? `
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:0.75rem;">
+        ${product.images.map(img => `
+          <img src="${img.imageUrl}" alt="${product.variantDescription}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0;" />
+        `).join('')}
+      </div>
+    ` : '<p style="color:#6c757d;margin:0;">No images uploaded.</p>';
+
+    const detailHtml = `
+      <div style="text-align:left;line-height:1.6;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:1rem;">
+          <div style="background:#f8fafc;border-radius:10px;padding:10px;">
+            <p style="margin:0;font-size:13px;color:#94a3b8;">Category</p>
+            <h4 style="margin:4px 0 0;color:#0f172a;font-size:16px;">${product.categoryName}</h4>
+            <small style="color:#475569;">${product.categoryDescription || '—'}</small>
+          </div>
+          <div style="background:#f8fafc;border-radius:10px;padding:10px;">
+            <p style="margin:0;font-size:13px;color:#94a3b8;">Size & Serial</p>
+            <h4 style="margin:4px 0 0;color:#0f172a;font-size:16px;">${product.size} • SN ${product.serialNumber}</h4>
+            <small style="color:#475569;">Quantity: ${product.numberOfItems}</small>
+          </div>
+          <div style="background:#f8fafc;border-radius:10px;padding:10px;">
+            <p style="margin:0;font-size:13px;color:#94a3b8;">Status</p>
+            <h4 style="margin:4px 0 0;color:#0f172a;font-size:16px;">${product.isRentable ? 'Available' : 'Not Available'}</h4>
+            <small style="color:#475569;">Rental ₹${this.formatCurrency(product.rentalPricePerDay)} / Deposit ₹${this.formatCurrency(product.deposit)}</small>
+          </div>
+        </div>
+        <div style="margin-bottom:1rem;">
+          <h5 style="margin-bottom:0.25rem;color:#0f172a;">Variant Information</h5>
+          <p style="margin:0;"><strong>Style:</strong> ${product.style}</p>
+          <p style="margin:0;"><strong>Colors:</strong> ${colors}</p>
+          <p style="margin:0;"><strong>Purchase Price:</strong> ₹${this.formatCurrency(product.purchasePrice)}</p>
+        </div>
+        <div style="margin-bottom:1rem;">
+          <h5 style="margin-bottom:0.25rem;color:#0f172a;">Costume Parts</h5>
+          ${itemsHtml}
+        </div>
+        <div>
+          <h5 style="margin-bottom:0.25rem;color:#0f172a;">Image Gallery</h5>
+          ${imagesHtml}
+        </div>
+      </div>
+    `;
+
     Swal.fire({
       title: product.variantDescription,
-      html: `
-        <div style="text-align: left;">
-          <p><strong>Category:</strong> ${product.categoryName}</p>
-          <p><strong>Style:</strong> ${product.style}</p>
-          <p><strong>Colors:</strong> ${product.primaryColor}, ${product.secondaryColor || 'N/A'}, ${product.tertiaryColor || 'N/A'}</p>
-          <p><strong>Size:</strong> ${product.size}</p>
-          <p><strong>Serial Number:</strong> ${product.serialNumber}</p>
-          <p><strong>Available Quantity:</strong> ${product.numberOfItems}</p>
-          <p><strong>Purchase Price:</strong> ₹${product.purchasePrice}</p>
-          <p><strong>Rental Price/Day:</strong> ₹${product.rentalPricePerDay}</p>
-          <p><strong>Deposit Amount:</strong> ₹${product.deposit}</p>
-          <p><strong>Status:</strong> ${product.isRentable ? 'Available for Rent' : 'Not Available'}</p>
-        </div>
-      `,
+      html: detailHtml,
       confirmButtonColor: '#5c1a1a',
-      width: '600px'
+      width: '650px'
     });
   }
 
@@ -611,5 +809,12 @@ export class ViewProductsComponent implements OnInit {
         });
       }
     });
+  }
+
+  private formatCurrency(value?: number): string {
+    if (value === null || value === undefined) {
+      return '0';
+    }
+    return Number(value).toLocaleString('en-IN');
   }
 }

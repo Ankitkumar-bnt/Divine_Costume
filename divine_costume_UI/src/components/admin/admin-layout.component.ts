@@ -83,13 +83,9 @@ import { Router, RouterModule } from '@angular/router';
             <i class="bi bi-people"></i>
             <span>Customers</span>
           </a>
-          <a routerLink="/admin/reports" routerLinkActive="active" class="nav-item">
-            <i class="bi bi-bar-chart"></i>
-            <span>Reports</span>
-          </a>
           <a routerLink="/admin/rental-inventory-report" routerLinkActive="active" class="nav-item">
             <i class="bi bi-clipboard-data"></i>
-            <span>Rental Inventory</span>
+            <span>Report</span>
           </a>
           <a routerLink="/admin/settings" routerLinkActive="active" class="nav-item">
             <i class="bi bi-gear"></i>
@@ -424,8 +420,7 @@ export class AdminLayoutComponent {
     if (route.includes('view-products')) return 'View Products';
     if (route.includes('bookings')) return 'Bookings / Rentals';
     if (route.includes('customers')) return 'Customers';
-    if (route.includes('rental-inventory-report')) return 'Rental Inventory Status';
-    if (route.includes('reports')) return 'Reports';
+    if (route.includes('rental-inventory-report')) return 'Report';
     if (route.includes('settings')) return 'Settings';
     return 'Admin Panel';
   }
