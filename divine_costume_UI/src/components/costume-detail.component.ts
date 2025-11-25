@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { FooterComponent } from './footer.component';
 
 interface VariantSize {
   size: string;
@@ -27,56 +28,73 @@ interface ProductDetailModel {
 @Component({
   selector: 'app-costume-detail',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink, FooterComponent],
   template: `
-    <section class="pdp">
-      <div class="container" *ngIf="product">
-        <div class="layout">
-          <div class="gallery">
-            <div class="thumbs">
-              <button
-                class="thumb"
-                *ngFor="let img of currentImages; let i = index"
-                [class.active]="i === activeImageIndex"
-                (click)="setActiveImage(i)"
-                aria-label="Thumbnail">
-                <img [src]="img" [alt]="product!.name + ' ' + i" />
-              </button>
-            </div>
-            <div class="main-image">
-              <img [src]="currentImages[activeImageIndex]" [alt]="product!.name" />
-            </div>
+    <section class="pdp-container">
+      <div class="breadcrumb">
+        <a routerLink="/costumes" class="back-link">← Back to Costumes</a>
+      </div>
+      
+      <div class="product-layout" *ngIf="product">
+        <!-- Gallery Section -->
+        <div class="gallery-section">
+          <div class="main-image-container">
+            <img [src]="currentImages[activeImageIndex]" [alt]="product.name" class="main-image" />
           </div>
+          <div class="thumbnails-scroll">
+            <button
+              class="thumb-btn"
+              *ngFor="let img of currentImages; let i = index"
+              [class.active]="i === activeImageIndex"
+              (click)="setActiveImage(i)"
+              aria-label="View image">
+              <img [src]="img" [alt]="product.name + ' view ' + (i+1)" />
+            </button>
+          </div>
+        </div>
 
-          <div class="details">
-            <h1 class="title">{{ product.name }}</h1>
-            <p class="desc">{{ product.shortDescription }}</p>
-
-            <div class="price-row">
-              <div class="rent">₹{{ currentVariant?.rentPerDay }}/day</div>
-              <div class="deposit">Refundable deposit: ₹{{ currentVariant?.deposit }}</div>
+        <!-- Details Section -->
+        <div class="info-section">
+          <header class="product-header">
+            <h1 class="product-title">{{ product.name }}</h1>
+            <div class="price-block">
+              <span class="currency">₹</span>
+              <span class="amount">{{ currentVariant?.rentPerDay }}</span>
+              <span class="period">/ day</span>
             </div>
+            <p class="deposit-info">Refundable Deposit: ₹{{ currentVariant?.deposit }}</p>
+          </header>
 
-            <div class="section">
-              <div class="section-title">Color</div>
-              <div class="color-grid">
+          <p class="description">{{ product.shortDescription }}</p>
+
+          <div class="options-grid">
+            <!-- Colors -->
+            <div class="option-group">
+              <label class="option-label">Color</label>
+              <div class="color-selector">
                 <button
-                  class="color-item"
+                  class="color-option"
                   *ngFor="let v of product.variants; let idx = index"
                   [class.selected]="v === currentVariant"
                   (click)="selectColor(idx)"
-                  aria-label="Select color">
+                  [title]="v.displayName">
                   <img [src]="v.thumbnail || v.images[0]" [alt]="v.displayName" />
-                  <span class="pill">{{ v.displayName }}</span>
+                  <span class="color-name">{{ v.displayName }}</span>
                 </button>
               </div>
             </div>
 
-            <div class="section">
-              <div class="section-title">Select Size</div>
-              <div class="size-grid">
+            <!-- Sizes -->
+            <div class="option-group">
+              <div class="label-row">
+                <label class="option-label">Size</label>
+                <span class="stock-status" [class.out-of-stock]="currentStock === 0">
+                  {{ currentStock > 0 ? 'In Stock' : 'Out of Stock' }}
+                </span>
+              </div>
+              <div class="size-selector">
                 <button
-                  class="size-box"
+                  class="size-option"
                   *ngFor="let s of currentVariant?.sizes"
                   [class.selected]="s.size === selectedSize"
                   [disabled]="s.stock <= 0"
@@ -84,59 +102,410 @@ interface ProductDetailModel {
                   {{ s.size }}
                 </button>
               </div>
-              <div class="stock" [class.out]="currentStock === 0">
-                {{ currentStock > 0 ? currentStock + ' in stock' : 'Out of stock' }}
-              </div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn-cart" [disabled]="currentStock === 0">
+              <span class="btn-icon">🛒</span>
+              {{ currentStock > 0 ? 'Add to Cart' : 'Out of Stock' }}
+            </button>
+            <button class="btn-wishlist">
+              <span class="btn-icon">❤️</span>
+              Add to Wishlist
+            </button>
+          </div>
+          
+          <div class="features">
+            <div class="feature-item">
+              <span class="icon">✨</span>
+              <span>Premium Quality</span>
+            </div>
+            <div class="feature-item">
+              <span class="icon">🧼</span>
+              <span>Dry Cleaned</span>
+            </div>
+            <div class="feature-item">
+              <span class="icon">🚚</span>
+              <span>Home Delivery</span>
             </div>
           </div>
         </div>
       </div>
     </section>
+    <app-footer></app-footer>
   `,
   styles: [`
-    :host { display: block; }
-    .pdp { padding: 1rem 0 2rem; background: #FFF8EE; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
-    .layout { display: grid; grid-template-columns: 540px 1fr; gap: 2rem; }
+    :host {
+      display: block;
+      background-color: #FFFDF9;
+      min-height: 100vh;
+    }
 
-    .gallery { display: grid; grid-template-columns: 140px 1fr; gap: 1rem; align-items: start; }
-    .thumbs { display: grid; gap: .5rem; align-content: start; overflow: visible; }
-    .thumb { border: 2px solid #D4AF37; background: #fff; padding: 4px; border-radius: 10px; width: 128px; height: 128px; cursor: pointer; display: grid; place-items: center; }
-    .thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
-    .thumb.active { outline: 3px solid #7A1F2A; }
-    .main-image { border: 2px solid #D4AF37; background: #FFFDF9; border-radius: 14px; padding: .75rem; display: grid; place-items: center; min-height: 520px; }
-    .main-image img { width: 100%; max-height: 640px; object-fit: contain; border-radius: 8px; }
+    .pdp-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
 
-    .details { background: #FFFDF9; border: 2px solid #D4AF37; border-radius: 12px; padding: 1rem 1.25rem; }
-    .title { margin: 0 0 .25rem; color: #7A1F2A; font-size: 1.5rem; }
-    .desc { margin: 0 0 .75rem; color: #1B1B1B; opacity: .85; }
-    .price-row { display: flex; gap: 1rem; align-items: baseline; margin-bottom: 1rem; }
-    .rent { color: #7A1F2A; font-weight: 800; font-size: 1.25rem; }
-    .deposit { color: #1B1B1B; opacity: .9; font-weight: 600; }
+    .breadcrumb {
+      margin-bottom: 2rem;
+    }
 
-    .section { margin: 1rem 0; }
-    .section-title { color: #7A1F2A; font-weight: 700; margin-bottom: .5rem; }
+    .back-link {
+      color: #7A1F2A;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: opacity 0.2s;
+    }
 
-    .color-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: .5rem; }
-    .color-item { display: grid; gap: .25rem; border: 2px solid #D4AF37; background: #fff; border-radius: 12px; padding: .35rem; cursor: pointer; }
-    .color-item.selected { outline: 3px solid #7A1F2A; }
-    .color-item img { width: 100%; height: 72px; object-fit: cover; border-radius: 8px; }
-    .pill { display: inline-block; text-align: center; font-size: .8rem; color: #7A1F2A; font-weight: 700; }
+    .back-link:hover {
+      opacity: 0.8;
+    }
 
-    .size-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, max-content)); gap: .5rem; }
-    .size-box { width: 52px; height: 44px; border-radius: 10px; border: 2px solid #D4AF37; background: #fff; color: #7A1F2A; font-weight: 800; cursor: pointer; }
-    .size-box.selected { background: #D4AF37; color: #7A1F2A; border-color: #7A1F2A; }
-    .size-box:disabled { opacity: .4; cursor: not-allowed; }
+    .product-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: start;
+    }
 
-    .stock { margin-top: .5rem; font-weight: 700; color: #0a7a57; }
-    .stock.out { color: #B00020; }
+    /* Gallery Styles */
+    .gallery-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      position: sticky;
+      top: 2rem;
+    }
 
-    @media (max-width: 991px) {
-      .layout { grid-template-columns: 1fr; }
-      .gallery { grid-template-columns: 1fr; }
-      .thumbs { order: 2; display: flex; flex-wrap: wrap; gap: .5rem; overflow: visible; }
-      .thumb { flex: 0 0 128px; }
-      .main-image { order: 1; min-height: 360px; }
+    .main-image-container {
+      background: #fff;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      max-height: 500px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(212, 175, 55, 0.2);
+    }
+
+    .main-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .thumbnails-scroll {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      scrollbar-width: thin;
+    }
+
+    .thumb-btn {
+      flex: 0 0 80px;
+      height: 80px;
+      border: 2px solid transparent;
+      border-radius: 12px;
+      padding: 0;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #fff;
+    }
+
+    .thumb-btn.active {
+      border-color: #7A1F2A;
+      transform: translateY(-2px);
+    }
+
+    .thumb-btn img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Info Section Styles */
+    .info-section {
+      padding-top: 1rem;
+    }
+
+    .product-title {
+      font-family: 'Playfair Display', serif; /* Assuming global font or fallback */
+      font-size: 2.5rem;
+      color: #1B1B1B;
+      margin: 0 0 1rem;
+      line-height: 1.2;
+    }
+
+    .price-block {
+      display: flex;
+      align-items: baseline;
+      gap: 0.25rem;
+      margin-bottom: 0.5rem;
+      color: #7A1F2A;
+    }
+
+    .currency {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .amount {
+      font-size: 2.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .period {
+      font-size: 1rem;
+      color: #666;
+      font-weight: 500;
+    }
+
+    .deposit-info {
+      color: #666;
+      font-size: 0.95rem;
+      margin: 0 0 2rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .description {
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: #444;
+      margin-bottom: 2.5rem;
+    }
+
+    .option-group {
+      margin-bottom: 2rem;
+    }
+
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .option-label {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+      color: #1B1B1B;
+    }
+
+    .color-selector {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .color-option {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 1rem 0.5rem 0.5rem;
+      border: 1px solid #e0e0e0;
+      border-radius: 50px;
+      background: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .color-option:hover {
+      border-color: #D4AF37;
+    }
+
+    .color-option.selected {
+      border-color: #7A1F2A;
+      background: #FFF8EE;
+      box-shadow: 0 0 0 1px #7A1F2A;
+    }
+
+    .color-option img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .color-name {
+      font-weight: 500;
+      color: #333;
+    }
+
+    .size-selector {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .size-option {
+      min-width: 3.5rem;
+      height: 3.5rem;
+      display: grid;
+      place-items: center;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      background: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .size-option:not(:disabled):hover {
+      border-color: #D4AF37;
+      transform: translateY(-2px);
+    }
+
+    .size-option.selected {
+      background: #7A1F2A;
+      color: #fff;
+      border-color: #7A1F2A;
+    }
+
+    .size-option:disabled {
+      background: #f5f5f5;
+      color: #aaa;
+      cursor: not-allowed;
+      border-style: dashed;
+    }
+
+    .stock-status {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #2E7D32;
+    }
+
+    .stock-status.out-of-stock {
+      color: #C62828;
+    }
+
+    .actions {
+      margin-top: 3rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .btn-cart,
+    .btn-wishlist {
+      padding: 1rem 1.5rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-cart {
+      background: #7A1F2A;
+      color: #fff;
+      box-shadow: 0 8px 20px rgba(122, 31, 42, 0.2);
+    }
+
+    .btn-cart:hover:not(:disabled) {
+      background: #962635;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 25px rgba(122, 31, 42, 0.3);
+    }
+
+    .btn-cart:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-wishlist {
+      background: #fff;
+      color: #7A1F2A;
+      border: 2px solid #7A1F2A;
+    }
+
+    .btn-wishlist:hover {
+      background: #FFF8EE;
+      transform: translateY(-2px);
+    }
+
+    .btn-icon {
+      font-size: 1.2rem;
+    }
+
+    .features {
+      margin-top: 3rem;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .feature-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #666;
+    }
+
+    .feature-item .icon {
+      font-size: 1.5rem;
+    }
+
+    @media (max-width: 968px) {
+      .pdp-container {
+        padding: 1rem;
+      }
+
+      .product-layout {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+      
+      .gallery-section {
+        position: static;
+      }
+
+      .main-image-container {
+        max-height: 400px;
+      }
+      
+      .product-title {
+        font-size: 1.75rem;
+      }
+
+      .amount {
+        font-size: 2rem;
+      }
+
+      .actions {
+        grid-template-columns: 1fr;
+      }
+
+      .features {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+      }
+
+      .feature-item {
+        flex-direction: row;
+        justify-content: center;
+      }
     }
   `]
 })
@@ -196,7 +565,7 @@ export class CostumeDetailComponent implements OnInit {
     }
   ];
 
-  constructor(private route: ActivatedRoute) {}
+  constructor(private route: ActivatedRoute) { }
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');

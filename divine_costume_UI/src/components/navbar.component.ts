@@ -180,7 +180,7 @@ import { Router } from '@angular/router';
 export class NavbarComponent {
   isMenuOpen = false;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router) { }
 
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;
