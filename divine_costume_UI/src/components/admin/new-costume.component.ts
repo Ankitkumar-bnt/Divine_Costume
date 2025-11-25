@@ -373,7 +373,7 @@ export class NewCostumeComponent implements OnInit {
   productImagePreviews: string[] = [];
   imageUrlList: string[] = [];
 
-  constructor(private itemService: ItemService, private inventoryService: InventoryService) {}
+  constructor(private itemService: ItemService, private inventoryService: InventoryService) { }
 
   ngOnInit(): void {
     // Prefer fetching categories with descriptions
@@ -532,43 +532,107 @@ export class NewCostumeComponent implements OnInit {
   }
 
   onSubmit(): void {
-    // First, upload any selected files
-    if (this.productImageFiles.length > 0) {
-      // Show loading
+    // Collect all files to upload
+    const productFiles = this.productImageFiles;
+
+    // Identify item images to upload: store { index, file }
+    const itemUploads: { index: number; file: File }[] = [];
+    this.itemImageFiles.forEach((file, idx) => {
+      if (file) {
+        itemUploads.push({ index: idx, file: file });
+      }
+    });
+
+    const totalFiles = productFiles.length + itemUploads.length;
+
+    if (totalFiles > 0) {
       Swal.fire({
         title: 'Uploading Images...',
-        text: 'Please wait while we upload your images.',
+        text: `Uploading ${totalFiles} image(s)...`,
         allowOutsideClick: false,
         didOpen: () => {
           Swal.showLoading();
         }
       });
 
-      this.itemService.uploadImages(this.productImageFiles).subscribe({
-        next: (response) => {
-          // Add uploaded URLs to existing text URLs
-          const uploadedUrls = response.data || [];
-          const textUrls = this.imagesText.trim() 
-            ? this.imagesText.split(',').map(url => url.trim()).filter(url => url.length > 0)
-            : [];
-          
-          const allUrls = [...textUrls, ...uploadedUrls];
-          this.product.images = allUrls.map(url => ({ imageUrl: url }));
-          
-          Swal.close();
-          this.submitCostume();
-        },
-        error: (err) => {
-          Swal.fire({
-            icon: 'error',
-            title: 'Image Upload Failed',
-            text: err.error?.message || 'Failed to upload images. Please try again.',
-            confirmButtonColor: '#5c1a1a'
+      // We need to upload product images and item images. 
+      // We can do them in parallel or sequence. Let's do parallel for speed, 
+      // but we need to map results back correctly.
+
+      // 1. Upload Product Images
+      const productUpload$ = productFiles.length > 0
+        ? this.itemService.uploadImages(productFiles)
+        : null;
+
+      // 2. Upload Item Images
+      // Since the API takes File[], we can upload all item images in one go, 
+      // and assume the order is preserved.
+      const itemFilesOnly = itemUploads.map(u => u.file);
+      const itemUpload$ = itemFilesOnly.length > 0
+        ? this.itemService.uploadImages(itemFilesOnly)
+        : null;
+
+      // ForkJoin or simple Promise.all equivalent logic
+      // Using a simple approach since we are inside a component
+
+      const promises: Promise<any>[] = [];
+
+      if (productUpload$) {
+        promises.push(new Promise((resolve, reject) => {
+          productUpload$!.subscribe({
+            next: (res) => resolve({ type: 'product', urls: res.data }),
+            error: (err) => reject(err)
           });
-        }
+        }));
+      }
+
+      if (itemUpload$) {
+        promises.push(new Promise((resolve, reject) => {
+          itemUpload$!.subscribe({
+            next: (res) => resolve({ type: 'item', urls: res.data }),
+            error: (err) => reject(err)
+          });
+        }));
+      }
+
+      Promise.all(promises).then(results => {
+        // Process results
+        results.forEach(result => {
+          if (result.type === 'product') {
+            const uploadedUrls = result.urls || [];
+            const textUrls = this.imagesText.trim()
+              ? this.imagesText.split(',').map(url => url.trim()).filter(url => url.length > 0)
+              : [];
+            const allUrls = [...textUrls, ...uploadedUrls];
+            this.product.images = allUrls.map(url => ({ imageUrl: url }));
+          } else if (result.type === 'item') {
+            const urls = result.urls || [];
+            // Map back to items using the itemUploads index
+            urls.forEach((url: string, i: number) => {
+              if (i < itemUploads.length) {
+                const originalIndex = itemUploads[i].index;
+                if (this.product.items[originalIndex]) {
+                  this.product.items[originalIndex].imageUrl = url;
+                }
+              }
+            });
+          }
+        });
+
+        Swal.close();
+        this.submitCostume();
+
+      }).catch(err => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Image Upload Failed',
+          text: err.error?.message || 'Failed to upload images. Please try again.',
+          confirmButtonColor: '#5c1a1a'
+        });
       });
+
     } else {
-      // No files to upload, just use text URLs
+      // No files to upload
       if (this.imagesText.trim()) {
         this.product.images = this.imagesText
           .split(',')

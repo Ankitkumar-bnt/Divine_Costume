@@ -114,20 +114,23 @@ import Swal from 'sweetalert2';
                       <button 
                         class="btn btn-icon view"
                         (click)="viewDetails(product)"
-                        title="View Details">
-                        <i class="bi bi-eye-fill"></i>
+                        title="View Details"
+                        aria-label="View Details">
+                        <i class="bi bi-eye"></i>
                       </button>
                       <button 
                         class="btn btn-icon edit"
                         (click)="editProduct(product)"
-                        title="Edit">
-                        <i class="bi bi-pencil-square"></i>
+                        title="Edit"
+                        aria-label="Edit">
+                        <i class="bi bi-pencil"></i>
                       </button>
                       <button 
                         class="btn btn-icon delete"
                         (click)="deleteProduct(product)"
-                        title="Delete">
-                        <i class="bi bi-trash3-fill"></i>
+                        title="Delete"
+                        aria-label="Delete">
+                        <i class="bi bi-trash"></i>
                       </button>
                     </div>
                   </td>
@@ -275,7 +278,19 @@ import Swal from 'sweetalert2';
                           </div>
                           <div class="col-md-6">
                             <label class="form-label">Image URL</label>
-                            <input type="text" class="form-control" [(ngModel)]="item.imageUrl" [name]="'itemImage' + idx">
+                            <div class="d-flex gap-2">
+                              <input type="text" class="form-control" [(ngModel)]="item.imageUrl" [name]="'itemImage' + idx">
+                              <button type="button" class="btn btn-outline-danger btn-sm" title="Clear URL" (click)="item.imageUrl = ''"><i class="bi bi-x"></i></button>
+                            </div>
+                            <input type="file" class="form-control mt-2" accept="image/*" (change)="onEditItemImageSelect(idx, $event)" />
+                            <div class="mt-2" *ngIf="itemImagePreviews[idx]">
+                              <div class="thumb" style="position:relative; display:inline-block;">
+                                <img [src]="itemImagePreviews[idx]" alt="item image" style="width:60px; height:60px; object-fit:cover; border-radius:4px; border:1px solid #dee2e6;" />
+                                <button type="button" class="thumb-remove" style="position:absolute; top:-5px; right:-5px; background:white; border:1px solid #ccc; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; padding:0; cursor:pointer;" (click)="removeEditItemImage(idx)">
+                                  <i class="bi bi-x" style="font-size:14px;"></i>
+                                </button>
+                              </div>
+                            </div>
                           </div>
                           <div class="col-md-6">
                             <label class="form-label">Rental Price/Day</label>
@@ -302,17 +317,23 @@ import Swal from 'sweetalert2';
                       <small *ngIf="editForm.images?.length">{{ editForm.images.length }} images</small>
                     </div>
                   </div>
-                  <ng-container *ngIf="editForm.images?.length; else noImages">
-                    <div class="image-grid">
-                      <div class="image-card" *ngFor="let image of editForm.images; let ix = index">
+                  <div class="image-grid" *ngIf="editForm.images?.length">
+                    <div class="image-card" *ngFor="let image of editForm.images; let ix = index">
+                      <div class="image-preview">
                         <img [src]="image.imageUrl || 'https://via.placeholder.com/120'" alt="Costume image">
-                        <input type="text" class="form-control" [(ngModel)]="image.imageUrl" [name]="'imageUrl' + ix" placeholder="Image URL">
+                        <button type="button" class="btn-remove-image" (click)="removeImage(ix)" title="Remove Image">
+                          <i class="bi bi-x"></i>
+                        </button>
                       </div>
+                      <input type="text" class="form-control mt-2" [(ngModel)]="image.imageUrl" [name]="'imageUrl' + ix" placeholder="Image URL">
+                      <input type="file" class="form-control mt-2" accept="image/*" (change)="onEditImageSelect(ix, $event)" />
+                      <small class="text-muted">Choose a new image or update the URL above</small>
                     </div>
-                  </ng-container>
-                  <ng-template #noImages>
-                    <p class="muted-text">No images uploaded for this costume.</p>
-                  </ng-template>
+                  </div>
+                  <p class="muted-text" *ngIf="!editForm.images?.length">No images uploaded for this costume.</p>
+                  <button type="button" class="btn btn-outline-primary mt-3" (click)="addNewImage()">
+                    <i class="bi bi-plus-circle"></i> Add Image
+                  </button>
                 </div>
               </form>
             </div>
@@ -442,33 +463,35 @@ import Swal from 'sweetalert2';
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 1rem;
+      font-size: 1.2rem;
       padding: 0;
       transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
     }
 
+    .btn-icon i {
+      color: #000;
+      font-weight: bold;
+    }
+
     .btn-icon.view {
-      background: rgba(13, 110, 253, 0.15);
-      color: #0d6efd;
-      border: 1px solid rgba(13, 110, 253, 0.25);
+      background: rgba(200, 200, 200, 0.2);
+      border: 1px solid rgba(150, 150, 150, 0.3);
     }
 
     .btn-icon.edit {
-      background: rgba(255, 193, 7, 0.15);
-      color: #c28100;
-      border: 1px solid rgba(255, 193, 7, 0.35);
+      background: rgba(200, 200, 200, 0.2);
+      border: 1px solid rgba(150, 150, 150, 0.3);
     }
 
     .btn-icon.delete {
-      background: rgba(220, 53, 69, 0.15);
-      color: #b3182a;
-      border: 1px solid rgba(220, 53, 69, 0.3);
+      background: rgba(200, 200, 200, 0.2);
+      border: 1px solid rgba(150, 150, 150, 0.3);
     }
 
     .btn-icon:hover {
       transform: translateY(-1px);
       box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15);
-      background: rgba(0, 0, 0, 0.05);
+      background: rgba(0, 0, 0, 0.1);
     }
 
     .btn-outline-primary {
@@ -555,6 +578,135 @@ import Swal from 'sweetalert2';
       background-color: #5c1a1a;
       border-color: #5c1a1a;
     }
+
+    /* Image Grid Styles */
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .image-card {
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 0.75rem;
+      background: #f8f9fa;
+      position: relative;
+    }
+
+    .image-preview {
+      position: relative;
+      width: 100%;
+      margin-bottom: 0.5rem;
+      height: 150px; /* Fixed height for consistency */
+      overflow: hidden;
+      border-radius: 6px;
+      border: 1px solid #dee2e6;
+      background: #fff;
+    }
+
+    .image-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain; /* Ensure image fits within the box */
+      display: block;
+    }
+
+    .btn-remove-image {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #dc3545;
+      color: white;
+      border: 2px solid white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 0;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .btn-remove-image:hover {
+      background: #c82333;
+      transform: scale(1.1);
+    }
+
+    .btn-remove-image i {
+      color: white;
+      font-weight: bold;
+    }
+
+    /* Item Grid Styles */
+    .item-grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .item-card {
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 1rem;
+      background: #f8f9fa;
+    }
+
+    .muted-text {
+      color: #6c757d;
+      font-style: italic;
+    }
+
+    .text-muted {
+      color: #6c757d;
+      font-size: 0.875rem;
+      display: block;
+      margin-top: 0.25rem;
+    }
+
+    .modal-section {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .modal-section:last-child {
+      border-bottom: none;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      color: #5c1a1a;
+      font-weight: 600;
+    }
+
+    .section-title i {
+      color: #ffd700;
+      font-size: 1.25rem;
+    }
+
+    .id-chips {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      background: rgba(255, 215, 0, 0.2);
+      color: #5c1a1a;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
   `]
 })
 export class ViewProductsComponent implements OnInit {
@@ -565,16 +717,25 @@ export class ViewProductsComponent implements OnInit {
   filterSize = '';
   categories: string[] = [];
   sizes: string[] = [];
-  
+
+  // Edit functionality
   // Edit functionality
   isEditModalOpen = false;
   editingProduct: ItemResponseDto | null = null;
   editForm: any = {};
 
+  // New properties for image upload in edit modal
+  itemImageFiles: (File | null)[] = [];
+  itemImagePreviews: (string | null)[] = [];
+
+  // Gallery image upload properties
+  galleryImageFiles: (File | null)[] = [];
+  galleryImagePreviews: (string | null)[] = [];
+
   constructor(
     private itemService: ItemService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loadProducts();
@@ -606,11 +767,11 @@ export class ViewProductsComponent implements OnInit {
 
   filterProducts(): void {
     this.filteredProducts = this.products.filter(product => {
-      const matchesSearch = !this.searchTerm || 
+      const matchesSearch = !this.searchTerm ||
         product.variantDescription.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         product.style.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         product.categoryName.toLowerCase().includes(this.searchTerm.toLowerCase());
-      
+
       const matchesCategory = !this.filterCategory || product.categoryName === this.filterCategory;
       const matchesSize = !this.filterSize || product.size === this.filterSize;
 
@@ -709,8 +870,105 @@ export class ViewProductsComponent implements OnInit {
     });
   }
 
+  saveEdit(): void {
+    if (!this.editingProduct) return;
+
+    // Collect item images to upload
+    const itemUploads: { index: number; file: File }[] = [];
+    this.itemImageFiles.forEach((file, idx) => {
+      if (file) {
+        itemUploads.push({ index: idx, file: file as File });
+      }
+    });
+
+    // Collect gallery images to upload
+    const galleryUploads: { index: number; file: File }[] = [];
+    this.galleryImageFiles.forEach((file, idx) => {
+      if (file) {
+        galleryUploads.push({ index: idx, file: file as File });
+      }
+    });
+
+    const totalUploads = itemUploads.length + galleryUploads.length;
+
+    if (totalUploads > 0) {
+      Swal.fire({
+        title: 'Uploading Images...',
+        text: `Uploading ${totalUploads} image(s)...`,
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      // Combine all files to upload
+      const allFiles = [...itemUploads.map(u => u.file), ...galleryUploads.map(u => u.file)];
+
+      this.itemService.uploadImages(allFiles).subscribe({
+        next: (res) => {
+          const urls = res.data || [];
+
+          // Map item image URLs
+          urls.slice(0, itemUploads.length).forEach((url: string, i: number) => {
+            const originalIndex = itemUploads[i].index;
+            if (this.editForm.items && this.editForm.items[originalIndex]) {
+              this.editForm.items[originalIndex].imageUrl = url;
+            }
+          });
+
+          // Map gallery image URLs
+          urls.slice(itemUploads.length).forEach((url: string, i: number) => {
+            const originalIndex = galleryUploads[i].index;
+            if (this.editForm.images && this.editForm.images[originalIndex]) {
+              this.editForm.images[originalIndex].imageUrl = url;
+            }
+          });
+
+          Swal.close();
+          this.submitEdit();
+        },
+        error: (err) => {
+          Swal.fire({
+            icon: 'error',
+            title: 'Image Upload Failed',
+            text: err.error?.message || 'Failed to upload images. Please try again.',
+            confirmButtonColor: '#5c1a1a'
+          });
+        }
+      });
+    } else {
+      this.submitEdit();
+    }
+  }
+
+  submitEdit(): void {
+    this.itemService.updateFullCostume(this.editingProduct!.costumeId, this.editForm).subscribe({
+      next: (res) => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Updated!',
+          text: 'Product details have been updated.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+        this.closeEditModal();
+        this.loadProducts(); // Reload to see changes
+      },
+      error: (err) => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Update Failed',
+          text: err.error?.message || 'Could not update product.',
+          confirmButtonColor: '#5c1a1a'
+        });
+      }
+    });
+  }
+
   editProduct(product: ItemResponseDto): void {
     this.editingProduct = product;
+
+    // Map flat ItemResponseDto to nested structure for the form (and ItemRequestDto)
     this.editForm = {
       category: {
         categoryName: product.categoryName,
@@ -732,16 +990,21 @@ export class ViewProductsComponent implements OnInit {
         deposit: product.deposit,
         isRentable: product.isRentable
       },
-      items: product.items?.map(item => ({
-        itemName: item.itemName,
-        rentalPricePerDay: item.rentalPricePerDay,
-        deposit: item.deposit,
-        imageUrl: item.imageUrl
-      })) || [],
-      images: product.images?.map(img => ({
-        imageUrl: img.imageUrl
-      })) || []
+      // Deep copy items and images to avoid mutating original until save
+      items: product.items ? JSON.parse(JSON.stringify(product.items)) : [],
+      images: product.images ? JSON.parse(JSON.stringify(product.images)) : []
     };
+
+    // Initialize image arrays for items
+    const itemCount = this.editForm.items ? this.editForm.items.length : 0;
+    this.itemImageFiles = new Array(itemCount).fill(null);
+    this.itemImagePreviews = new Array(itemCount).fill(null);
+
+    // Initialize image arrays for gallery
+    const galleryCount = this.editForm.images ? this.editForm.images.length : 0;
+    this.galleryImageFiles = new Array(galleryCount).fill(null);
+    this.galleryImagePreviews = new Array(galleryCount).fill(null);
+
     this.isEditModalOpen = true;
   }
 
@@ -749,31 +1012,92 @@ export class ViewProductsComponent implements OnInit {
     this.isEditModalOpen = false;
     this.editingProduct = null;
     this.editForm = {};
+
+    // Cleanup item previews
+    this.itemImagePreviews.forEach(url => {
+      if (url) URL.revokeObjectURL(url);
+    });
+    this.itemImageFiles = [];
+    this.itemImagePreviews = [];
+
+    // Cleanup gallery previews
+    this.galleryImagePreviews.forEach(url => {
+      if (url) URL.revokeObjectURL(url);
+    });
+    this.galleryImageFiles = [];
+    this.galleryImagePreviews = [];
   }
 
-  saveEdit(): void {
-    if (!this.editingProduct) return;
+  onEditItemImageSelect(index: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files && input.files[0] ? input.files[0] : null;
 
-    this.itemService.updateFullCostume(this.editingProduct.costumeId, this.editForm).subscribe({
-      next: (response) => {
-        Swal.fire({
-          icon: 'success',
-          title: 'Updated Successfully!',
-          text: 'Product has been updated.',
-          confirmButtonColor: '#5c1a1a'
-        });
-        this.closeEditModal();
-        this.loadProducts();
-      },
-      error: (err) => {
-        Swal.fire({
-          icon: 'error',
-          title: 'Update Failed',
-          text: err.error?.message || 'Failed to update product.',
-          confirmButtonColor: '#5c1a1a'
-        });
+    this.itemImageFiles[index] = file;
+
+    if (this.itemImagePreviews[index]) {
+      URL.revokeObjectURL(this.itemImagePreviews[index]!);
+    }
+    this.itemImagePreviews[index] = file ? URL.createObjectURL(file) : null;
+  }
+
+  removeEditItemImage(index: number): void {
+    if (this.itemImagePreviews[index]) {
+      URL.revokeObjectURL(this.itemImagePreviews[index]!);
+    }
+    this.itemImagePreviews[index] = null;
+    this.itemImageFiles[index] = null;
+  }
+
+  // Helper for currency formatting
+  formatCurrency(value: number): string {
+    return (value || 0).toLocaleString('en-IN');
+  }
+
+  // Remove gallery image (just removes from array, needs save to persist)
+  removeImage(index: number): void {
+    if (this.editForm.images) {
+      this.editForm.images.splice(index, 1);
+    }
+  }
+
+  // Add new image to gallery
+  addNewImage(): void {
+    if (!this.editForm.images) {
+      this.editForm.images = [];
+    }
+    this.editForm.images.push({ imageUrl: '' });
+  }
+
+  // Handle gallery image file selection
+  onEditImageSelect(index: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files && input.files[0] ? input.files[0] : null;
+
+    // Ensure arrays are large enough
+    while (this.galleryImageFiles.length <= index) {
+      this.galleryImageFiles.push(null);
+    }
+    while (this.galleryImagePreviews.length <= index) {
+      this.galleryImagePreviews.push(null);
+    }
+
+    this.galleryImageFiles[index] = file;
+
+    // Revoke old preview if exists
+    if (this.galleryImagePreviews[index]) {
+      URL.revokeObjectURL(this.galleryImagePreviews[index]!);
+    }
+
+    // Create preview for new file
+    if (file) {
+      this.galleryImagePreviews[index] = URL.createObjectURL(file);
+      // Update the image URL in editForm to show preview
+      if (this.editForm.images && this.editForm.images[index]) {
+        this.editForm.images[index].imageUrl = this.galleryImagePreviews[index];
       }
-    });
+    } else {
+      this.galleryImagePreviews[index] = null;
+    }
   }
 
   deleteProduct(product: ItemResponseDto): void {
@@ -809,12 +1133,5 @@ export class ViewProductsComponent implements OnInit {
         });
       }
     });
-  }
-
-  private formatCurrency(value?: number): string {
-    if (value === null || value === undefined) {
-      return '0';
-    }
-    return Number(value).toLocaleString('en-IN');
   }
 }
