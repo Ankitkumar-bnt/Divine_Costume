@@ -66,8 +66,8 @@ public class FileUploadController {
                 Path filePath = uploadPath.resolve(uniqueFilename);
                 Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-                // Return actual file path
-                imagePaths.add(filePath.toString());
+                // Return relative path for static resource serving (e.g., /uploads/images/xyz.png)
+                imagePaths.add("/uploads/images/" + uniqueFilename);
             }
 
             return ResponseEntity.ok(MessageResponse.success(imagePaths, "Images uploaded successfully"));
@@ -170,21 +170,29 @@ public class FileUploadController {
         }
     }
 
-    @GetMapping("/images/{filename}")
-    public ResponseEntity<byte[]> getImage(@PathVariable String filename) {
+    /**
+     * Display image by path (supports both relative and absolute paths)
+     */
+    @GetMapping("/display")
+    public ResponseEntity<byte[]> displayImage(@RequestParam("path") String imagePath) {
         try {
             Path filePath;
             
-            // Check if filename is a full path or just a filename
-            if (filename.contains(":") || filename.startsWith("/") || filename.startsWith("\\")) {
-                // It's a full path
-                filePath = Paths.get(filename);
+            // Check if it's a relative path (starts with /uploads/images/)
+            if (imagePath.startsWith("/uploads/images/")) {
+                // Extract filename from relative path
+                String filename = imagePath.substring("/uploads/images/".length());
+                filePath = Paths.get(uploadDir).resolve(filename);
+            } else if (imagePath.contains(":") || imagePath.startsWith("/") || imagePath.startsWith("\\")) {
+                // It's an absolute path
+                filePath = Paths.get(imagePath);
             } else {
                 // It's just a filename
-                filePath = Paths.get(uploadDir).resolve(filename);
+                filePath = Paths.get(uploadDir).resolve(imagePath);
             }
             
             if (!Files.exists(filePath)) {
+                System.err.println("Image not found: " + filePath);
                 return ResponseEntity.notFound().build();
             }
 
@@ -198,7 +206,48 @@ public class FileUploadController {
                     .header("Content-Type", contentType)
                     .body(imageBytes);
 
-        } catch (IOException e) {
+        } catch (Exception e) {
+            System.err.println("Error serving image: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/images/{filename}")
+    public ResponseEntity<byte[]> getImage(@PathVariable String filename) {
+        try {
+            Path filePath;
+            
+            // Decode URL-encoded filename
+            String decodedFilename = java.net.URLDecoder.decode(filename, "UTF-8");
+            
+            // Check if filename is a full path or just a filename
+            if (decodedFilename.contains(":") || decodedFilename.startsWith("/") || decodedFilename.startsWith("\\")) {
+                // It's a full path
+                filePath = Paths.get(decodedFilename);
+            } else {
+                // It's just a filename
+                filePath = Paths.get(uploadDir).resolve(decodedFilename);
+            }
+            
+            if (!Files.exists(filePath)) {
+                System.err.println("Image not found: " + filePath);
+                return ResponseEntity.notFound().build();
+            }
+
+            byte[] imageBytes = Files.readAllBytes(filePath);
+            String contentType = Files.probeContentType(filePath);
+            if (contentType == null) {
+                contentType = "application/octet-stream";
+            }
+
+            return ResponseEntity.ok()
+                    .header("Content-Type", contentType)
+                    .body(imageBytes);
+
+        } catch (Exception e) {
+            System.err.println("Error serving image: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

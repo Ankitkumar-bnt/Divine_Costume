@@ -6,6 +6,7 @@ import com.rental.divine_costume.entity.items.*;
 import com.rental.divine_costume.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,9 @@ public class CostumeInventoryServiceImpl implements CostumeInventoryService {
     private final CostumePartRepository costumePartRepository;
     private final CostumeImageRepository imageRepository;
 
+    @Value("${app.base-url}")
+    private String baseUrl; // Used to build full image URL
+
     @Override
     @Transactional(readOnly = true)
     public List<CostumeCategory> getAllCategories() {
@@ -37,8 +41,6 @@ public class CostumeInventoryServiceImpl implements CostumeInventoryService {
         log.info("Fetching variants for category ID: {}", categoryId);
         List<CostumeVariant> variants = variantRepository.findByCategoryId(categoryId);
 
-        // Deduplicate by normalized variant description so the UI only shows unique
-        // entries like "xyz", "abc" even if multiple rows share the same description.
         Map<String, CostumeVariant> deduped = new LinkedHashMap<>();
         for (CostumeVariant variant : variants) {
             String key = Optional.ofNullable(variant.getVariantDescription())
@@ -63,7 +65,6 @@ public class CostumeInventoryServiceImpl implements CostumeInventoryService {
     public Map<String, Long> getSizeCountsByVariant(Long variantId) {
         log.info("Fetching size counts for logical variant (by description) for variant ID: {}", variantId);
 
-        // Find the base variant to determine its category and description
         CostumeVariant baseVariant = variantRepository.findById(variantId)
                 .orElseThrow(() -> new RuntimeException("Variant not found with ID: " + variantId));
 
@@ -71,7 +72,6 @@ public class CostumeInventoryServiceImpl implements CostumeInventoryService {
         String description = baseVariant.getVariantDescription();
 
         if (categoryId == null || description == null) {
-            // Fallback to original behavior if we cannot determine logical grouping
             List<String> sizes = getSizesByVariant(variantId);
             Map<String, Long> fallback = new HashMap<>();
             for (String size : sizes) {
@@ -81,7 +81,6 @@ public class CostumeInventoryServiceImpl implements CostumeInventoryService {
             return fallback;
         }
 
-        // Find all variants in this category that share the same description (ignoring case)
         List<CostumeVariant> relatedVariants = variantRepository
                 .findByCategoryIdAndVariantDescriptionIgnoreCase(categoryId, description.trim());
 
@@ -139,31 +138,21 @@ public class CostumeInventoryServiceImpl implements CostumeInventoryService {
     @Override
     public void updateInventoryCount(Long costumeId, Integer newCount) {
         log.info("Updating inventory count for costume ID: {} to: {}", costumeId, newCount);
-        Optional<Costume> costumeOpt = costumeRepository.findById(costumeId);
-        
-        if (costumeOpt.isPresent()) {
-            Costume costume = costumeOpt.get();
-            costume.setNumberOfItems(newCount);
-            costumeRepository.save(costume);
-            log.info("Successfully updated inventory count for costume ID: {}", costumeId);
-        } else {
-            log.error("Costume not found with ID: {}", costumeId);
-            throw new RuntimeException("Costume not found with ID: " + costumeId);
-        }
+        Costume costume = costumeRepository.findById(costumeId)
+                .orElseThrow(() -> new RuntimeException("Costume not found with ID: " + costumeId));
+        costume.setNumberOfItems(newCount);
+        costumeRepository.save(costume);
+        log.info("Successfully updated inventory count for costume ID: {}", costumeId);
     }
 
     @Override
     public Long addCostumePart(CostumePartRequestDto requestDto) {
         log.info("Adding costume part for costume ID: {}", requestDto.getParentCostumeId());
-        
-        Optional<Costume> costumeOpt = costumeRepository.findById(requestDto.getParentCostumeId());
-        if (costumeOpt.isEmpty()) {
-            log.error("Parent costume not found with ID: {}", requestDto.getParentCostumeId());
-            throw new RuntimeException("Parent costume not found with ID: " + requestDto.getParentCostumeId());
-        }
+        Costume costume = costumeRepository.findById(requestDto.getParentCostumeId())
+                .orElseThrow(() -> new RuntimeException("Parent costume not found with ID: " + requestDto.getParentCostumeId()));
 
         CostumePart costumePart = CostumePart.builder()
-                .parentCostume(costumeOpt.get())
+                .parentCostume(costume)
                 .partName(requestDto.getPartName())
                 .partDescription(requestDto.getPartDescription())
                 .quantity(requestDto.getQuantity())
@@ -174,39 +163,30 @@ public class CostumeInventoryServiceImpl implements CostumeInventoryService {
 
         CostumePart savedPart = costumePartRepository.save(costumePart);
         log.info("Successfully added costume part with ID: {}", savedPart.getId());
-        
         return savedPart.getId();
     }
 
     @Override
     public void removeCostumePart(Long partId) {
         log.info("Removing costume part with ID: {}", partId);
-        
-        if (costumePartRepository.existsById(partId)) {
-            costumePartRepository.deleteById(partId);
-            log.info("Successfully removed costume part with ID: {}", partId);
-        } else {
-            log.error("Costume part not found with ID: {}", partId);
+        if (!costumePartRepository.existsById(partId)) {
             throw new RuntimeException("Costume part not found with ID: " + partId);
         }
+        costumePartRepository.deleteById(partId);
+        log.info("Successfully removed costume part with ID: {}", partId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<String> getSerialNumbersByVariantAndSize(Long variantId, String size) {
         log.info("Fetching serial numbers for variant ID: {} and size: {}", variantId, size);
-        List<Costume> costumes = costumeRepository.findByVariantIdAndSize(variantId, size);
-        
-        return costumes.stream()
+        return costumeRepository.findByVariantIdAndSize(variantId, size)
+                .stream()
                 .map(costume -> "SN" + costume.getSerialNumber())
                 .collect(Collectors.toList());
     }
 
     private List<CostumeInventoryResponseDto> mapToInventoryResponseDto(List<Costume> costumes) {
-        // Group by logical key: category + normalized variant description + normalized size.
-        // This ensures that if there are multiple CostumeVariant rows with the same
-        // description under the same category, they are treated as a single
-        // inventory row per size.
         Map<String, List<Costume>> groupedCostumes = costumes.stream()
                 .collect(Collectors.groupingBy(costume -> {
                     CostumeVariant variant = costume.getCostumeVariant();
@@ -229,16 +209,19 @@ public class CostumeInventoryServiceImpl implements CostumeInventoryService {
                     List<Costume> costumeGroup = entry.getValue();
                     Costume firstCostume = costumeGroup.get(0);
                     CostumeVariant variant = firstCostume.getCostumeVariant();
-                    
-                    // Get image URL with proper fallback
-                    String imageUrl = variant.getImages().isEmpty() ? 
-                        "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjRjhGOUZBIiBzdHJva2U9IiNEREREREQiLz4KPHN2ZyB4PSIyMCIgeT0iMjAiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM5OTk5OTkiIHN0cm9rZS13aWR0aD0iMiI+CjxwYXRoIGQ9Im0yMSAxNS02LTYtNiA2Ii8+CjxwYXRoIGQ9Im05IDlhMyAzIDAgMSAwIDYgMGEzIDMgMCAwIDAtNiAweiIvPgo8L3N2Zz4KPC9zdmc+" : 
-                        variant.getImages().get(0).getImageUrl();
 
-                    // Generate serial numbers
-                    List<String> serialNumbers = costumeGroup.stream()
-                            .map(costume -> "SN" + costume.getSerialNumber())
-                            .collect(Collectors.toList());
+                    String imageUrl = null;
+                    if (variant.getImages() != null && !variant.getImages().isEmpty()) {
+                        imageUrl = variant.getImages().get(0).getImageUrl(); // real stored path
+                    }
+
+                    // Convert path to exposed API usable URL
+                    if (imageUrl != null && !imageUrl.trim().isEmpty()) {
+                        imageUrl = baseUrl + "/api/files/display?path=" + imageUrl;
+                    } else {
+                        // fallback
+                        imageUrl = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjRjhGOUZBIiBzdHJva2U9IiNEREREREQiLz4KPHN2ZyB4PSIyMCIgeT0iMjAiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM5OTk5OTkiIHN0cm9rZS13aWR0aD0iMiI+CjxwYXRoIGQ9Im0yMSAxNS02LTYtNiA2Ii8+CjxwYXRoIGQ9Im05IDlhMyAzIDAgMSAwIDYgMGEzIDMgMCAwIDAtNiAweiIvPgo8L3N2Zz4KPC9zdmc+";
+                    }
 
                     return CostumeInventoryResponseDto.builder()
                             .id(firstCostume.getId())
@@ -247,13 +230,14 @@ public class CostumeInventoryServiceImpl implements CostumeInventoryService {
                             .size(firstCostume.getSize())
                             .count(costumeGroup.size())
                             .imageUrl(imageUrl)
-                            .serialNumbers(serialNumbers)
+                            .serialNumbers(costumeGroup.stream()
+                                    .map(costume -> "SN" + costume.getSerialNumber())
+                                    .collect(Collectors.toList()))
                             .style(variant.getStyle())
                             .primaryColor(variant.getPrimaryColor())
                             .secondaryColor(variant.getSecondaryColor())
                             .tertiaryColor(variant.getTertiaryColor())
                             .build();
-                })
-                .collect(Collectors.toList());
+                }).collect(Collectors.toList());
     }
 }

@@ -24,20 +24,23 @@ public interface CostumeRepository extends JpaRepository<Costume, Long> {
             @Param("size") String size
     );
 
-    // Inventory management queries
-    @Query("SELECT c FROM Costume c " +
-           "JOIN c.costumeVariant v " +
+    // Inventory management queries with eager image loading
+    @Query("SELECT DISTINCT c FROM Costume c " +
+           "JOIN FETCH c.costumeVariant v " +
+           "LEFT JOIN FETCH v.images " +
            "JOIN v.category cat " +
            "WHERE cat.id = :categoryId")
     List<Costume> findByCategoryId(@Param("categoryId") Long categoryId);
 
-    @Query("SELECT c FROM Costume c " +
-           "JOIN c.costumeVariant v " +
+    @Query("SELECT DISTINCT c FROM Costume c " +
+           "JOIN FETCH c.costumeVariant v " +
+           "LEFT JOIN FETCH v.images " +
            "WHERE v.id = :variantId")
     List<Costume> findByVariantId(@Param("variantId") Long variantId);
 
-    @Query("SELECT c FROM Costume c " +
-           "JOIN c.costumeVariant v " +
+    @Query("SELECT DISTINCT c FROM Costume c " +
+           "JOIN FETCH c.costumeVariant v " +
+           "LEFT JOIN FETCH v.images " +
            "WHERE v.id = :variantId AND c.size = :size")
     List<Costume> findByVariantIdAndSize(@Param("variantId") Long variantId, @Param("size") String size);
 
