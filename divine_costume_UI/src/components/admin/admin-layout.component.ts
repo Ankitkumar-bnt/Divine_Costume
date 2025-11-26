@@ -17,32 +17,26 @@ import { Router, RouterModule } from '@angular/router';
         </div>
         <nav class="sidebar-nav">
           <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-item">
-            <i class="bi bi-speedometer2"></i>
             <span>Dashboard</span>
           </a>
           
           <!-- Costume Dropdown -->
           <div class="nav-dropdown">
             <a (click)="toggleDropdown('costume')" class="nav-item dropdown-toggle" [class.active]="isDropdownOpen('costume')">
-              <i class="bi bi-person-dress"></i>
               <span>Costume</span>
-              <i class="bi bi-chevron-down dropdown-arrow" [class.rotated]="isDropdownOpen('costume')"></i>
+              <i class="bi" [class.rotated]="isDropdownOpen('costume')"></i>
             </a>
             <div class="dropdown-menu" [class.show]="isDropdownOpen('costume')">
               <a routerLink="/admin/add-product/costume/new" routerLinkActive="active" class="dropdown-item">
-                <i class="bi bi-plus"></i>
                 <span>Add Costume</span>
               </a>
               <a routerLink="/admin/add-product/costume/bulk-insert" routerLinkActive="active" class="dropdown-item">
-                <i class="bi bi-upload"></i>
                 <span>Bulk Insert</span>
               </a>
               <a routerLink="/admin/view-products" routerLinkActive="active" class="dropdown-item">
-                <i class="bi bi-eye"></i>
                 <span>View Costume</span>
               </a>
               <a routerLink="/admin/existing-costume" routerLinkActive="active" class="dropdown-item">
-                <i class="bi bi-collection"></i>
                 <span>Existing Costume</span>
               </a>
             </div>
@@ -51,48 +45,38 @@ import { Router, RouterModule } from '@angular/router';
           <!-- Ornaments Dropdown -->
           <div class="nav-dropdown">
             <a (click)="toggleDropdown('ornaments')" class="nav-item dropdown-toggle" [class.active]="isDropdownOpen('ornaments')">
-              <i class="bi bi-gem"></i>
               <span>Ornaments</span>
-              <i class="bi bi-chevron-down dropdown-arrow" [class.rotated]="isDropdownOpen('ornaments')"></i>
+              <i class="bi" [class.rotated]="isDropdownOpen('ornaments')"></i>
             </a>
             <div class="dropdown-menu" [class.show]="isDropdownOpen('ornaments')">
               <a routerLink="/admin/ornaments/add" routerLinkActive="active" class="dropdown-item">
-                <i class="bi bi-plus"></i>
                 <span>Add Ornaments</span>
               </a>
               <a routerLink="/admin/ornaments/bulk-insert" routerLinkActive="active" class="dropdown-item">
-                <i class="bi bi-upload"></i>
                 <span>Bulk Insert</span>
               </a>
               <a routerLink="/admin/ornaments/view" routerLinkActive="active" class="dropdown-item">
-                <i class="bi bi-eye"></i>
                 <span>View Ornaments</span>
               </a>
               <a routerLink="/admin/ornaments/existing" routerLinkActive="active" class="dropdown-item">
-                <i class="bi bi-collection"></i>
                 <span>Existing Ornaments</span>
               </a>
             </div>
           </div>
 
           <a routerLink="/admin/bookings" routerLinkActive="active" class="nav-item">
-            <i class="bi bi-calendar-check"></i>
             <span>Bookings / Rentals</span>
           </a>
           <a routerLink="/admin/customers" routerLinkActive="active" class="nav-item">
-            <i class="bi bi-people"></i>
             <span>Customers</span>
           </a>
           <a routerLink="/admin/rental-inventory-report" routerLinkActive="active" class="nav-item">
-            <i class="bi bi-clipboard-data"></i>
             <span>Report</span>
           </a>
           <a routerLink="/admin/settings" routerLinkActive="active" class="nav-item">
-            <i class="bi bi-gear"></i>
             <span>Settings</span>
           </a>
           <a (click)="logout()" class="nav-item logout">
-            <i class="bi bi-box-arrow-right"></i>
             <span>Logout</span>
           </a>
         </nav>
@@ -128,99 +112,88 @@ import { Router, RouterModule } from '@angular/router';
     }
 
     .sidebar {
-      width: 260px;
-      background: #FFF8EE;
-      color: #080808ff;
+      width: 280px;
+      background: #ffffff;
+      color: #1a1a1a;
       position: fixed;
       height: 100vh;
       overflow-y: auto;
-      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+      box-shadow: 4px 0 24px rgba(0,0,0,0.02);
+      border-right: 1px solid rgba(0,0,0,0.03);
+      z-index: 1000;
     }
 
     .sidebar-header {
-      padding: 2rem 1.5rem;
-      border-bottom: 1px solid rgba(255,215,0,0.2);
+      padding: 2.5rem 2rem;
+      margin-bottom: 1rem;
     }
 
     .brand-logo {
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 1rem;
     }
 
     .logo-image {
-      height: 60px;
+      height: 55px;
       width: auto;
       object-fit: contain;
       transition: transform 0.3s ease;
     }
 
     .brand-logo:hover .logo-image {
-      transform: scale(1.05);
-    }
-
-    .sidebar-header h3 {
-      color: #ffd700;
-      margin: 0;
-      font-size: 1.5rem;
-      font-weight: 700;
-    }
-
-    .sidebar-header .text-muted {
-      color: rgba(255,255,255,0.6);
-      font-size: 0.875rem;
-      margin: 0.25rem 0 0 0;
+      transform: scale(1.02);
     }
 
     .sidebar-nav {
-      padding: 1rem 0;
+      padding: 0 1.5rem;
     }
 
     .nav-item {
       display: flex;
       align-items: center;
-      padding: 0.875rem 1.5rem;
-      color: #080808ff;
+      padding: 0.7rem 1rem;
+      color: #555;
       text-decoration: none;
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
       cursor: pointer;
-      border-left: 3px solid transparent;
-    }
-
-    .nav-item i {
-      font-size: 1.25rem;
-      color: #D4AF37;
-      margin-right: 1rem;
-      width: 24px;
+      border-radius: 12px;
+      margin-bottom: 0.15rem;
+      font-weight: 500;
+      font-size: 0.95rem;
+      letter-spacing: 0.3px;
     }
 
     .nav-item:hover {
-      background: rgba(212, 175, 55, 0.1);
+      background: #FFF8EE;
       color: #7A1F2A;
-      border-left-color: #D4AF37;
+      transform: translateX(4px);
     }
 
     .nav-item.active {
-      background: rgba(212, 175, 55, 0.15);
+      background: #FFF8EE;
       color: #7A1F2A;
-      border-left-color: #D4AF37;
+      font-weight: 600;
     }
 
     .nav-dropdown {
-      /* Remove position relative to allow natural flow */
+      margin-bottom: 0.15rem;
+    }
+
+    .nav-dropdown .nav-item {
+      margin-bottom: 0;
     }
 
     .dropdown-toggle {
       justify-content: space-between;
-      position: relative;
     }
 
     .dropdown-arrow {
-      font-size: 0.875rem;
-      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 0.75rem;
+      transition: transform 0.3s ease;
       margin-left: auto;
-      color: #D4AF37;
+      color: #999;
+      opacity: 0.7;
     }
 
     .dropdown-arrow.rotated {
@@ -228,77 +201,85 @@ import { Router, RouterModule } from '@angular/router';
     }
 
     .dropdown-menu {
+      border: none !important;
       position: relative !important;
       display: block !important;
-      margin-top: 5px;
+      margin-top: 0;
       overflow: hidden;
-      background: rgba(212, 175, 55, 0.05);
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      background: transparent !important;
+      box-shadow: none !important;
+      transition: all 0.3s ease;
       max-height: 0;
       opacity: 0;
+      padding-left: 1rem;
+      padding-top: 0.25rem;
     }
 
     .dropdown-menu.show {
-      max-height: 300px;
+      max-height: 500px;
       opacity: 1;
+      margin-bottom: 0;
     }
 
     .dropdown-item {
       display: flex;
       align-items: center;
-      padding: 0.75rem 2.5rem;
-      color: #080808ff;
+      padding: 0.6rem 1rem;
+      color: #666;
       text-decoration: none;
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
       font-size: 0.9rem;
-      border-left: 3px solid transparent;
-      margin: 0.125rem 0;
+      border-radius: 8px;
+      margin-bottom: 0.25rem;
+      margin-top: 0;
+      position: relative;
     }
 
-    .dropdown-item i {
-      font-size: 1rem;
-      color: #D4AF37;
-      margin-right: 0.75rem;
-      width: 20px;
+    .dropdown-item:last-child {
+      margin-bottom: 0;
     }
 
     .dropdown-item:hover {
-      background: rgba(212, 175, 55, 0.1);
       color: #7A1F2A;
-      border-left-color: #D4AF37;
+      background: rgba(255, 248, 238, 0.5);
+      transform: translateX(4px);
     }
 
     .dropdown-item.active {
-      background: rgba(212, 175, 55, 0.15);
       color: #7A1F2A;
-      border-left-color: #D4AF37;
+      font-weight: 500;
+      background: rgba(255, 248, 238, 0.8);
     }
 
     .nav-item.logout {
-      margin-top: 2rem;
-      border-top: 1px solid rgba(255,215,0,0.2);
-      padding-top: 1.5rem;
+      margin-top: 1.5rem;
+      border-top: 1px solid rgba(0,0,0,0.05);
+      padding-top: 0.75rem;
+      border-radius: 0;
+      color: #dc3545;
     }
 
     .nav-item.logout:hover {
-      background: rgba(220,53,69,0.2);
-      border-left-color: #dc3545;
+      background: rgba(220,53,69,0.05);
+      transform: none;
     }
 
     .main-content {
-      margin-left: 260px;
+      margin-left: 280px;
       flex: 1;
       display: flex;
       flex-direction: column;
+      background: #fcfcfc;
     }
 
     .top-navbar {
-      background: #fff;
-      padding: 1rem 2rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+      background: #ffffff;
+      padding: 1.25rem 2.5rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
       position: sticky;
       top: 0;
       z-index: 100;
+      border-bottom: 1px solid rgba(0,0,0,0.03);
     }
 
     .navbar-content {
@@ -309,8 +290,10 @@ import { Router, RouterModule } from '@angular/router';
 
     .page-title {
       margin: 0;
-      color: #5c1a1a;
+      color: #1a1a1a;
       font-weight: 600;
+      font-size: 1.25rem;
+      letter-spacing: -0.5px;
     }
 
     .navbar-right {
@@ -322,23 +305,27 @@ import { Router, RouterModule } from '@angular/router';
     .profile-section {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      color: #5c1a1a;
+      gap: 0.75rem;
+      color: #333;
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+      background: #f8f9fa;
+      border: 1px solid rgba(0,0,0,0.03);
     }
 
     .profile-section i {
-      font-size: 1.75rem;
-      color: #ffd700;
+      font-size: 1.5rem;
+      color: #D4AF37;
     }
 
     .content-area {
-      padding: 2rem;
+      padding: 2.5rem;
       flex: 1;
     }
 
     @media (max-width: 768px) {
       .sidebar {
-        width: 260px;
+        width: 280px;
         transform: translateX(-100%);
         transition: transform 0.3s ease;
         z-index: 1000;
@@ -356,15 +343,6 @@ import { Router, RouterModule } from '@angular/router';
         padding: 0.875rem 1.5rem;
       }
 
-      .dropdown-menu {
-        background: rgba(212, 175, 55, 0.08);
-      }
-
-      .dropdown-item {
-        padding: 0.75rem 2.5rem;
-        font-size: 0.85rem;
-      }
-
       .main-content {
         margin-left: 0;
       }
@@ -376,7 +354,8 @@ import { Router, RouterModule } from '@angular/router';
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
+        background: rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(2px);
         z-index: 999;
         display: none;
       }

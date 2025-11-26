@@ -66,8 +66,8 @@ public class FileUploadController {
                 Path filePath = uploadPath.resolve(uniqueFilename);
                 Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-                // Return relative path for static resource serving (e.g., /uploads/images/xyz.png)
-                imagePaths.add("/uploads/images/" + uniqueFilename);
+                // Return absolute file path for database storage
+                imagePaths.add(filePath.toAbsolutePath().toString());
             }
 
             return ResponseEntity.ok(MessageResponse.success(imagePaths, "Images uploaded successfully"));

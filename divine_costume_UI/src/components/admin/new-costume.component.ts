@@ -256,7 +256,7 @@ import Swal from 'sweetalert2';
                 <div class="col-md-12" *ngIf="imageUrlList.length > 0">
                   <div class="preview-row">
                     <div class="chip" *ngFor="let url of imageUrlList; let idx = index">
-                      <img [src]="url" alt="preview" class="chip-img" onerror="this.style.display='none'">
+                      <img [src]="getImageDisplayUrl(url)" alt="preview" class="chip-img" onerror="this.style.display='none'">
                       <span class="chip-text">{{ url }}</span>
                       <button type="button" class="chip-close" (click)="removeImageUrl(idx)">×</button>
                     </div>
@@ -374,6 +374,29 @@ export class NewCostumeComponent implements OnInit {
   imageUrlList: string[] = [];
 
   constructor(private itemService: ItemService, private inventoryService: InventoryService) { }
+
+  /**
+   * Convert absolute file path to displayable URL
+   * Handles both old relative paths and new absolute paths for backward compatibility
+   */
+  getImageDisplayUrl(imagePath: string): string {
+    if (!imagePath) return '';
+
+    // If it's already a URL, return as-is
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+
+    // If it's an absolute file path (contains : for Windows or starts with / or \)
+    if (imagePath.includes(':') || imagePath.startsWith('/') || imagePath.startsWith('\\')) {
+      // Encode the path for URL
+      const encodedPath = encodeURIComponent(imagePath);
+      return `http://localhost:8080/api/files/display?path=${encodedPath}`;
+    }
+
+    // Fallback: treat as relative path (for backward compatibility)
+    return `http://localhost:8080/api/files/images/${imagePath}`;
+  }
 
   ngOnInit(): void {
     // Prefer fetching categories with descriptions

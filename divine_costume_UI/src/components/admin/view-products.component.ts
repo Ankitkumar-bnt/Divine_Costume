@@ -11,140 +11,155 @@ import Swal from 'sweetalert2';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="view-products">
-      <!-- Search and Filter Section -->
-      <div class="card mb-4">
-        <div class="card-body">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <div class="search-box">
-                <i class="bi bi-search"></i>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  [(ngModel)]="searchTerm"
-                  (ngModelChange)="filterProducts()"
-                  placeholder="Search by product name, style, or category...">
-              </div>
-            </div>
-            <div class="col-md-3">
-              <select 
-                class="form-select" 
+      <div class="page-shell">
+        <header class="page-header">
+          <div>
+            <h1>Costume Inventory</h1>
+            <p>Curate and oversee premium looks ready for rent.</p>
+          </div>
+          <button type="button" class="refresh-button" (click)="refreshProducts()">
+            <i class="bi bi-arrow-clockwise"></i>
+            <span>Refresh</span>
+          </button>
+        </header>
+
+        <div class="filter-toolbar">
+          <div class="search-field">
+            <i class="bi bi-search"></i>
+            <input
+              class="toolbar-input"
+              type="text"
+              [(ngModel)]="searchTerm"
+              (ngModelChange)="filterProducts()"
+              placeholder="Search costumes by name, style, or category" />
+          </div>
+          <div class="toolbar-filters">
+            <div class="filter-item">
+              <i class="bi bi-collection"></i>
+              <select
+                class="filter-select"
                 [(ngModel)]="filterCategory"
                 (ngModelChange)="filterProducts()">
-                <option value="">All Categories</option>
+                <option value="">All categories</option>
                 <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
               </select>
             </div>
-            <div class="col-md-3">
-              <select 
-                class="form-select" 
+            <div class="filter-item">
+              <i class="bi bi-aspect-ratio"></i>
+              <select
+                class="filter-select"
                 [(ngModel)]="filterSize"
                 (ngModelChange)="filterProducts()">
-                <option value="">All Sizes</option>
+                <option value="">All sizes</option>
                 <option *ngFor="let size of sizes" [value]="size">{{ size }}</option>
               </select>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Products Table -->
-      <div class="card">
-        <div class="card-header">
-          <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">All Products ({{ filteredProducts.length }})</h5>
-            <button class="btn btn-sm btn-primary" (click)="refreshProducts()">
-              <i class="bi bi-arrow-clockwise"></i> Refresh
-            </button>
+        <section class="surface-card">
+          <div class="surface-header">
+            <div>
+              <h2>All Costumes</h2>
+              <span class="surface-subtitle">Showing {{ filteredProducts.length }} items</span>
+            </div>
+            <span class="count-badge">{{ filteredProducts.length }}</span>
           </div>
-        </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-hover">
+          <div class="table-wrapper">
+            <table class="modern-table">
               <thead>
                 <tr>
-                  <th>Image</th>
-                  <th>Product Name</th>
+                  <th>Costume</th>
                   <th>Category</th>
                   <th>Size</th>
-                  <th>Rental Price/Day</th>
+                  <th>Rental / Day</th>
                   <th>Quantity</th>
                   <th>Status</th>
-                  <th>Actions</th>
+                  <th class="actions-header">Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr *ngFor="let product of filteredProducts">
+              <tbody *ngIf="filteredProducts.length; else emptyState">
+                <tr *ngFor="let product of filteredProducts" (click)="viewDetails(product)">
                   <td>
-                    <div class="thumbs" *ngIf="product.images?.length; else noImg">
-                      <ng-container *ngFor="let img of product.images | slice:0:4; let i = index">
-                        <img [src]="img.imageUrl" [alt]="product.variantDescription + ' ' + i">
-                      </ng-container>
-                      <span class="more" *ngIf="product.images.length > 4">+{{ product.images.length - 4 }}</span>
+                    <div class="costume-cell">
+                      <div class="thumb-stack" *ngIf="product.images?.length; else noThumb">
+                        <ng-container *ngFor="let img of product.images | slice:0:3; let i = index">
+                          <img [src]="getImageDisplayUrl(img.imageUrl)" [alt]="product.variantDescription + ' ' + i">
+                        </ng-container>
+                        <span class="more" *ngIf="product.images.length > 3">+{{ product.images.length - 3 }}</span>
+                      </div>
+                      <ng-template #noThumb>
+                        <div class="fallback-thumb">
+                          <i class="bi bi-image"></i>
+                        </div>
+                      </ng-template>
+                      <div class="name-block">
+                        <span class="product-primary">{{ product.variantDescription }}</span>
+                        <span class="product-secondary">{{ product.style || '—' }}</span>
+                      </div>
                     </div>
-                    <ng-template #noImg>
-                      <img src="https://via.placeholder.com/60" alt="no image" class="product-img">
-                    </ng-template>
                   </td>
                   <td>
-                    <strong>{{ product.variantDescription }}</strong>
-                    <br>
-                    <small class="text-muted">{{ product.style }}</small>
+                    <span class="category-chip">{{ product.categoryName }}</span>
                   </td>
-                  <td>{{ product.categoryName }}</td>
                   <td>
-                    <span class="badge bg-secondary">{{ product.size }}</span>
+                    <span class="size-pill">{{ product.size }}</span>
                   </td>
-                  <td class="text-primary fw-bold">₹{{ product.rentalPricePerDay }}</td>
                   <td>
-                    <span class="badge" [ngClass]="{
-                      'bg-success': product.numberOfItems > 5,
-                      'bg-warning': product.numberOfItems > 0 && product.numberOfItems <= 5,
-                      'bg-danger': product.numberOfItems === 0
+                    <span class="price-text">₹{{ product.rentalPricePerDay }}</span>
+                  </td>
+                  <td>
+                    <span class="inventory-pill" [ngClass]="{
+                      'inventory-safe': product.numberOfItems > 5,
+                      'inventory-low': product.numberOfItems > 0 && product.numberOfItems <= 5,
+                      'inventory-empty': product.numberOfItems === 0
                     }">{{ product.numberOfItems }}</span>
                   </td>
                   <td>
-                    <span class="badge" [ngClass]="{
-                      'bg-success': product.isRentable,
-                      'bg-secondary': !product.isRentable
-                    }">{{ product.isRentable ? 'Available' : 'Not Available' }}</span>
+                    <span class="status-pill" [ngClass]="product.isRentable ? 'status-available' : 'status-out'">
+                      {{ product.isRentable ? 'Available' : 'Out of Stock' }}
+                    </span>
                   </td>
                   <td>
                     <div class="action-buttons">
-                      <button 
-                        class="btn btn-icon view"
-                        (click)="viewDetails(product)"
-                        title="View Details"
-                        aria-label="View Details">
+                      <button
+                        type="button"
+                        class="icon-button view"
+                        data-tooltip="View details"
+                        aria-label="View details"
+                        (click)="viewDetails(product); $event.stopPropagation()">
                         <i class="bi bi-eye"></i>
                       </button>
-                      <button 
-                        class="btn btn-icon edit"
-                        (click)="editProduct(product)"
-                        title="Edit"
-                        aria-label="Edit">
+                      <button
+                        type="button"
+                        class="icon-button edit"
+                        data-tooltip="Edit costume"
+                        aria-label="Edit costume"
+                        (click)="editProduct(product); $event.stopPropagation()">
                         <i class="bi bi-pencil"></i>
                       </button>
-                      <button 
-                        class="btn btn-icon delete"
-                        (click)="deleteProduct(product)"
-                        title="Delete"
-                        aria-label="Delete">
+                      <button
+                        type="button"
+                        class="icon-button delete"
+                        data-tooltip="Delete costume"
+                        aria-label="Delete costume"
+                        (click)="deleteProduct(product); $event.stopPropagation()">
                         <i class="bi bi-trash"></i>
                       </button>
                     </div>
                   </td>
                 </tr>
-                <tr *ngIf="filteredProducts.length === 0">
-                  <td colspan="8" class="text-center text-muted py-4">
-                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
-                    <p class="mt-2">No products found</p>
-                  </td>
-                </tr>
               </tbody>
             </table>
           </div>
-        </div>
+          <ng-template #emptyState>
+            <div class="empty-state">
+              <i class="bi bi-inboxes"></i>
+              <h3>No costumes match your filters</h3>
+              <p>Adjust the search or filter selections to discover more looks.</p>
+            </div>
+          </ng-template>
+        </section>
       </div>
 
       <!-- Edit Modal -->
@@ -320,7 +335,7 @@ import Swal from 'sweetalert2';
                   <div class="image-grid" *ngIf="editForm.images?.length">
                     <div class="image-card" *ngFor="let image of editForm.images; let ix = index">
                       <div class="image-preview">
-                        <img [src]="image.imageUrl || 'https://via.placeholder.com/120'" alt="Costume image">
+                        <img [src]="getImageDisplayUrl(image.imageUrl) || 'https://via.placeholder.com/120'" alt="Costume image">
                         <button type="button" class="btn-remove-image" (click)="removeImage(ix)" title="Remove Image">
                           <i class="bi bi-x"></i>
                         </button>
@@ -348,8 +363,8 @@ import Swal from 'sweetalert2';
     </div>
   `,
   styles: [`
-    .view-products {
-      animation: fadeIn 0.3s ease-in;
+    .view-products 
+      animation: fadeIn 0.4s ease;
     }
 
     @keyframes fadeIn {
@@ -357,321 +372,661 @@ import Swal from 'sweetalert2';
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .card {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      border: none;
+    .page-shell {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(1.5rem, 2.5vw, 2.25rem);
+      max-width: 1280px;
+      margin: 0 auto;
     }
 
-    .card-header {
-      background: #fff;
-      border-bottom: 1px solid #e9ecef;
-      padding: 1.25rem 1.5rem;
-      border-radius: 12px 12px 0 0;
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: clamp(1rem, 2vw, 1.5rem);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.15);
     }
 
-    .card-header h5 {
-      color: #5c1a1a;
+    .page-header h1 {
+      margin: 0;
+      font-size: clamp(1.6rem, 3vw, 2rem);
       font-weight: 600;
+      color: #1f2937;
     }
 
-    .card-body {
-      padding: 1.5rem;
+    .page-header p {
+      margin: 0.35rem 0 0;
+      color: #64748b;
+      font-size: 0.95rem;
     }
 
-    .search-box {
+    .refresh-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.3rem;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+      color: #fff;
+      border: none;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      box-shadow: 0 12px 18px rgba(79, 70, 229, 0.25);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .refresh-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 20px 28px rgba(79, 70, 229, 0.28);
+    }
+
+    .refresh-button i {
+      font-size: 1.1rem;
+    }
+
+    .filter-toolbar {
+      display: flex;
+      align-items: center;
+      gap: clamp(0.75rem, 2vw, 1.2rem);
+      padding: clamp(0.75rem, 2vw, 1rem);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: clamp(0.5rem, 2vw, 1.25rem);
+      z-index: 15;
+    }
+
+    .search-field {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      padding: 0.85rem 1.15rem;
+      background: linear-gradient(135deg, #f9fbff 0%, #f6f7fb 100%);
+      border-radius: 14px;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+      color: #475569;
+    }
+
+    .search-field i {
+      color: #6366f1;
+      font-size: 1rem;
+    }
+
+    .toolbar-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: #1f2937;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .toolbar-input::placeholder {
+      color: #94a3b8;
+    }
+
+    .toolbar-input:focus {
+      outline: none;
+    }
+
+    .toolbar-filters {
+      display: flex;
+      align-items: stretch;
+      gap: 0.75rem;
+    }
+
+    .filter-item {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.85rem 1rem;
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: linear-gradient(135deg, #ffffff 0%, #f8f8ff 100%);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      color: #475569;
+      min-width: 160px;
       position: relative;
     }
 
-    .search-box i {
-      position: absolute;
-      left: 1rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #6c757d;
+    .filter-item i {
+      color: #818cf8;
     }
 
-    .search-box .form-control {
-      padding-left: 2.75rem;
-    }
-
-    .form-control, .form-select {
-      border: 1px solid #ced4da;
-      border-radius: 8px;
-      padding: 0.625rem 0.875rem;
-      transition: all 0.3s ease;
-    }
-
-    .form-control:focus, .form-select:focus {
-      border-color: #5c1a1a;
-      box-shadow: 0 0 0 0.2rem rgba(92, 26, 26, 0.15);
-    }
-
-    .table {
-      margin: 0;
-    }
-
-    .table thead th {
-      background: #f8f9fa;
-      color: #5c1a1a;
-      font-weight: 600;
-      border-bottom: 2px solid #dee2e6;
-      padding: 0.875rem;
-      white-space: nowrap;
-    }
-
-    .table tbody td {
-      padding: 0.875rem;
-      vertical-align: middle;
-    }
-
-    .product-img {
-      width: 60px;
-      height: 60px;
-      object-fit: cover;
-      border-radius: 8px;
-      border: 1px solid #dee2e6;
-    }
-
-    .thumbs { display: flex; align-items: center; gap: 6px; }
-    .thumbs img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid #dee2e6; }
-    .thumbs .more { font-size: 0.8rem; color: #6c757d; background: #f1f3f5; border: 1px solid #dee2e6; border-radius: 6px; padding: 0.25rem 0.5rem; }
-
-    .badge {
-      padding: 0.375rem 0.75rem;
+    .filter-select {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: #1f2937;
       font-weight: 500;
+      font-size: 0.95rem;
+      appearance: none;
+      padding-right: 1.5rem;
+    }
+
+    .filter-select:focus {
+      outline: none;
+    }
+
+    .filter-item::after {
+      content: '\\f282';
+      font-family: 'bootstrap-icons';
+      position: absolute;
+      right: 0.9rem;
+      font-size: 0.85rem;
+      color: #94a3b8;
+      pointer-events: none;
+    }
+
+    .surface-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 22px;
+      padding: clamp(1.25rem, 2vw, 1.75rem);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .surface-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+      padding-bottom: 1rem;
+    }
+
+    .surface-header h2 {
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #1e293b;
+      letter-spacing: 0.01em;
+    }
+
+    .surface-subtitle {
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+
+    .count-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 14px 28px rgba(99, 102, 241, 0.22);
+    }
+
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .modern-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 760px;
+      font-size: 0.95rem;
+      color: #1e293b;
+    }
+
+    .modern-table thead tr {
+      background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+    }
+
+    .modern-table thead th {
+      padding: 1rem 1.25rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      text-align: left;
+      color: #312e81;
+      border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    .modern-table tbody tr {
+      background: rgba(255, 255, 255, 0.75);
+      transition: background-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+      cursor: pointer;
+    }
+
+    .modern-table tbody tr:nth-child(even) {
+      background: rgba(248, 250, 255, 0.85);
+    }
+
+    .modern-table tbody tr:hover {
+      background: rgba(238, 242, 255, 0.85);
+      transform: translateY(-1px);
+      box-shadow: 0 12px 24px rgba(79, 70, 229, 0.08);
+    }
+
+    .modern-table tbody td {
+      padding: 1rem 1.25rem;
+      vertical-align: middle;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+    }
+
+    .modern-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .costume-cell {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      min-width: 240px;
+    }
+
+    .thumb-stack {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .thumb-stack img {
+      width: 58px;
+      height: 58px;
+      object-fit: cover;
+      border-radius: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      box-shadow: 0 6px 12px rgba(100, 116, 139, 0.12);
+    }
+
+    .thumb-stack .more {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: rgba(99, 102, 241, 0.12);
+      color: #4338ca;
       font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0 0.75rem;
+    }
+
+    .fallback-thumb {
+      width: 58px;
+      height: 58px;
+      border-radius: 16px;
+      background: linear-gradient(145deg, rgba(99, 102, 241, 0.16) 0%, rgba(129, 140, 248, 0.28) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6366f1;
+      font-size: 1.4rem;
+    }
+
+    .name-block {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .product-primary {
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .product-secondary {
+      color: #94a3b8;
+      font-size: 0.85rem;
+    }
+
+    .category-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.45rem 0.85rem;
+      border-radius: 999px;
+      background: rgba(14, 165, 233, 0.12);
+      color: #0369a1;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .size-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 48px;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      background: rgba(15, 118, 110, 0.12);
+      color: #0f766e;
+      font-weight: 600;
+      font-size: 0.85rem;
+      letter-spacing: 0.02em;
+    }
+
+    .price-text {
+      font-weight: 600;
+      color: #4338ca;
+    }
+
+    .inventory-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 42px;
+      padding: 0.35rem 0.65rem;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.82rem;
+      letter-spacing: 0.02em;
+    }
+
+    .inventory-safe {
+      background: rgba(22, 163, 74, 0.14);
+      color: #166534;
+    }
+
+    .inventory-low {
+      background: rgba(253, 224, 71, 0.22);
+      color: #b45309;
+    }
+
+    .inventory-empty {
+      background: rgba(248, 113, 113, 0.18);
+      color: #b91c1c;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.4rem 0.9rem;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.82rem;
+      letter-spacing: 0.02em;
+    }
+
+    .status-available {
+      background: rgba(16, 185, 129, 0.18);
+      color: #047857;
+    }
+
+    .status-out {
+      background: rgba(248, 113, 113, 0.18);
+      color: #b91c1c;
+    }
+
+    .actions-header {
+      text-align: right;
     }
 
     .action-buttons {
-      display: flex;
-      gap: 0.5rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      justify-content: flex-end;
     }
 
-    .btn-sm {
-      padding: 0.375rem 0.625rem;
-      font-size: 0.875rem;
-      border-radius: 6px;
-    }
-
-    .btn-icon {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
+    .icon-button {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
       border: none;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.2rem;
-      padding: 0;
+      font-size: 1.1rem;
       transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      cursor: pointer;
     }
 
-    .btn-icon i {
-      color: #000;
-      font-weight: bold;
+    .icon-button.view {
+      background: rgba(59, 130, 246, 0.12);
+      color: #1d4ed8;
     }
 
-    .btn-icon.view {
-      background: rgba(200, 200, 200, 0.2);
-      border: 1px solid rgba(150, 150, 150, 0.3);
+    .icon-button.edit {
+      background: rgba(34, 197, 94, 0.12);
+      color: #047857;
     }
 
-    .btn-icon.edit {
-      background: rgba(200, 200, 200, 0.2);
-      border: 1px solid rgba(150, 150, 150, 0.3);
+    .icon-button.delete {
+      background: rgba(248, 113, 113, 0.12);
+      color: #b91c1c;
     }
 
-    .btn-icon.delete {
-      background: rgba(200, 200, 200, 0.2);
-      border: 1px solid rgba(150, 150, 150, 0.3);
-    }
-
-    .btn-icon:hover {
+    .icon-button:hover {
       transform: translateY(-1px);
-      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15);
-      background: rgba(0, 0, 0, 0.1);
+      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.15);
     }
 
-    .btn-outline-primary {
-      color: #0d6efd;
-      border-color: #0d6efd;
+    .icon-button.view:hover {
+      background: rgba(59, 130, 246, 0.2);
     }
 
-    .btn-outline-primary:hover {
-      background: #0d6efd;
-      color: #fff;
+    .icon-button.edit:hover {
+      background: rgba(34, 197, 94, 0.2);
     }
 
-    .btn-outline-warning {
-      color: #ffc107;
-      border-color: #ffc107;
+    .icon-button.delete:hover {
+      background: rgba(248, 113, 113, 0.24);
     }
 
-    .btn-outline-warning:hover {
-      background: #ffc107;
-      color: #000;
+    .icon-button::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 8px);
+      transform: translate(-50%, -6px);
+      background: rgba(15, 23, 42, 0.9);
+      color: #f8fafc;
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 0.35rem 0.6rem;
+      border-radius: 8px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      z-index: 20;
     }
 
-    .btn-outline-danger {
-      color: #dc3545;
-      border-color: #dc3545;
+    .icon-button:hover::after {
+      opacity: 1;
+      transform: translate(-50%, -2px);
     }
 
-    .btn-outline-danger:hover {
-      background: #dc3545;
-      color: #fff;
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 0.75rem;
+      padding: 4rem 1rem;
+      color: #94a3b8;
     }
 
-    .btn-primary {
-      background: linear-gradient(135deg, #5c1a1a 0%, #7d2424 100%);
-      border: none;
-      color: #fff;
+    .empty-state i {
+      font-size: 3rem;
+      color: #6366f1;
     }
 
-    .btn-primary:hover {
-      background: linear-gradient(135deg, #4a1515 0%, #6a1e1e 100%);
+    .empty-state h3 {
+      margin: 0;
+      font-weight: 600;
+      color: #1e293b;
     }
 
-    /* Modal Styles */
+    .empty-state p {
+      margin: 0;
+      font-size: 0.95rem;
+    }
+
     .modal {
       z-index: 1050;
     }
 
     .modal-backdrop {
       z-index: 1040;
-      background-color: rgba(0, 0, 0, 0.5);
+      background-color: rgba(15, 23, 42, 0.55);
     }
 
     .modal-content {
-      border-radius: 12px;
+      border-radius: 18px;
       border: none;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 30px 68px rgba(15, 23, 42, 0.35);
     }
 
     .modal-header {
-      background: linear-gradient(135deg, #5c1a1a 0%, #7d2424 100%);
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
       color: #fff;
-      border-radius: 12px 12px 0 0;
+      border-radius: 18px 18px 0 0;
       border-bottom: none;
+      padding: 1.25rem 1.5rem;
     }
 
     .modal-title {
       font-weight: 600;
+      font-size: 1.15rem;
     }
 
     .btn-close {
       filter: invert(1);
+      opacity: 0.7;
+    }
+
+    .btn-close:hover {
+      opacity: 1;
     }
 
     .modal-body {
       padding: 2rem;
+      background: #f8fafc;
     }
 
     .modal-footer {
-      border-top: 1px solid #e9ecef;
+      border-top: 1px solid rgba(148, 163, 184, 0.25);
       padding: 1rem 2rem;
+      background: #fff;
+      border-radius: 0 0 18px 18px;
+    }
+
+    .form-control, .form-select {
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      padding: 0.65rem 0.85rem;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+      outline: none;
     }
 
     .form-check-input:checked {
-      background-color: #5c1a1a;
-      border-color: #5c1a1a;
+      background-color: #6366f1;
+      border-color: #6366f1;
     }
 
-    /* Image Grid Styles */
     .image-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       gap: 1rem;
-      margin-top: 1rem;
+      margin-top: 1.25rem;
     }
 
     .image-card {
-      border: 1px solid #e9ecef;
-      border-radius: 8px;
-      padding: 0.75rem;
-      background: #f8f9fa;
-      position: relative;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 12px;
+      padding: 0.85rem;
+      background: #fff;
+      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
     }
 
     .image-preview {
       position: relative;
       width: 100%;
-      margin-bottom: 0.5rem;
-      height: 150px; /* Fixed height for consistency */
+      height: 150px;
+      border-radius: 12px;
       overflow: hidden;
-      border-radius: 6px;
-      border: 1px solid #dee2e6;
-      background: #fff;
+      background: #f8fafc;
+      border: 1px solid rgba(148, 163, 184, 0.2);
     }
 
     .image-preview img {
       width: 100%;
       height: 100%;
-      object-fit: contain; /* Ensure image fits within the box */
-      display: block;
+      object-fit: contain;
     }
 
     .btn-remove-image {
       position: absolute;
-      top: -8px;
-      right: -8px;
-      width: 28px;
-      height: 28px;
+      top: 8px;
+      right: 8px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
-      background: #dc3545;
-      color: white;
-      border: 2px solid white;
+      border: none;
+      background: rgba(248, 113, 113, 0.9);
+      color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
-      font-size: 1.2rem;
-      padding: 0;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      font-size: 1rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
     .btn-remove-image:hover {
-      background: #c82333;
       transform: scale(1.1);
+      box-shadow: 0 10px 20px rgba(248, 113, 113, 0.35);
     }
 
-    .btn-remove-image i {
-      color: white;
-      font-weight: bold;
-    }
-
-    /* Item Grid Styles */
     .item-grid {
       display: grid;
       gap: 1rem;
     }
 
     .item-card {
-      border: 1px solid #e9ecef;
-      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 12px;
       padding: 1rem;
-      background: #f8f9fa;
+      background: #fff;
+      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.05);
     }
 
     .muted-text {
-      color: #6c757d;
+      color: #94a3b8;
       font-style: italic;
     }
 
     .text-muted {
-      color: #6c757d;
-      font-size: 0.875rem;
+      color: #94a3b8;
+      font-size: 0.85rem;
       display: block;
-      margin-top: 0.25rem;
+      margin-top: 0.2rem;
     }
 
     .modal-section {
-      margin-bottom: 1.5rem;
-      padding-bottom: 1.5rem;
-      border-bottom: 1px solid #e9ecef;
+      margin-bottom: 1.75rem;
+      padding-bottom: 1.75rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
     }
 
     .modal-section:last-child {
@@ -681,31 +1036,120 @@ import Swal from 'sweetalert2';
     .section-title {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.6rem;
       margin-bottom: 1rem;
-      color: #5c1a1a;
+      color: #4338ca;
       font-weight: 600;
     }
 
     .section-title i {
-      color: #ffd700;
-      font-size: 1.25rem;
+      color: #facc15;
+      font-size: 1.2rem;
     }
 
     .id-chips {
       display: flex;
+      flex-wrap: wrap;
       gap: 0.5rem;
       margin-top: 0.5rem;
-      flex-wrap: wrap;
     }
 
     .chip {
-      background: rgba(255, 215, 0, 0.2);
-      color: #5c1a1a;
-      padding: 0.25rem 0.75rem;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 500;
+      background: rgba(99, 102, 241, 0.12);
+      color: #4338ca;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    @media (max-width: 1200px) {
+      .modern-table {
+        min-width: 100%;
+      }
+    }
+
+    @media (max-width: 992px) {
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .filter-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        top: clamp(0.5rem, 3vw, 1rem);
+      }
+
+      .toolbar-filters {
+        width: 100%;
+        flex-wrap: wrap;
+      }
+
+      .filter-item {
+        flex: 1 1 45%;
+        min-width: 0;
+      }
+
+      .surface-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .action-buttons {
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .view-products {
+        padding: 1.5rem;
+      }
+
+      .page-shell {
+        gap: 1.5rem;
+      }
+
+      .search-field {
+        padding: 0.75rem 1rem;
+      }
+
+      .thumb-stack img,
+      .fallback-thumb {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .filter-item {
+        flex: 1 1 100%;
+      }
+
+      .modern-table thead {
+        display: none;
+      }
+
+      .modern-table tbody tr {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+        padding: 1.1rem;
+      }
+
+      .modern-table tbody td {
+        padding: 0;
+        border: none;
+      }
+
+      .modern-table tbody td:nth-child(1) {
+        grid-column: 1 / -1;
+      }
+
+      .action-buttons {
+        justify-content: flex-start;
+      }
     }
   `]
 })
@@ -736,6 +1180,29 @@ export class ViewProductsComponent implements OnInit {
     private itemService: ItemService,
     private router: Router
   ) { }
+
+  /**
+   * Convert absolute file path to displayable URL
+   * Handles both old relative paths and new absolute paths for backward compatibility
+   */
+  getImageDisplayUrl(imagePath: string): string {
+    if (!imagePath) return '';
+
+    // If it's already a URL, return as-is
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+
+    // If it's an absolute file path (contains : for Windows or starts with / or \)
+    if (imagePath.includes(':') || imagePath.startsWith('/') || imagePath.startsWith('\\')) {
+      // Encode the path for URL
+      const encodedPath = encodeURIComponent(imagePath);
+      return `http://localhost:8080/api/files/display?path=${encodedPath}`;
+    }
+
+    // Fallback: treat as relative path (for backward compatibility)
+    return `http://localhost:8080/api/files/images/${imagePath}`;
+  }
 
   ngOnInit(): void {
     this.loadProducts();
@@ -821,7 +1288,7 @@ export class ViewProductsComponent implements OnInit {
     const imagesHtml = product.images?.length ? `
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:0.75rem;">
         ${product.images.map(img => `
-          <img src="${img.imageUrl}" alt="${product.variantDescription}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0;" />
+          <img src="${this.getImageDisplayUrl(img.imageUrl)}" alt="${product.variantDescription}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0;" />
         `).join('')}
       </div>
     ` : '<p style="color:#6c757d;margin:0;">No images uploaded.</p>';
