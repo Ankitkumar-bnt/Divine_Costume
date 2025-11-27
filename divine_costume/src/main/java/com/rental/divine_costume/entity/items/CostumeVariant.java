@@ -2,6 +2,8 @@ package com.rental.divine_costume.entity.items;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,10 +14,12 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class CostumeVariant extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
+    @JsonIgnore
     private CostumeCategory category;
 
     @Column(name = "description", columnDefinition = "TEXT", nullable = false)
@@ -34,6 +38,7 @@ public class CostumeVariant extends BaseEntity {
     private String tertiaryColor;
 
     @OneToMany(mappedBy = "costumeVariant", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     @Builder.Default
     private List<CostumeImage> images = new ArrayList<>();
 }
