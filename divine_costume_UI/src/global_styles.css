@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap');
 
 * {
   margin: 0;
@@ -11,14 +12,14 @@ html {
 }
 
 body {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Inter', 'Poppins', sans-serif;
   color: #1B1B1B;
   background-color: #FFF8EE;
   overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Space Grotesk', 'Playfair Display', serif;
 }
 
 :root {
@@ -26,6 +27,15 @@ h1, h2, h3, h4, h5, h6 {
   --accent-gold: #D4AF37;
   --background-cream: #FFF8EE;
   --text-dark: #1B1B1B;
+
+  /* Gen-Z Pastel Palette */
+  --pastel-lavender: #EAE6FF;
+  --pastel-mint: #E6FFF5;
+  --pastel-peach: #FFE9E3;
+  --pastel-beige: #F5F2EA;
+  --glass-bg: rgba(255,255,255,0.45);
+  --glass-border: rgba(255,255,255,0.35);
+  --soft-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
 }
 
 ::selection {

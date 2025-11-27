@@ -1,21 +1,29 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-hero',
   standalone: true,
+  imports: [CommonModule],
   template: `
     <section class="hero-section">
-      <div class="hero-overlay"></div>
-      <div class="hero-content">
-        <h1 class="hero-title">
-          Discover Divine Classical Costumes & Ornaments for Rent
-        </h1>
+      <div class="slides">
+        <img *ngFor="let img of images; let i = index" [src]="img" [class.active]="i === current" alt="Divine Costume Banner">
+      </div>
+
+      <div class="gradient-overlay"></div>
+
+      <div class="hero-content glass">
+        <h1 class="hero-title">Divine Classical Costumes & Ornaments</h1>
         <p class="hero-subtitle">
-          Bringing grace, culture, and tradition to every performance with our carefully curated classical dance attire.
+          Gracefully curated rentals for Bharatanatyam, Kathak, Kuchipudi, Mohiniyattam and more.
         </p>
         <div class="hero-buttons">
-          <button class="btn btn-primary-gold">View Categories</button>
-          <button class="btn btn-outline-gold">Contact Us</button>
+          <a class="btn btn-primary" href="#categories">View Categories</a>
+          <a class="btn btn-ghost" href="#contact">Contact Us</a>
+        </div>
+        <div class="dots">
+          <button *ngFor="let _ of images; let i = index" class="dot" [class.active]="i===current" (click)="goTo(i)" [attr.aria-label]="'Go to slide ' + (i + 1)"></button>
         </div>
       </div>
     </section>
@@ -23,151 +31,83 @@ import { Component } from '@angular/core';
   styles: [`
     .hero-section {
       position: relative;
-      height: 85vh;
-      min-height: 600px;
-      background: linear-gradient(135deg, #7A1F2A 0%, #4A0F1A 50%, #2A0510 100%),
-                  url('https://images.pexels.com/photos/8923477/pexels-photo-8923477.jpeg?auto=compress&cs=tinysrgb&w=1920') center/cover;
-      background-blend-mode: multiply;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      height: 80vh;
+      min-height: 560px;
+      width: 100%;
       overflow: hidden;
     }
 
-    .hero-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(to bottom, rgba(122, 31, 42, 0.7) 0%, rgba(122, 31, 42, 0.3) 50%, rgba(0, 0, 0, 0.5) 100%);
+    .slides { position: absolute; inset: 0; }
+    .slides img {
+      position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 800ms ease;
+      filter: saturate(1.05) contrast(1.02);
+    }
+    .slides img.active { opacity: 1; }
+
+    .gradient-overlay {
+      position: absolute; inset: 0;
+      background: radial-gradient(80% 60% at 50% 40%, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 40%, rgba(0,0,0,0.45) 100%),
+                  linear-gradient(180deg, rgba(234,230,255,0.35) 0%, rgba(230,255,245,0.15) 60%, rgba(0,0,0,0.45) 100%);
     }
 
     .hero-content {
-      position: relative;
-      z-index: 2;
-      text-align: center;
-      padding: 2rem;
-      max-width: 900px;
-      animation: fadeInUp 1s ease-out;
+      position: relative; z-index: 2; text-align: center; padding: 2rem; max-width: 980px; margin: 0 auto; top: 50%; transform: translateY(-50%);
+      animation: rise 900ms ease-out;
+    }
+    .glass { background: var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: blur(10px); border-radius: 20px; box-shadow: var(--soft-shadow); }
+    @keyframes rise { from { opacity: 0; transform: translateY(-30%) } to { opacity: 1; transform: translateY(-50%) } }
+
+    .hero-title { font-family: 'Space Grotesk', 'Playfair Display', serif; font-size: 3rem; font-weight: 700; color: #0f172a; margin-bottom: .75rem; }
+    .hero-subtitle { font-family: 'Inter', 'Poppins', sans-serif; font-size: 1.1rem; color: #334155; margin: 0 auto 1.5rem; max-width: 760px; }
+
+    .hero-buttons { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; padding-bottom: 1rem; }
+    .btn { font-family: 'Inter', 'Poppins', sans-serif; font-weight: 600; font-size: 0.95rem; padding: .9rem 1.4rem; border-radius: 12px; transition: all .25s ease; text-decoration: none; display: inline-flex; align-items: center; }
+    .btn-primary { color: #111827; background: linear-gradient(90deg, var(--pastel-peach), var(--pastel-beige)); border: 1px solid var(--glass-border); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: var(--soft-shadow); }
+    .btn-ghost { color: #111827; background: transparent; border: 1px solid var(--glass-border); }
+    .btn-ghost:hover { background: var(--glass-bg); }
+
+    .dots { display: flex; gap: .4rem; justify-content: center; padding: .5rem 0 1rem; }
+    .dot { width: 8px; height: 8px; border-radius: 999px; border: none; background: rgba(15,23,42,.25); cursor: pointer; transition: transform .2s ease, background .2s ease; }
+    .dot.active { background: #0f172a; transform: scale(1.1); }
+
+    @media (max-width: 992px) {
+      .hero-section { height: 70vh; min-height: 480px; }
+      .hero-title { font-size: 2.2rem; }
+      .hero-subtitle { font-size: 1rem; }
     }
 
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .hero-title {
-      font-family: 'Playfair Display', serif;
-      font-size: 3.5rem;
-      font-weight: 700;
-      color: #FFF8EE;
-      margin-bottom: 1.5rem;
-      line-height: 1.2;
-      text-shadow: 2px 4px 8px rgba(0, 0, 0, 0.5);
-    }
-
-    .hero-subtitle {
-      font-family: 'Poppins', sans-serif;
-      font-size: 1.3rem;
-      color: #FFF8EE;
-      margin-bottom: 2.5rem;
-      line-height: 1.6;
-      opacity: 0.95;
-      text-shadow: 1px 2px 4px rgba(0, 0, 0, 0.4);
-    }
-
-    .hero-buttons {
-      display: flex;
-      gap: 1.5rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      font-family: 'Poppins', sans-serif;
-      font-weight: 600;
-      font-size: 1.1rem;
-      padding: 1rem 2.5rem;
-      border-radius: 10px;
-      transition: all 0.3s ease;
-      cursor: pointer;
-      border: none;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .btn-primary-gold {
-      background-color: #D4AF37;
-      color: #7A1F2A;
-      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
-    }
-
-    .btn-primary-gold:hover {
-      background-color: #C49D2E;
-      box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
-      transform: translateY(-3px);
-    }
-
-    .btn-outline-gold {
-      background-color: transparent;
-      color: #D4AF37;
-      border: 2px solid #D4AF37;
-      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
-    }
-
-    .btn-outline-gold:hover {
-      background-color: #D4AF37;
-      color: #7A1F2A;
-      box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
-      transform: translateY(-3px);
-    }
-
-    @media (max-width: 768px) {
-      .hero-section {
-        height: 70vh;
-        min-height: 500px;
-      }
-
-      .hero-title {
-        font-size: 2.2rem;
-      }
-
-      .hero-subtitle {
-        font-size: 1.1rem;
-      }
-
-      .btn {
-        font-size: 1rem;
-        padding: 0.9rem 2rem;
-      }
-
-      .hero-buttons {
-        flex-direction: column;
-        gap: 1rem;
-      }
-
-      .hero-buttons .btn {
-        width: 100%;
-        max-width: 300px;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .hero-title {
-        font-size: 1.8rem;
-      }
-
-      .hero-subtitle {
-        font-size: 1rem;
-      }
+    @media (max-width: 520px) {
+      .hero-title { font-size: 1.8rem; }
     }
   `]
 })
-export class HeroComponent {}
+export class HeroComponent implements OnInit, OnDestroy {
+  images: string[] = [
+    'https://images.pexels.com/photos/8923477/pexels-photo-8923477.jpeg?auto=compress&cs=tinysrgb&w=1920',
+    'https://images.pexels.com/photos/8923478/pexels-photo-8923478.jpeg?auto=compress&cs=tinysrgb&w=1920',
+    'https://images.pexels.com/photos/2697787/pexels-photo-2697787.jpeg?auto=compress&cs=tinysrgb&w=1920'
+  ];
+  current = 0;
+  timer: any;
+
+  ngOnInit(): void {
+    this.start();
+  }
+
+  ngOnDestroy(): void {
+    this.stop();
+  }
+
+  start() {
+    this.stop();
+    this.timer = setInterval(() => this.next(), 4500);
+  }
+
+  stop() {
+    if (this.timer) clearInterval(this.timer);
+  }
+
+  next() { this.current = (this.current + 1) % this.images.length; }
+  goTo(i: number) { this.current = i; this.start(); }
+}

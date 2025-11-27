@@ -1,16 +1,18 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
   imports: [CommonModule],
   template: `
-    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top" *ngIf="!isAdminRoute">
       <div class="container-fluid px-4">
         <a class="navbar-brand brand-logo" href="#">
-          Divine Costume
+          <img src="/assets/logo.png" alt="Divine Costume" class="logo-image">
         </a>
 
         <button
@@ -22,7 +24,7 @@ import { Router } from '@angular/router';
           <span class="navbar-toggler-icon"></span>
         </button>
 
-        <div class="collapse navbar-collapse" [class.show]="isMenuOpen" id="navbarNav">
+        <div class="collapse navbar-collapse w-100" [class.show]="isMenuOpen" id="navbarNav">
           <ul class="navbar-nav mx-auto nav-center">
             <li class="nav-item">
               <a class="nav-link" href="#about">About Us</a>
@@ -38,7 +40,7 @@ import { Router } from '@angular/router';
             </li>
           </ul>
 
-          <div class="d-flex">
+          <div class="d-flex ms-auto">
             <button class="btn btn-login" type="button" (click)="onLoginClick()">Login</button>
           </div>
         </div>
@@ -53,16 +55,20 @@ import { Router } from '@angular/router';
     }
 
     .brand-logo {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: #7A1F2A;
+      display: flex;
+      align-items: center;
       text-decoration: none;
-      letter-spacing: 0.5px;
     }
 
-    .brand-logo:hover {
-      color: #D4AF37;
+    .logo-image {
+      height: 60px;
+      width: auto;
+      object-fit: contain;
+      transition: transform 0.3s ease;
+    }
+
+    .brand-logo:hover .logo-image {
+      transform: scale(1.05);
     }
 
     .nav-center {
@@ -129,6 +135,18 @@ import { Router } from '@angular/router';
       background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%237A1F2A' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
     }
 
+    /* Center menu on desktop */
+    @media (min-width: 992px) {
+      .navbar-collapse {
+        position: relative;
+      }
+      .nav-center {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+    }
+
     @media (max-width: 991px) {
       .nav-center {
         margin-top: 1rem;
@@ -148,13 +166,48 @@ import { Router } from '@angular/router';
       .btn-login {
         width: 100%;
       }
+
+      .logo-image {
+        height: 50px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .logo-image {
+        height: 45px;
+      }
     }
   `]
 })
-export class NavbarComponent {
+export class NavbarComponent implements OnInit, OnDestroy {
   isMenuOpen = false;
+  isAdminRoute = false;
+  private routerSubscription?: Subscription;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router) {
+    // Check initial route
+    this.checkAdminRoute(this.router.url);
+  }
+
+  ngOnInit() {
+    // Subscribe to router events to detect route changes
+    this.routerSubscription = this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe((event: NavigationEnd) => {
+        this.checkAdminRoute(event.urlAfterRedirects);
+      });
+  }
+
+  ngOnDestroy() {
+    // Clean up subscription
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
+  }
+
+  private checkAdminRoute(url: string) {
+    this.isAdminRoute = url.startsWith('/admin') || url.startsWith('/login') || url.startsWith('/register');
+  }
 
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;

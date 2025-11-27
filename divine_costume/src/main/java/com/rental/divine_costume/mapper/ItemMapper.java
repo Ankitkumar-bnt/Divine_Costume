@@ -10,7 +10,7 @@ public interface ItemMapper {
 
     @Mapping(source = "costumeVariant.category.id", target = "categoryId")
     @Mapping(source = "costumeVariant.category.categoryName", target = "categoryName")
-    @Mapping(source = "costumeVariant.category.categoryDescription", target = "categoryDescription") // ✅ fixed
+    @Mapping(source = "costumeVariant.category.categoryDescription", target = "categoryDescription")
     @Mapping(source = "costumeVariant.id", target = "variantId")
     @Mapping(source = "costumeVariant.variantDescription", target = "variantDescription")
     @Mapping(source = "costumeVariant.style", target = "style")

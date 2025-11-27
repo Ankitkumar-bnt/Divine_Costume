@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 public class ItemServiceImpl implements ItemService {
 
     // Inject all repositories
+     // Inject all repositories
     private final CostumeCategoryRepository categoryRepository;
     private final CostumeVariantRepository variantRepository;
     private final CostumeRepository costumeRepository;
@@ -112,14 +113,60 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public ItemResponseDto addFullCostume(ItemRequestDto requestDto) {
 
-        // ---------- 1️⃣ Save Category ----------
-        CostumeCategory category = categoryMapper.toEntity(requestDto.getCategory());
-        category = categoryRepository.save(category);
+        // ---------- 1️⃣ Upsert Category (by name, ignore case) ----------
+        String incomingCategoryName = requestDto.getCategory() != null ? requestDto.getCategory().getCategoryName() : null;
+        String incomingCategoryDesc = requestDto.getCategory() != null ? requestDto.getCategory().getCategoryDescription() : null;
 
-        // ---------- 2️⃣ Save Variant ----------
-        CostumeVariant variant = variantMapper.toEntity(requestDto.getVariant());
-        variant.setCategory(category);
-        variant = variantRepository.save(variant);
+        if (incomingCategoryName == null || incomingCategoryName.trim().isEmpty()) {
+            throw new RuntimeException("Category name is required");
+        }
+
+        List<CostumeCategory> existingCategories = categoryRepository
+                .findAllByCategoryNameIgnoreCase(incomingCategoryName.trim());
+
+        CostumeCategory category;
+        if (existingCategories != null && !existingCategories.isEmpty()) {
+            CostumeCategory existing = existingCategories.get(0);
+            String newDesc = incomingCategoryDesc == null ? null : incomingCategoryDesc.trim();
+            String oldDesc = existing.getCategoryDescription() == null ? null : existing.getCategoryDescription().trim();
+            if ((newDesc != null && !newDesc.equals(oldDesc)) || (newDesc == null && oldDesc != null)) {
+                existing.setCategoryDescription(newDesc);
+                category = categoryRepository.save(existing);
+            } else {
+                category = existing;
+            }
+        } else {
+            CostumeCategory entity = categoryMapper.toEntity(requestDto.getCategory());
+            entity.setCategoryName(incomingCategoryName.trim());
+            category = categoryRepository.save(entity);
+        }
+
+        // ---------- 2️⃣ Upsert Variant (by category + description, ignore case) ----------
+        String incomingVariantDesc = requestDto.getVariant() != null ? requestDto.getVariant().getVariantDescription() : null;
+        if (incomingVariantDesc == null || incomingVariantDesc.trim().isEmpty()) {
+            throw new RuntimeException("Variant description is required");
+        }
+
+        List<CostumeVariant> foundVariants = variantRepository
+                .findByCategoryIdAndVariantDescriptionIgnoreCase(category.getId(), incomingVariantDesc.trim());
+
+        CostumeVariant variant;
+        if (foundVariants != null && !foundVariants.isEmpty()) {
+            CostumeVariant existing = foundVariants.get(0);
+            boolean changed = false;
+            var vDto = requestDto.getVariant();
+            if (vDto.getStyle() != null && !vDto.getStyle().equals(existing.getStyle())) { existing.setStyle(vDto.getStyle()); changed = true; }
+            if (vDto.getPrimaryColor() != null && !vDto.getPrimaryColor().equals(existing.getPrimaryColor())) { existing.setPrimaryColor(vDto.getPrimaryColor()); changed = true; }
+            if (vDto.getSecondaryColor() != null && !vDto.getSecondaryColor().equals(existing.getSecondaryColor())) { existing.setSecondaryColor(vDto.getSecondaryColor()); changed = true; }
+            if (vDto.getTertiaryColor() != null && !vDto.getTertiaryColor().equals(existing.getTertiaryColor())) { existing.setTertiaryColor(vDto.getTertiaryColor()); changed = true; }
+            if (existing.getCategory() == null || existing.getCategory().getId() != category.getId()) { existing.setCategory(category); changed = true; }
+            variant = changed ? variantRepository.save(existing) : existing;
+        } else {
+            CostumeVariant newVar = variantMapper.toEntity(requestDto.getVariant());
+            newVar.setVariantDescription(incomingVariantDesc.trim());
+            newVar.setCategory(category);
+            variant = variantRepository.save(newVar);
+        }
 
         // ---------- 3️⃣ Save Costume ----------
         Costume costume = costumeMapper.toEntity(requestDto.getCostume());
@@ -138,6 +185,10 @@ public class ItemServiceImpl implements ItemService {
         // ---------- 5️⃣ Save Images ----------
         if (requestDto.getImages() != null) {
             for (CostumeImageRequestDto imgDto : requestDto.getImages()) {
+                // Skip empty or null image URLs
+                if (imgDto.getImageUrl() == null || imgDto.getImageUrl().trim().isEmpty()) {
+                    continue;
+                }
                 CostumeImage img = imageMapper.toEntity(imgDto);
                 img.setCostumeVariant(variant);
                 imageRepository.save(img);
@@ -292,6 +343,10 @@ public class ItemServiceImpl implements ItemService {
             
             // Add new images
             for (CostumeImageRequestDto imgDto : requestDto.getImages()) {
+                // Skip empty or null image URLs
+                if (imgDto.getImageUrl() == null || imgDto.getImageUrl().trim().isEmpty()) {
+                    continue;
+                }
                 CostumeImage img = imageMapper.toEntity(imgDto);
                 img.setCostumeVariant(variant);
                 imageRepository.save(img);
@@ -300,6 +355,17 @@ public class ItemServiceImpl implements ItemService {
 
         // 7️⃣ Return updated full DTO
         return fullMapper.toItemDto(costume);
+    }
+
+    @Override
+    public Integer getNextSerialNumber(String categoryName, String primaryColor, String secondaryColor, String tertiaryColor, String size) {
+        String sec = secondaryColor == null ? "" : secondaryColor;
+        String ter = tertiaryColor == null ? "" : tertiaryColor;
+        Integer max = costumeRepository.findMaxSerialNumber(categoryName, primaryColor, sec, ter, size);
+        if (max == null || max <= 0) {
+            return 1;
+        }
+        return max + 1;
     }
 
     /**
