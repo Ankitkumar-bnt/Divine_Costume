@@ -43,6 +43,15 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
             <li><a routerLink="/" fragment="about" (click)="closeMenu()">About Us</a></li>
             <li><a routerLink="/" fragment="contact" (click)="closeMenu()">Contact Us</a></li>
           </ul>
+
+          <div class="nav-icons">
+            <a routerLink="/cart" class="icon-btn" title="Cart">
+              <i class="bi bi-cart3"></i>
+            </a>
+            <a routerLink="/wishlist" class="icon-btn" title="Wishlist">
+              <i class="bi bi-heart"></i>
+            </a>
+          </div>
         </div>
       </nav>
     </header>
@@ -114,12 +123,43 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
     .links a:hover { background: linear-gradient(90deg, var(--pastel-peach), var(--pastel-beige)); transform: translateY(-1px); }
     .links a.active { background: linear-gradient(90deg, var(--pastel-lavender), var(--pastel-mint)); }
 
+    .nav-icons {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      margin-left: 1000px;
+      padding-right: 1rem;
+    }
+
+    .icon-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #000000;
+      font-size: 1.4rem;
+      text-decoration: none;
+      padding: 0.5rem;
+      border-radius: 10px;
+      transition: all 0.25s ease;
+      background: transparent;
+    }
+
+    .icon-btn:nth-child(2) {
+      color: #dc2626;
+    }
+
+    .icon-btn:hover {
+      transform: scale(1.1);
+    }
+
     @media (max-width: 992px) {
       .container { padding: .65rem .75rem; }
       .burger { display: flex; }
       .links { position: absolute; top: calc(100% + .5rem); right: .75rem; left: auto; transform: none; flex-direction: column; align-items: stretch; gap: .25rem; padding: .5rem; min-width: 70%; display: none; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; box-shadow: var(--soft-shadow); }
       .links.open { display: flex; }
       .links a { width: 100%; text-align: left; }
+      .nav-icons { position: absolute; right: 4rem; gap: 0.5rem; }
+      .icon-btn { font-size: 1.2rem; padding: 0.4rem; }
     }
   `]
 })

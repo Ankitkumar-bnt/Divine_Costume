@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FooterComponent } from './footer.component';
+import { CartService } from '../services/cart.service';
+import Swal from 'sweetalert2';
 
 interface VariantSize {
   size: string;
@@ -106,7 +108,7 @@ interface ProductDetailModel {
           </div>
 
           <div class="actions">
-            <button class="btn-cart" [disabled]="currentStock === 0">
+            <button class="btn-cart" [disabled]="currentStock === 0" (click)="addToCart()">
               <span class="btn-icon">🛒</span>
               {{ currentStock > 0 ? 'Add to Cart' : 'Out of Stock' }}
             </button>
@@ -139,24 +141,29 @@ interface ProductDetailModel {
     :host {
       display: block;
       background-color: #FFFDF9;
-      min-height: 100vh;
     }
 
     .pdp-container {
       max-width: 1280px;
       margin: 0 auto;
-      padding: 2rem 1.5rem;
+      padding: 1rem 1.5rem;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
     }
 
     .breadcrumb {
-      margin-bottom: 2rem;
+      margin-bottom: 1rem;
+      flex-shrink: 0;
     }
 
     .back-link {
       color: #7A1F2A;
       text-decoration: none;
       font-weight: 500;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       transition: opacity 0.2s;
     }
 
@@ -167,29 +174,33 @@ interface ProductDetailModel {
     .product-layout {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 3rem;
-      align-items: start;
+      gap: 2rem;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
     }
 
     /* Gallery Styles */
     .gallery-section {
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
-      position: sticky;
-      top: 2rem;
+      gap: 0.75rem;
+      height: 100%;
+      overflow: hidden;
     }
 
     .main-image-container {
       background: #fff;
-      border-radius: 20px;
+      border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-      max-height: 500px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+      flex: 1;
+      max-height: 400px;
       display: flex;
       align-items: center;
       justify-content: center;
       border: 1px solid rgba(212, 175, 55, 0.2);
+      min-height: 0;
     }
 
     .main-image {
@@ -201,17 +212,18 @@ interface ProductDetailModel {
 
     .thumbnails-scroll {
       display: flex;
-      gap: 1rem;
+      gap: 0.5rem;
       overflow-x: auto;
-      padding-bottom: 0.5rem;
+      padding-bottom: 0.25rem;
       scrollbar-width: thin;
+      flex-shrink: 0;
     }
 
     .thumb-btn {
-      flex: 0 0 80px;
-      height: 80px;
+      flex: 0 0 60px;
+      height: 60px;
       border: 2px solid transparent;
-      border-radius: 12px;
+      border-radius: 8px;
       padding: 0;
       overflow: hidden;
       cursor: pointer;
@@ -232,14 +244,17 @@ interface ProductDetailModel {
 
     /* Info Section Styles */
     .info-section {
-      padding-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
     }
 
     .product-title {
-      font-family: 'Playfair Display', serif; /* Assuming global font or fallback */
-      font-size: 2.5rem;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
       color: #1B1B1B;
-      margin: 0 0 1rem;
+      margin: 0 0 0.4rem;
       line-height: 1.2;
     }
 
@@ -247,55 +262,55 @@ interface ProductDetailModel {
       display: flex;
       align-items: baseline;
       gap: 0.25rem;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.25rem;
       color: #7A1F2A;
     }
 
     .currency {
-      font-size: 1.5rem;
+      font-size: 1rem;
       font-weight: 600;
     }
 
     .amount {
-      font-size: 2.5rem;
+      font-size: 1.5rem;
       font-weight: 700;
       letter-spacing: -0.02em;
     }
 
     .period {
-      font-size: 1rem;
+      font-size: 0.8rem;
       color: #666;
       font-weight: 500;
     }
 
     .deposit-info {
       color: #666;
-      font-size: 0.95rem;
-      margin: 0 0 2rem;
-      padding-bottom: 2rem;
+      font-size: 0.75rem;
+      margin: 0 0 0.75rem;
+      padding-bottom: 0.75rem;
       border-bottom: 1px solid rgba(0,0,0,0.08);
     }
 
     .description {
-      font-size: 1.05rem;
-      line-height: 1.7;
+      font-size: 0.8rem;
+      line-height: 1.4;
       color: #444;
-      margin-bottom: 2.5rem;
+      margin-bottom: 0.75rem;
     }
 
     .option-group {
-      margin-bottom: 2rem;
+      margin-bottom: 0.75rem;
     }
 
     .label-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.5rem;
     }
 
     .option-label {
-      font-size: 0.9rem;
+      font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       font-weight: 700;
@@ -305,14 +320,14 @@ interface ProductDetailModel {
     .color-selector {
       display: flex;
       flex-wrap: wrap;
-      gap: 1rem;
+      gap: 0.75rem;
     }
 
     .color-option {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      padding: 0.5rem 1rem 0.5rem 0.5rem;
+      gap: 0.5rem;
+      padding: 0.4rem 0.75rem 0.4rem 0.4rem;
       border: 1px solid #e0e0e0;
       border-radius: 50px;
       background: #fff;
@@ -331,8 +346,8 @@ interface ProductDetailModel {
     }
 
     .color-option img {
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       object-fit: cover;
     }
@@ -340,25 +355,27 @@ interface ProductDetailModel {
     .color-name {
       font-weight: 500;
       color: #333;
+      font-size: 0.8rem;
     }
 
     .size-selector {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.75rem;
+      gap: 0.5rem;
     }
 
     .size-option {
-      min-width: 3.5rem;
-      height: 3.5rem;
+      min-width: 2.5rem;
+      height: 2.5rem;
       display: grid;
       place-items: center;
       border: 1px solid #e0e0e0;
-      border-radius: 12px;
+      border-radius: 8px;
       background: #fff;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
+      font-size: 0.8rem;
     }
 
     .size-option:not(:disabled):hover {
@@ -380,7 +397,7 @@ interface ProductDetailModel {
     }
 
     .stock-status {
-      font-size: 0.85rem;
+      font-size: 0.7rem;
       font-weight: 600;
       color: #2E7D32;
     }
@@ -390,37 +407,37 @@ interface ProductDetailModel {
     }
 
     .actions {
-      margin-top: 3rem;
+      margin-top: 1rem;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1rem;
+      gap: 0.5rem;
     }
 
     .btn-cart,
     .btn-wishlist {
-      padding: 1rem 1.5rem;
+      padding: 0.7rem 1rem;
       border: none;
-      border-radius: 12px;
-      font-size: 1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.5rem;
+      gap: 0.4rem;
     }
 
     .btn-cart {
       background: #7A1F2A;
       color: #fff;
-      box-shadow: 0 8px 20px rgba(122, 31, 42, 0.2);
+      box-shadow: 0 6px 16px rgba(122, 31, 42, 0.2);
     }
 
     .btn-cart:hover:not(:disabled) {
       background: #962635;
       transform: translateY(-2px);
-      box-shadow: 0 12px 25px rgba(122, 31, 42, 0.3);
+      box-shadow: 0 10px 20px rgba(122, 31, 42, 0.3);
     }
 
     .btn-cart:disabled {
@@ -441,15 +458,15 @@ interface ProductDetailModel {
     }
 
     .btn-icon {
-      font-size: 1.2rem;
+      font-size: 1rem;
     }
 
     .features {
-      margin-top: 3rem;
+      margin-top: 1rem;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      padding-top: 2rem;
+      gap: 0.5rem;
+      padding-top: 0.75rem;
       border-top: 1px solid rgba(0,0,0,0.08);
     }
 
@@ -457,40 +474,47 @@ interface ProductDetailModel {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.25rem;
       text-align: center;
-      font-size: 0.85rem;
+      font-size: 0.7rem;
       color: #666;
     }
 
     .feature-item .icon {
-      font-size: 1.5rem;
+      font-size: 1rem;
     }
 
     @media (max-width: 968px) {
       .pdp-container {
-        padding: 1rem;
+        padding: 0.75rem;
+        height: auto;
+        max-height: none;
       }
 
       .product-layout {
         grid-template-columns: 1fr;
-        gap: 2rem;
+        gap: 1.5rem;
+        overflow: visible;
       }
       
       .gallery-section {
-        position: static;
+        height: auto;
       }
 
       .main-image-container {
-        max-height: 400px;
+        height: 50vh;
+      }
+
+      .info-section {
+        overflow-y: visible;
       }
       
       .product-title {
-        font-size: 1.75rem;
+        font-size: 1.5rem;
       }
 
       .amount {
-        font-size: 2rem;
+        font-size: 1.75rem;
       }
 
       .actions {
@@ -499,7 +523,7 @@ interface ProductDetailModel {
 
       .features {
         grid-template-columns: 1fr;
-        gap: 0.75rem;
+        gap: 0.5rem;
       }
 
       .feature-item {
@@ -565,7 +589,11 @@ export class CostumeDetailComponent implements OnInit {
     }
   ];
 
-  constructor(private route: ActivatedRoute) { }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private cartService: CartService
+  ) { }
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
@@ -599,5 +627,34 @@ export class CostumeDetailComponent implements OnInit {
     if (!this.currentVariant || !this.selectedSize) { this.currentStock = 0; return; }
     const entry = this.currentVariant.sizes.find(s => s.size === this.selectedSize);
     this.currentStock = entry ? entry.stock : 0;
+  }
+
+  addToCart() {
+    if (!this.product || !this.currentVariant || !this.selectedSize || this.currentStock === 0) {
+      return;
+    }
+
+    this.cartService.addToCart({
+      productId: this.product.id,
+      name: this.product.name,
+      description: this.product.shortDescription,
+      color: this.currentVariant.displayName,
+      size: this.selectedSize,
+      image: this.currentImages[0],
+      rentPerDay: this.currentVariant.rentPerDay,
+      deposit: this.currentVariant.deposit
+    });
+
+    // Show success message with SweetAlert2
+    Swal.fire({
+      icon: 'success',
+      title: 'Added to Cart!',
+      text: `${this.product.name} has been added to your cart.`,
+      showConfirmButton: false,
+      timer: 1500,
+      timerProgressBar: true
+    }).then(() => {
+      this.router.navigate(['/cart']);
+    });
   }
 }

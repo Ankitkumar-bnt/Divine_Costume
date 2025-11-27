@@ -18,6 +18,10 @@ export const routes: Routes = [
     loadComponent: () => import('./components/ornaments-list.component').then(m => m.OrnamentsListComponent)
   },
   {
+    path: 'cart',
+    loadComponent: () => import('./components/cart.component').then(m => m.CartComponent)
+  },
+  {
     path: 'login',
     loadComponent: () => import('./components/login.component').then(m => m.LoginComponent)
   },
