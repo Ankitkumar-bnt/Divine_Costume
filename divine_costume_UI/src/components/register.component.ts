@@ -5,33 +5,58 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 @Component({
-  selector: 'app-login',
+  selector: 'app-register',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <div class="login-container">
+    <div class="register-container">
       <div class="background-decoration">
         <div class="circle circle-1"></div>
         <div class="circle circle-2"></div>
         <div class="circle circle-3"></div>
       </div>
 
-      <div class="login-card" [class.shake]="showError">
+      <div class="register-card" [class.shake]="showError">
         <div class="logo-container">
           <div class="logo-circle">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="8.5" cy="7" r="4"></circle>
+              <polyline points="17 11 19 13 23 9"></polyline>
             </svg>
           </div>
         </div>
 
-        <div class="login-header">
-          <h1 class="brand-title">Divine Costume</h1>
-          <p class="subtitle">Welcome back! Please login to continue.</p>
+        <div class="register-header">
+          <h1 class="brand-title">Create Account</h1>
+          <p class="subtitle">Join Divine Costume and start your journey!</p>
         </div>
 
-        <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+        <form (ngSubmit)="onSubmit()" #registerForm="ngForm">
+          <div class="form-group">
+            <div class="input-wrapper">
+              <div class="input-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                [(ngModel)]="formData.name"
+                required
+                minlength="2"
+                class="form-control"
+                placeholder=" "
+                (focus)="onInputFocus('name')"
+                (blur)="onInputBlur('name')"
+              />
+              <label for="name" class="floating-label">Full Name</label>
+            </div>
+          </div>
+
           <div class="form-group">
             <div class="input-wrapper">
               <div class="input-icon">
@@ -44,7 +69,7 @@ import { AuthService } from '../services/auth.service';
                 type="email"
                 id="email"
                 name="email"
-                [(ngModel)]="credentials.email"
+                [(ngModel)]="formData.email"
                 required
                 email
                 class="form-control"
@@ -60,6 +85,32 @@ import { AuthService } from '../services/auth.service';
             <div class="input-wrapper">
               <div class="input-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                </svg>
+              </div>
+              <input
+                type="tel"
+                id="contact"
+                name="contact"
+                [(ngModel)]="formData.contact"
+                required
+                pattern="[0-9]{10}"
+                class="form-control"
+                placeholder=" "
+                (focus)="onInputFocus('contact')"
+                (blur)="onInputBlur('contact')"
+              />
+              <label for="contact" class="floating-label">Contact Number</label>
+            </div>
+            <small class="field-hint" *ngIf="registerForm.controls['contact']?.invalid && registerForm.controls['contact']?.touched">
+              Please enter a valid 10-digit phone number
+            </small>
+          </div>
+
+          <div class="form-group">
+            <div class="input-wrapper">
+              <div class="input-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                   <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                 </svg>
@@ -68,14 +119,68 @@ import { AuthService } from '../services/auth.service';
                 type="password"
                 id="password"
                 name="password"
-                [(ngModel)]="credentials.password"
+                [(ngModel)]="formData.password"
                 required
+                minlength="6"
                 class="form-control"
                 placeholder=" "
                 (focus)="onInputFocus('password')"
                 (blur)="onInputBlur('password')"
               />
               <label for="password" class="floating-label">Password</label>
+            </div>
+            <small class="field-hint" *ngIf="registerForm.controls['password']?.invalid && registerForm.controls['password']?.touched">
+              Password must be at least 6 characters
+            </small>
+          </div>
+
+          <div class="form-group">
+            <div class="input-wrapper">
+              <div class="input-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </div>
+              <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                [(ngModel)]="formData.confirmPassword"
+                required
+                class="form-control"
+                placeholder=" "
+                (focus)="onInputFocus('confirmPassword')"
+                (blur)="onInputBlur('confirmPassword')"
+              />
+              <label for="confirmPassword" class="floating-label">Confirm Password</label>
+            </div>
+            <small class="field-hint error" *ngIf="formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword">
+              Passwords do not match
+            </small>
+          </div>
+
+          <div class="form-group">
+            <div class="input-wrapper textarea-wrapper">
+              <div class="input-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+              </div>
+              <textarea
+                id="address"
+                name="address"
+                [(ngModel)]="formData.address"
+                required
+                minlength="10"
+                class="form-control textarea-control"
+                placeholder=" "
+                rows="3"
+                (focus)="onInputFocus('address')"
+                (blur)="onInputBlur('address')"
+              ></textarea>
+              <label for="address" class="floating-label">Address</label>
             </div>
           </div>
 
@@ -90,55 +195,37 @@ import { AuthService } from '../services/auth.service';
             </div>
           </div>
 
-          <button type="submit" class="btn-login" [disabled]="!loginForm.form.valid || isLoading">
-            <span *ngIf="!isLoading">Login</span>
+          <div class="form-group success-container" *ngIf="successMessage">
+            <div class="alert alert-success">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              {{ successMessage }}
+            </div>
+          </div>
+
+          <button 
+            type="submit" 
+            class="btn-register" 
+            [disabled]="!registerForm.form.valid || isLoading || (formData.password !== formData.confirmPassword)"
+          >
+            <span *ngIf="!isLoading">Create Account</span>
             <span *ngIf="isLoading" class="loading-spinner"></span>
           </button>
         </form>
 
-        <div class="create-account-section">
-          <p class="create-account-text">
-            Don't have an account?
-            <a routerLink="/register" class="create-account-link">Create Account</a>
+        <div class="login-link-section">
+          <p class="login-text">
+            Already have an account?
+            <a routerLink="/login" class="login-link">Login</a>
           </p>
-        </div>
-
-        <div class="login-footer">
-          <div class="divider">
-            <span>Demo Credentials</span>
-          </div>
-          <div class="credentials-info">
-            <div class="credential-card">
-              <div class="credential-icon admin">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-                  <path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path>
-                </svg>
-              </div>
-              <div class="credential-text">
-                <strong>Admin</strong>
-                <span>admin&#64;gmail.com / admin123</span>
-              </div>
-            </div>
-            <div class="credential-card">
-              <div class="credential-icon customer">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-              </div>
-              <div class="credential-text">
-                <strong>Customer</strong>
-                <span>Any email/password</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
   `,
   styles: [`
-    .login-container {
+    .register-container {
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -195,13 +282,13 @@ import { AuthService } from '../services/auth.service';
       75% { transform: translate(20px, 30px) scale(1.05); }
     }
 
-    .login-card {
+    .register-card {
       background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(20px);
       border-radius: 24px;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
       padding: 3rem;
-      max-width: 480px;
+      max-width: 550px;
       width: 100%;
       position: relative;
       z-index: 1;
@@ -220,7 +307,7 @@ import { AuthService } from '../services/auth.service';
       }
     }
 
-    .login-card.shake {
+    .register-card.shake {
       animation: shake 0.5s ease-in-out;
     }
 
@@ -259,9 +346,9 @@ import { AuthService } from '../services/auth.service';
       50% { transform: scale(1.05); }
     }
 
-    .login-header {
+    .register-header {
       text-align: center;
-      margin-bottom: 2.5rem;
+      margin-bottom: 2rem;
     }
 
     .brand-title {
@@ -282,23 +369,30 @@ import { AuthService } from '../services/auth.service';
     }
 
     .form-group {
-      margin-bottom: 1.75rem;
+      margin-bottom: 1.5rem;
     }
 
     .input-wrapper {
       position: relative;
     }
 
+    .textarea-wrapper {
+      position: relative;
+    }
+
     .input-icon {
       position: absolute;
       left: 1rem;
-      top: 50%;
-      transform: translateY(-50%);
+      top: 1rem;
       width: 20px;
       height: 20px;
       color: #999;
       transition: color 0.3s ease;
       z-index: 1;
+    }
+
+    .textarea-wrapper .input-icon {
+      top: 1.25rem;
     }
 
     .input-icon svg {
@@ -317,6 +411,11 @@ import { AuthService } from '../services/auth.service';
       background: white;
     }
 
+    .textarea-control {
+      resize: vertical;
+      min-height: 80px;
+    }
+
     .form-control:focus {
       outline: none;
       border-color: #667eea;
@@ -333,6 +432,11 @@ import { AuthService } from '../services/auth.service';
       padding: 0 0.5rem;
     }
 
+    .textarea-control:focus ~ .floating-label,
+    .textarea-control:not(:placeholder-shown) ~ .floating-label {
+      top: -10px;
+    }
+
     .form-control:focus ~ .input-icon {
       color: #667eea;
     }
@@ -340,8 +444,7 @@ import { AuthService } from '../services/auth.service';
     .floating-label {
       position: absolute;
       left: 3rem;
-      top: 50%;
-      transform: translateY(-50%);
+      top: 1rem;
       font-family: 'Poppins', sans-serif;
       font-size: 1rem;
       color: #999;
@@ -349,7 +452,20 @@ import { AuthService } from '../services/auth.service';
       transition: all 0.3s ease;
     }
 
-    .error-container {
+    .field-hint {
+      display: block;
+      margin-top: 0.5rem;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+
+    .field-hint.error {
+      color: #dc2626;
+    }
+
+    .error-container,
+    .success-container {
       animation: slideDown 0.3s ease-out;
     }
 
@@ -386,7 +502,13 @@ import { AuthService } from '../services/auth.service';
       border: 1px solid #fca5a5;
     }
 
-    .btn-login {
+    .alert-success {
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+      color: #059669;
+      border: 1px solid #6ee7b7;
+    }
+
+    .btn-register {
       width: 100%;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
@@ -403,7 +525,7 @@ import { AuthService } from '../services/auth.service';
       overflow: hidden;
     }
 
-    .btn-login::before {
+    .btn-register::before {
       content: '';
       position: absolute;
       top: 0;
@@ -414,20 +536,20 @@ import { AuthService } from '../services/auth.service';
       transition: left 0.5s ease;
     }
 
-    .btn-login:hover::before {
+    .btn-register:hover::before {
       left: 100%;
     }
 
-    .btn-login:hover:not(:disabled) {
+    .btn-register:hover:not(:disabled) {
       transform: translateY(-2px);
       box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
     }
 
-    .btn-login:active:not(:disabled) {
+    .btn-register:active:not(:disabled) {
       transform: translateY(0);
     }
 
-    .btn-login:disabled {
+    .btn-register:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
@@ -446,21 +568,21 @@ import { AuthService } from '../services/auth.service';
       to { transform: rotate(360deg); }
     }
 
-    .create-account-section {
+    .login-link-section {
       margin-top: 1.5rem;
       text-align: center;
       padding-top: 1.5rem;
       border-top: 1px solid #e5e7eb;
     }
 
-    .create-account-text {
+    .login-text {
       font-family: 'Poppins', sans-serif;
       font-size: 0.9rem;
       color: #666;
       margin: 0;
     }
 
-    .create-account-link {
+    .login-link {
       color: #667eea;
       font-weight: 600;
       text-decoration: none;
@@ -469,7 +591,7 @@ import { AuthService } from '../services/auth.service';
       position: relative;
     }
 
-    .create-account-link::after {
+    .login-link::after {
       content: '';
       position: absolute;
       bottom: -2px;
@@ -480,107 +602,16 @@ import { AuthService } from '../services/auth.service';
       transition: width 0.3s ease;
     }
 
-    .create-account-link:hover {
+    .login-link:hover {
       color: #764ba2;
     }
 
-    .create-account-link:hover::after {
+    .login-link:hover::after {
       width: 100%;
     }
 
-    .login-footer {
-      margin-top: 2.5rem;
-    }
-
-    .divider {
-      display: flex;
-      align-items: center;
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
-
-    .divider::before,
-    .divider::after {
-      content: '';
-      flex: 1;
-      border-bottom: 1px solid #e5e7eb;
-    }
-
-    .divider span {
-      padding: 0 1rem;
-      font-family: 'Poppins', sans-serif;
-      font-size: 0.85rem;
-      color: #999;
-      font-weight: 500;
-    }
-
-    .credentials-info {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .credential-card {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 1rem;
-      background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-      border-radius: 12px;
-      border: 1px solid #e5e7eb;
-      transition: all 0.3s ease;
-    }
-
-    .credential-card:hover {
-      transform: translateX(5px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .credential-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .credential-icon.admin {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-    }
-
-    .credential-icon.customer {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-    }
-
-    .credential-icon svg {
-      width: 20px;
-      height: 20px;
-    }
-
-    .credential-text {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-
-    .credential-text strong {
-      font-family: 'Poppins', sans-serif;
-      font-size: 0.9rem;
-      color: #1f2937;
-    }
-
-    .credential-text span {
-      font-family: 'Poppins', sans-serif;
-      font-size: 0.8rem;
-      color: #6b7280;
-    }
-
     @media (max-width: 576px) {
-      .login-card {
+      .register-card {
         padding: 2rem 1.5rem;
       }
 
@@ -600,12 +631,17 @@ import { AuthService } from '../services/auth.service';
     }
   `]
 })
-export class LoginComponent {
-  credentials = {
+export class RegisterComponent {
+  formData = {
+    name: '',
     email: '',
-    password: ''
+    contact: '',
+    password: '',
+    confirmPassword: '',
+    address: ''
   };
   errorMessage = '';
+  successMessage = '';
   showError = false;
   isLoading = false;
 
@@ -624,37 +660,54 @@ export class LoginComponent {
 
   onSubmit() {
     this.errorMessage = '';
+    this.successMessage = '';
     this.showError = false;
+
+    // Validate passwords match
+    if (this.formData.password !== this.formData.confirmPassword) {
+      this.errorMessage = 'Passwords do not match';
+      this.showError = true;
+      setTimeout(() => this.showError = false, 500);
+      return;
+    }
+
     this.isLoading = true;
 
-    // Simulate a brief loading state for better UX
+    // Simulate registration process
     setTimeout(() => {
-      // Admin login
-      if (this.credentials.email === 'admin@gmail.com' && this.credentials.password === 'admin123') {
-        this.authService.login(this.credentials.email, 'admin');
-        console.log('Admin login successful');
-        this.router.navigate(['/admin/dashboard']);
+      // Store user data in localStorage (for demo purposes)
+      const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+
+      // Check if email already exists
+      if (users.some((u: any) => u.email === this.formData.email)) {
+        this.errorMessage = 'Email already registered. Please login.';
+        this.showError = true;
         this.isLoading = false;
+        setTimeout(() => this.showError = false, 500);
         return;
       }
 
-      // Customer login (any other credentials)
-      if (this.credentials.email && this.credentials.password) {
-        this.authService.login(this.credentials.email, 'customer');
-        console.log('Customer login successful');
-        this.router.navigate(['/']);
-        this.isLoading = false;
-        return;
-      }
+      // Add new user
+      users.push({
+        name: this.formData.name,
+        email: this.formData.email,
+        contact: this.formData.contact,
+        address: this.formData.address,
+        password: this.formData.password,
+        role: 'customer',
+        registeredAt: new Date().toISOString()
+      });
 
-      this.errorMessage = 'Please enter valid credentials';
-      this.showError = true;
+      localStorage.setItem('registeredUsers', JSON.stringify(users));
+
+      // Show success message
+      this.successMessage = 'Account created successfully! Redirecting to login...';
       this.isLoading = false;
 
-      // Reset shake animation
+      // Redirect to login after 2 seconds
       setTimeout(() => {
-        this.showError = false;
-      }, 500);
-    }, 800);
+        this.router.navigate(['/login']);
+      }, 2000);
+    }, 1000);
   }
 }

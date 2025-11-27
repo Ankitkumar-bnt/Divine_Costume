@@ -6,25 +6,29 @@ export const routes: Routes = [
     path: '',
     loadComponent: () => import('./components/home.component').then(m => m.HomeComponent)
   },
-   {
-      path: 'costumes',
-      loadComponent: () => import('./components/costumes-list.component').then(m => m.CostumesListComponent)
-    },
-    {
-      path: 'costumes/:id',
-      loadComponent: () => import('./components/costume-detail.component').then(m => m.CostumeDetailComponent)
-    },
-    {
-      path: 'ornaments',
-      loadComponent: () => import('./components/ornaments-list.component').then(m => m.OrnamentsListComponent)
-    },
-    {
-      path: 'cart',
-      loadComponent: () => import('./components/cart.component').then(m => m.CartComponent)
-    },
+  {
+    path: 'costumes',
+    loadComponent: () => import('./components/costumes-list.component').then(m => m.CostumesListComponent)
+  },
+  {
+    path: 'costumes/:id',
+    loadComponent: () => import('./components/costume-detail.component').then(m => m.CostumeDetailComponent)
+  },
+  {
+    path: 'ornaments',
+    loadComponent: () => import('./components/ornaments-list.component').then(m => m.OrnamentsListComponent)
+  },
+  {
+    path: 'cart',
+    loadComponent: () => import('./components/cart.component').then(m => m.CartComponent)
+  },
   {
     path: 'login',
     loadComponent: () => import('./components/login.component').then(m => m.LoginComponent)
+  },
+  {
+    path: 'register',
+    loadComponent: () => import('./components/register.component').then(m => m.RegisterComponent)
   },
   {
     path: 'admin',

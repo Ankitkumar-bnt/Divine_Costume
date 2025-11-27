@@ -1,13 +1,15 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
   imports: [CommonModule],
   template: `
-    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top" *ngIf="!isAdminRoute">
       <div class="container-fluid px-4">
         <a class="navbar-brand brand-logo" href="#">
           <img src="/assets/logo.png" alt="Divine Costume" class="logo-image">
@@ -177,10 +179,35 @@ import { Router } from '@angular/router';
     }
   `]
 })
-export class NavbarComponent {
+export class NavbarComponent implements OnInit, OnDestroy {
   isMenuOpen = false;
+  isAdminRoute = false;
+  private routerSubscription?: Subscription;
 
-  constructor(private router: Router) { }
+  constructor(private router: Router) {
+    // Check initial route
+    this.checkAdminRoute(this.router.url);
+  }
+
+  ngOnInit() {
+    // Subscribe to router events to detect route changes
+    this.routerSubscription = this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe((event: NavigationEnd) => {
+        this.checkAdminRoute(event.urlAfterRedirects);
+      });
+  }
+
+  ngOnDestroy() {
+    // Clean up subscription
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
+  }
+
+  private checkAdminRoute(url: string) {
+    this.isAdminRoute = url.startsWith('/admin') || url.startsWith('/login') || url.startsWith('/register');
+  }
 
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;

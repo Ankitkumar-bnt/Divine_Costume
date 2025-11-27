@@ -1,13 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import { AuthService, AuthState } from '../services/auth.service';
 
 @Component({
   selector: 'app-nav',
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive],
   template: `
-    <header class="header-wrapper">
+    <header class="header-wrapper" *ngIf="!isAdminRoute">
       <div class="topbar">
         <div class="topbar-container">
           <div class="contact-left">
@@ -51,6 +54,22 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
             <a routerLink="/wishlist" class="icon-btn" title="Wishlist">
               <i class="bi bi-heart"></i>
             </a>
+            <div class="auth-section" *ngIf="authState$ | async as authState">
+              <button *ngIf="!authState.isAuthenticated" class="btn-auth login" (click)="onLogin()">
+                <i class="bi bi-box-arrow-in-right"></i>
+                <span>Login</span>
+              </button>
+              <div *ngIf="authState.isAuthenticated" class="user-menu">
+                <div class="user-info">
+                  <i class="bi bi-person-circle"></i>
+                  <span class="user-email">{{ authState.userEmail }}</span>
+                </div>
+                <button class="btn-auth logout" (click)="onLogout()">
+                  <i class="bi bi-box-arrow-right"></i>
+                  <span>Logout</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </nav>
@@ -152,6 +171,77 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       transform: scale(1.1);
     }
 
+    .auth-section {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-left: 1rem;
+    }
+
+    .btn-auth {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      border: none;
+      font-family: 'Inter', 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .btn-auth.login {
+      background: linear-gradient(90deg, var(--pastel-lavender), var(--pastel-mint));
+      color: #111827;
+    }
+
+    .btn-auth.login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .user-menu {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      color: #334155;
+    }
+
+    .user-info i {
+      font-size: 1.2rem;
+    }
+
+    .user-email {
+      font-weight: 500;
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .btn-auth.logout {
+      background: linear-gradient(90deg, #fee2e2, #fecaca);
+      color: #dc2626;
+    }
+
+    .btn-auth.logout:hover {
+      background: linear-gradient(90deg, #fecaca, #fca5a5);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+    }
+
     @media (max-width: 992px) {
       .container { padding: .65rem .75rem; }
       .burger { display: flex; }
@@ -163,9 +253,40 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
     }
   `]
 })
-export class NavComponent {
+export class NavComponent implements OnInit, OnDestroy {
   menuOpen = false;
   logoOk = true;
+  isAdminRoute = false;
+  authState$ = this.authService.authState$;
+  private routerSubscription?: Subscription;
+
+  constructor(
+    private router: Router,
+    private authService: AuthService
+  ) {
+    // Check initial route
+    this.checkAdminRoute(this.router.url);
+  }
+
+  ngOnInit() {
+    // Subscribe to router events to detect route changes
+    this.routerSubscription = this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe((event: NavigationEnd) => {
+        this.checkAdminRoute(event.urlAfterRedirects);
+      });
+  }
+
+  ngOnDestroy() {
+    // Clean up subscription
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
+  }
+
+  private checkAdminRoute(url: string) {
+    this.isAdminRoute = url.startsWith('/admin') || url.startsWith('/login') || url.startsWith('/register');
+  }
 
   toggleMenu() {
     this.menuOpen = !this.menuOpen;
@@ -173,5 +294,16 @@ export class NavComponent {
 
   closeMenu() {
     this.menuOpen = false;
+  }
+
+  onLogin() {
+    this.router.navigate(['/login']);
+  }
+
+  onLogout() {
+    if (confirm('Are you sure you want to logout?')) {
+      this.authService.logout();
+      this.router.navigate(['/']);
+    }
   }
 }

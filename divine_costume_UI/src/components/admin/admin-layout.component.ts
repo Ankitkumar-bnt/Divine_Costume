@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-admin-layout',
@@ -369,7 +370,10 @@ import { Router, RouterModule } from '@angular/router';
 export class AdminLayoutComponent {
   private openDropdowns = new Set<string>();
 
-  constructor(private router: Router) { }
+  constructor(
+    private router: Router,
+    private authService: AuthService
+  ) { }
 
   toggleDropdown(dropdownName: string): void {
     if (this.openDropdowns.has(dropdownName)) {
@@ -406,6 +410,7 @@ export class AdminLayoutComponent {
 
   logout(): void {
     if (confirm('Are you sure you want to logout?')) {
+      this.authService.logout();
       this.router.navigate(['/login']);
     }
   }
