@@ -16,266 +16,286 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="existing-costume-container">
-      <!-- Toast Notification -->
-      <div class="toast-container" *ngIf="currentToast">
-        <div class="toast" [class]="'toast-' + currentToast.type">
-          <div class="toast-content">
-            <i class="bi" [class]="getToastIcon(currentToast.type)"></i>
-            <span>{{ currentToast.message }}</span>
-          </div>
-          <button class="toast-close" (click)="inventoryService.clearToast()">
-            <i class="bi bi-x"></i>
-          </button>
-        </div>
-      </div>
-
-      <div class="page-header">
-        <h2>Existing Costume Inventory</h2>
-        <p class="subtitle">Manage and browse your costume inventory with dynamic filtering</p>
-      </div>
-
-      <!-- Loading Spinner -->
-      <div class="loading-spinner" *ngIf="isLoading">
-        <div class="spinner"></div>
-        <p>Loading inventory data...</p>
-      </div>
-
-      <!-- Cascading Dropdowns Section -->
-      <div class="filters-section" *ngIf="!isLoading">
-        <div class="dropdown-row">
-          <!-- Category Dropdown -->
-          <div class="dropdown-group">
-            <label for="category">Category</label>
-            <div class="dropdown-wrapper">
-              <select 
-                id="category" 
-                [(ngModel)]="selectedCategory" 
-                (change)="onCategoryChange()" 
-                class="form-select dropdown-enhanced"
-                [disabled]="categoriesLoading">
-                <option value="">{{ categoriesLoading ? 'Loading categories...' : 'Select Category' }}</option>
-                <option *ngFor="let category of categories" [value]="category.id">
-                  {{ category.categoryName }}
-                </option>
-              </select>
-              <div class="dropdown-spinner" *ngIf="categoriesLoading">
-                <div class="mini-spinner"></div>
-              </div>
+    <div class="existing-costume">
+      <div class="page-shell">
+        <div class="toast-stack" *ngIf="currentToast">
+          <div class="toast" [class]="'toast-' + currentToast.type">
+            <div class="toast-content">
+              <i class="bi" [class]="getToastIcon(currentToast.type)"></i>
+              <span>{{ currentToast.message }}</span>
             </div>
-          </div>
-
-          <!-- Variant Description Dropdown -->
-          <div class="dropdown-group">
-            <label for="variant">Variant Description</label>
-            <div class="dropdown-wrapper">
-              <select 
-                id="variant" 
-                [(ngModel)]="selectedVariant" 
-                (change)="onVariantChange()" 
-                class="form-select dropdown-enhanced"
-                [disabled]="!selectedCategory || variantsLoading">
-                <option value="">{{ variantsLoading ? 'Loading variants...' : 'Select Variant' }}</option>
-                <option *ngFor="let variant of filteredVariants" [value]="variant.id">
-                  {{ variant.variantDescription }}
-                </option>
-              </select>
-              <div class="dropdown-spinner" *ngIf="variantsLoading">
-                <div class="mini-spinner"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Size Dropdown -->
-          <div class="dropdown-group">
-            <label for="size">Size</label>
-            <div class="dropdown-wrapper">
-              <select 
-                id="size" 
-                [(ngModel)]="selectedSize" 
-                (change)="onSizeChange()" 
-                class="form-select dropdown-enhanced"
-                [disabled]="!selectedVariant || sizesLoading">
-                <option value="">{{ sizesLoading ? 'Loading sizes...' : 'Select Size' }}</option>
-                <option *ngFor="let size of filteredSizes" [value]="size.id">
-                  {{ size.size }} ({{ size.availableCount }} available)
-                </option>
-              </select>
-              <div class="dropdown-spinner" *ngIf="sizesLoading">
-                <div class="mini-spinner"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Count Input -->
-          <div class="dropdown-group">
-            <label for="count">Count</label>
-            <input 
-              type="number" 
-              id="count" 
-              [(ngModel)]="selectedCount" 
-              (input)="onCountChange()"
-              class="form-control"
-              [max]="maxAvailableCount"
-              min="0"
-              [disabled]="!selectedSize"
-              placeholder="Enter count">
-            <div class="count-hint" *ngIf="selectedSize && selectedCount > 0">
-              <span class="hint-text">{{ getCountHint() }}</span>
-            </div>
+            <button class="toast-close" (click)="inventoryService.clearToast()">
+              <i class="bi bi-x"></i>
+            </button>
           </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="action-buttons">
-          <button 
-            class="btn btn-primary" 
-            (click)="addToInventoryTable()"
-            [disabled]="!canAddToTable()">
-            <i class="bi bi-plus-circle"></i>
-            Add to Table
-          </button>
-          <button 
-            class="btn btn-secondary" 
-            (click)="clearFilters()">
-            <i class="bi bi-arrow-clockwise"></i>
-            Clear Filters
-          </button>
-        </div>
-      </div>
-
-      <!-- Dynamic Inventory Table -->
-      <div class="table-section">
-        <div class="table-header">
-          <h3>Costume Inventory</h3>
-          <div class="table-stats">
-            <span class="stat-item">Total Items: {{ inventoryData.length }}</span>
-            <span class="stat-item">Total Count: {{ getTotalCount() }}</span>
+        <header class="page-header">
+          <div>
+            <h1>Existing Costume Inventory</h1>
+            <p>Manage and browse your costume inventory with dynamic filtering</p>
           </div>
+          <span class="header-pill">
+            <i class="bi bi-box-seam"></i>
+            <span>{{ inventoryData.length }} records</span>
+          </span>
+        </header>
+
+        <div class="loading-state" *ngIf="isLoading">
+          <div class="spinner"></div>
+          <p>Loading inventory data...</p>
         </div>
 
-        <div class="table-responsive">
-          <table class="inventory-table" *ngIf="inventoryData.length > 0; else noDataTemplate">
-            <thead>
-              <tr>
-                <th>Image</th>
-                <th>Category</th>
-                <th>Variant Description</th>
-                <th>Size</th>
-                <th>Count</th>
-                <th>Serial Numbers</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let item of inventoryData; let i = index" class="inventory-row" [attr.data-item-id]="item.id">
-                <td class="image-cell">
-                  <img 
-                    [src]="item.imageUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjRjhGOUZBIiBzdHJva2U9IiNEREREREQiLz4KPHN2ZyB4PSIyMCIgeT0iMjAiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM5OTk5OTkiIHN0cm9rZS13aWR0aD0iMiI+CjxwYXRoIGQ9Im0yMSAxNS02LTYtNiA2Ii8+CjxwYXRoIGQ9Im05IDlhMyAzIDAgMSAwIDYgMGEzIDMgMCAwIDAtNiAweiIvPgo8L3N2Zz4KPC9zdmc+'" 
-                    [alt]="item.variantDescription"
-                    class="costume-image"
-                    (error)="onImageError($event)">
-                </td>
-                <td class="category-cell">{{ item.categoryName }}</td>
-                <td class="variant-cell">{{ item.variantDescription }}</td>
-                <td class="size-cell">
-                  <span class="size-badge">{{ item.size }}</span>
-                </td>
-                <td class="count-cell">
-                  <input 
-                    type="number" 
-                    [(ngModel)]="item.count" 
-                    (input)="onTableCountChange(i)"
-                    class="count-input"
-                    min="0">
-                </td>
-                <td class="serial-cell">
-                  <div class="serial-numbers">
-                    <span *ngFor="let serial of item.serialNumbers" class="serial-tag">
-                      {{ serial }}
-                    </span>
+        <section class="surface-card filters-card" *ngIf="!isLoading">
+          <div class="surface-header">
+            <div>
+              <h2>Filter Inventory</h2>
+              <span class="surface-subtitle">Refine by category, variant, size, and count.</span>
+            </div>
+          </div>
+
+          <div class="filters-body">
+            <div class="filters-grid">
+              <div class="field-block">
+                <label class="field-label" for="category">Category</label>
+                <div class="field-control">
+                  <select
+                    id="category"
+                    [(ngModel)]="selectedCategory"
+                    (change)="onCategoryChange()"
+                    class="dropdown-control"
+                    [disabled]="categoriesLoading">
+                    <option value="">{{ categoriesLoading ? 'Loading categories...' : 'Select Category' }}</option>
+                    <option *ngFor="let category of categories" [value]="category.id">
+                      {{ category.categoryName }}
+                    </option>
+                  </select>
+                  <div class="inline-spinner" *ngIf="categoriesLoading">
+                    <div class="mini-spinner"></div>
                   </div>
-                </td>
-                <td class="actions-cell">
-                  <button 
-                    class="btn btn-sm btn-success" 
-                    (click)="addCostumePart(item)"
-                    title="Add Costume Part">
-                    <i class="bi bi-plus"></i>
-                    Add Part
-                  </button>
-                  <button 
-                    class="btn btn-sm btn-danger" 
-                    (click)="removeFromTable(i)"
-                    title="Remove from table">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                </div>
+              </div>
 
-          <ng-template #noDataTemplate>
-            <div class="no-data">
-              <i class="bi bi-inbox"></i>
-              <h4>No Inventory Data</h4>
-              <p>Select category, variant, and size to view inventory items</p>
-            </div>
-          </ng-template>
-        </div>
-      </div>
+              <div class="field-block">
+                <label class="field-label" for="variant">Variant Description</label>
+                <div class="field-control">
+                  <select
+                    id="variant"
+                    [(ngModel)]="selectedVariant"
+                    (change)="onVariantChange()"
+                    class="dropdown-control"
+                    [disabled]="!selectedCategory || variantsLoading">
+                    <option value="">{{ variantsLoading ? 'Loading variants...' : 'Select Variant' }}</option>
+                    <option *ngFor="let variant of filteredVariants" [value]="variant.id">
+                      {{ variant.variantDescription }}
+                    </option>
+                  </select>
+                  <div class="inline-spinner" *ngIf="variantsLoading">
+                    <div class="mini-spinner"></div>
+                  </div>
+                </div>
+              </div>
 
-      <!-- Add Costume Part Modal -->
-      <div class="modal" [class.show]="showAddPartModal" *ngIf="showAddPartModal">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">Add Costume Part</h5>
-              <button type="button" class="btn-close" (click)="closeAddPartModal()"></button>
+              <div class="field-block">
+                <label class="field-label" for="size">Size</label>
+                <div class="field-control">
+                  <select
+                    id="size"
+                    [(ngModel)]="selectedSize"
+                    (change)="onSizeChange()"
+                    class="dropdown-control"
+                    [disabled]="!selectedVariant || sizesLoading">
+                    <option [ngValue]="null">{{ sizesLoading ? 'Loading sizes...' : 'Select Size' }}</option>
+                    <option *ngFor="let size of filteredSizes" [ngValue]="size.id">
+                      {{ size.size }} ({{ size.availableCount }} available)
+                    </option>
+                  </select>
+                  <div class="inline-spinner" *ngIf="sizesLoading">
+                    <div class="mini-spinner"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="field-block">
+                <label class="field-label" for="count">Count</label>
+                <input
+                  type="number"
+                  id="count"
+                  [(ngModel)]="selectedCount"
+                  (input)="onCountChange()"
+                  class="text-input"
+                  min="0"
+                  [disabled]="!selectedSize"
+                  placeholder="Enter count">
+                <div class="count-hint" *ngIf="selectedSize && selectedCount > 0">
+                  <span class="hint-text">{{ getCountHint() }}</span>
+                </div>
+              </div>
             </div>
-            <div class="modal-body">
-              <form>
-                <div class="form-group">
-                  <label for="partName">Part Name</label>
-                  <input 
-                    type="text" 
-                    id="partName" 
-                    [(ngModel)]="newPart.name" 
-                    name="partName"
-                    class="form-control" 
-                    placeholder="Enter part name">
-                </div>
-                <div class="form-group">
-                  <label for="partDescription">Description</label>
-                  <textarea 
-                    id="partDescription" 
-                    [(ngModel)]="newPart.description" 
-                    name="partDescription"
-                    class="form-control" 
-                    rows="3" 
-                    placeholder="Enter part description"></textarea>
-                </div>
-                <div class="form-group">
-                  <label for="partQuantity">Quantity</label>
-                  <input 
-                    type="number" 
-                    id="partQuantity" 
-                    [(ngModel)]="newPart.quantity" 
-                    name="partQuantity"
-                    class="form-control" 
-                    min="1" 
-                    [max]="selectedInventoryItem?.count || 1">
-                </div>
-              </form>
+
+            <div class="filter-actions">
+              <button
+                class="btn primary-action"
+                (click)="addToInventoryTable()"
+                [disabled]="!canAddToTable()">
+                <i class="bi bi-plus-circle"></i>
+                Add to Table
+              </button>
+              <button
+                class="btn secondary-action"
+                (click)="clearFilters()">
+                <i class="bi bi-arrow-clockwise"></i>
+                Clear Filters
+              </button>
             </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" (click)="closeAddPartModal()">
-                Cancel
-              </button>
-              <button type="button" class="btn btn-primary" (click)="saveCostumePart()">
-                <i class="bi bi-save"></i>
-                Save Part
-              </button>
+          </div>
+        </section>
+
+        <section class="surface-card table-card">
+          <div class="surface-header table-head">
+            <div>
+              <h2>Costume Inventory</h2>
+              <span class="surface-subtitle">Maintain real-time counts and serial numbers.</span>
+            </div>
+            <div class="table-stats">
+              <span class="stat-chip">
+                <i class="bi bi-grid"></i>
+                {{ inventoryData.length }} entries
+              </span>
+              <span class="stat-chip">
+                <i class="bi bi-123"></i>
+                {{ getTotalCount() }} items
+              </span>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="modern-table inventory-table" *ngIf="inventoryData.length > 0; else noDataTemplate">
+              <thead>
+                <tr>
+                  <th>Image</th>
+                  <th>Category</th>
+                  <th>Variant</th>
+                  <th>Size</th>
+                  <th>Count</th>
+                  <th class="actions-header">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of inventoryData; let i = index" class="inventory-row" [attr.data-item-id]="item.id">
+                  <td class="image-cell">
+                    <img
+                      [src]="item.imageUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjRjhGOUZBIiBzdHJva2U9IiNEREREREQiLz4KPHN2ZyB4PSIyMCIgeT0iMjAiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM5OTk5OTkiIHN0cm9rZS13aWR0aD0iMiI+CjxwYXRoIGQ9Im0yMSAxNS02LTYtNiA2Ii8+CjxwYXRoIGQ9Im05IDlhMyAzIDAgMSAwIDYgMGEzIDMgMCAwIDAtNiAweiIvPgo8L3N2Zz4KPC9zdmc+'"
+                      [alt]="item.variantDescription"
+                      class="costume-image"
+                      (error)="onImageError($event)">
+                  </td>
+                  <td class="category-cell">
+                    <span class="category-chip">{{ item.categoryName }}</span>
+                  </td>
+                  <td class="variant-cell">
+                    <div class="variant-text">
+                      <span>{{ item.variantDescription }}</span>
+                    </div>
+                  </td>
+                  <td class="size-cell">
+                    <span class="size-pill">{{ item.size }}</span>
+                  </td>
+                  <td class="count-cell">
+                    <input
+                      type="number"
+                      [value]="item.count"
+                      class="count-input"
+                      readonly>
+                  </td>
+              
+                  <td class="actions-cell">
+                    <button
+                      class="btn btn-sm success-action"
+                      (click)="addCostumePart(item)"
+                      title="Add Costume Part">
+                      <i class="bi bi-plus"></i>
+                      Add Part
+                    </button>
+                    <button
+                      class="btn btn-sm danger-action"
+                      (click)="removeFromTable(i)"
+                      title="Remove from table">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <ng-template #noDataTemplate>
+              <div class="empty-state">
+                <div class="empty-icon">
+                  <i class="bi bi-inbox"></i>
+                </div>
+                <h3>No inventory data yet</h3>
+                <p>Select category, variant, and size to view inventory items.</p>
+              </div>
+            </ng-template>
+          </div>
+        </section>
+
+        <div class="modal" [class.show]="showAddPartModal" *ngIf="showAddPartModal">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <div>
+                  <h5 class="modal-title">Add Costume Part</h5>
+                  <span class="modal-subtitle" *ngIf="selectedInventoryItem">
+                    {{ selectedInventoryItem.variantDescription }} • Size {{ selectedInventoryItem.size }}
+                  </span>
+                </div>
+                <button type="button" class="btn-close" (click)="closeAddPartModal()"></button>
+              </div>
+              <div class="modal-body">
+                <form>
+                  <div class="form-group">
+                    <label for="partName">Part Name</label>
+                    <input
+                      type="text"
+                      id="partName"
+                      [(ngModel)]="newPart.name"
+                      name="partName"
+                      class="form-control"
+                      placeholder="Enter part name">
+                  </div>
+                  <div class="form-group">
+                    <label for="partDescription">Description</label>
+                    <textarea
+                      id="partDescription"
+                      [(ngModel)]="newPart.description"
+                      name="partDescription"
+                      class="form-control"
+                      rows="3"
+                      placeholder="Enter part description"></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label for="partQuantity">Quantity</label>
+                    <input
+                      type="number"
+                      id="partQuantity"
+                      [(ngModel)]="newPart.quantity"
+                      name="partQuantity"
+                      class="form-control"
+                      min="1"
+                      [max]="selectedInventoryItem?.count || 1">
+                  </div>
+                </form>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn secondary-action" (click)="closeAddPartModal()">
+                  Cancel
+                </button>
+                <button type="button" class="btn primary-action" (click)="saveCostumePart()">
+                  <i class="bi bi-save"></i>
+                  Save Part
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -283,352 +303,40 @@ import {
     </div>
   `,
   styles: [`
-    .existing-costume-container {
-      padding: 2rem;
-      max-width: 1400px;
+    .existing-costume {
+      min-height: 100vh;
+      padding: clamp(1.5rem, 3vw, 2.75rem);
+      animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .page-shell {
+      max-width: 1280px;
       margin: 0 auto;
-    }
-
-
-    .page-header {
-      margin-bottom: 2rem;
-      text-align: center;
-    }
-
-    .page-header h2 {
-      color: #7A1F2A;
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-
-    .subtitle {
-      color: #666;
-      font-size: 1.1rem;
-      margin: 0;
-    }
-
-    .filters-section {
-      background: #FFF8EE;
-      border-radius: 12px;
-      padding: 2rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-
-    .dropdown-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .dropdown-group {
       display: flex;
       flex-direction: column;
+      gap: clamp(1.5rem, 2.5vw, 2.5rem);
+      position: relative;
     }
 
-    .dropdown-group label {
-      font-weight: 600;
-      color: #7A1F2A;
-      margin-bottom: 0.5rem;
-      font-size: 0.9rem;
-    }
-
-    .form-select, .form-control {
-      padding: 0.75rem;
-      border: 2px solid #D4AF37;
-      border-radius: 8px;
-      font-size: 1rem;
-      transition: all 0.3s ease;
-      background: white;
-    }
-
-    .form-select:focus, .form-control:focus {
-      outline: none;
-      border-color: #7A1F2A;
-      box-shadow: 0 0 0 3px rgba(122, 31, 42, 0.1);
-    }
-
-    .form-select:disabled, .form-control:disabled {
-      background: #f8f9fa;
-      border-color: #dee2e6;
-      color: #6c757d;
-    }
-
-    .action-buttons {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-    }
-
-    .btn {
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .btn-primary {
-      background: #D4AF37;
-      color: #7A1F2A;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background: #C49D2E;
-      transform: translateY(-2px);
-    }
-
-    .btn-secondary {
-      background: #6c757d;
-      color: white;
-    }
-
-    .btn-secondary:hover {
-      background: #5a6268;
-    }
-
-    .btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .table-section {
-      background: white;
-      border-radius: 12px;
-      padding: 2rem;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-
-    .table-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-
-    .table-header h3 {
-      color: #7A1F2A;
-      font-size: 1.8rem;
-      font-weight: 700;
-      margin: 0;
-    }
-
-    .table-stats {
-      display: flex;
-      gap: 2rem;
-    }
-
-    .stat-item {
-      background: #FFF8EE;
-      padding: 0.5rem 1rem;
-      border-radius: 20px;
-      font-weight: 600;
-      color: #7A1F2A;
-      font-size: 0.9rem;
-    }
-
-    .table-responsive {
-      overflow-x: auto;
-    }
-
-    .inventory-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-    }
-
-    .inventory-table th {
-      background: #7A1F2A;
-      color: white;
-      padding: 1rem;
-      text-align: left;
-      font-weight: 600;
-      border-bottom: 2px solid #D4AF37;
-    }
-
-    .inventory-table td {
-      padding: 1rem;
-      border-bottom: 1px solid #dee2e6;
-      vertical-align: middle;
-    }
-
-    .inventory-row:hover {
-      background: #FFF8EE;
-    }
-
-    .costume-image {
-      width: 60px;
-      height: 60px;
-      object-fit: cover;
-      border-radius: 8px;
-      border: 2px solid #D4AF37;
-    }
-
-    .size-badge {
-      background: #D4AF37;
-      color: #7A1F2A;
-      padding: 0.25rem 0.75rem;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 0.85rem;
-    }
-
-    .count-input {
-      width: 80px;
-      padding: 0.5rem;
-      border: 1px solid #D4AF37;
-      border-radius: 4px;
-      text-align: center;
-    }
-
-    .serial-numbers {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.25rem;
-    }
-
-    .serial-tag {
-      background: #e9ecef;
-      padding: 0.2rem 0.5rem;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      color: #495057;
-    }
-
-    .actions-cell {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .btn-sm {
-      padding: 0.4rem 0.8rem;
-      font-size: 0.85rem;
-    }
-
-    .btn-success {
-      background: #28a745;
-      color: white;
-    }
-
-    .btn-success:hover {
-      background: #218838;
-    }
-
-    .btn-danger {
-      background: #dc3545;
-      color: white;
-    }
-
-    .btn-danger:hover {
-      background: #c82333;
-    }
-
-    .no-data {
-      text-align: center;
-      padding: 4rem 2rem;
-      color: #6c757d;
-    }
-
-    .no-data i {
-      font-size: 4rem;
-      margin-bottom: 1rem;
-      color: #D4AF37;
-    }
-
-    .no-data h4 {
-      margin-bottom: 0.5rem;
-    }
-
-    /* Modal Styles */
-    .modal {
+    .toast-stack {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      top: 24px;
+      right: 24px;
       z-index: 1000;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .modal.show {
-      opacity: 1;
-    }
-
-    .modal-dialog {
-      background: white;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 500px;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-
-    .modal-header {
-      padding: 1.5rem;
-      border-bottom: 1px solid #dee2e6;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: column;
+      gap: 0.75rem;
+      animation: slideIn 0.3s ease;
     }
 
-    .modal-title {
-      color: #7A1F2A;
-      font-weight: 700;
-      margin: 0;
-    }
-
-    .btn-close {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: #6c757d;
-    }
-
-    .modal-body {
-      padding: 1.5rem;
-    }
-
-    .form-group {
-      margin-bottom: 1.5rem;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: 600;
-      color: #7A1F2A;
-    }
-
-    .modal-footer {
-      padding: 1.5rem;
-      border-top: 1px solid #dee2e6;
-      display: flex;
-      gap: 1rem;
-      justify-content: flex-end;
-    }
-
-    /* Toast Notification Styles */
-    .toast-container {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 9999;
-      animation: slideInRight 0.3s ease;
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
     }
 
     .toast {
@@ -637,223 +345,726 @@ import {
       justify-content: space-between;
       min-width: 300px;
       padding: 1rem 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      margin-bottom: 0.5rem;
-      animation: fadeIn 0.3s ease;
-    }
-
-    .toast-success {
-      background: #d4edda;
-      border-left: 4px solid #28a745;
-      color: #155724;
-    }
-
-    .toast-error {
-      background: #f8d7da;
-      border-left: 4px solid #dc3545;
-      color: #721c24;
-    }
-
-    .toast-warning {
-      background: #fff3cd;
-      border-left: 4px solid #ffc107;
-      color: #856404;
-    }
-
-    .toast-info {
-      background: #d1ecf1;
-      border-left: 4px solid #17a2b8;
-      color: #0c5460;
+      border-radius: 16px;
+      box-shadow: 0 24px 40px rgba(15, 23, 42, 0.18);
+      background: rgba(255, 255, 255, 0.96);
+      border-left: 4px solid transparent;
+      gap: 1rem;
     }
 
     .toast-content {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 0.75rem;
+      color: #0f172a;
+      font-weight: 600;
     }
 
+    .toast-success { border-left-color: #16a34a; color: #166534; }
+    .toast-error { border-left-color: #dc2626; color: #991b1b; }
+    .toast-info { border-left-color: #2563eb; color: #1d4ed8; }
+    .toast-warning { border-left-color: #f59e0b; color: #b45309; }
+
     .toast-close {
-      background: none;
       border: none;
-      font-size: 1.2rem;
+      background: rgba(241, 245, 249, 0.9);
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #0f172a;
       cursor: pointer;
-      opacity: 0.7;
-      transition: opacity 0.2s;
+      transition: background 0.2s ease;
     }
 
     .toast-close:hover {
-      opacity: 1;
+      background: rgba(15, 23, 42, 0.1);
     }
 
-    /* Loading Spinner Styles */
-    .loading-spinner {
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: clamp(1rem, 2vw, 1.5rem);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    }
+
+    .page-header h1 {
+      margin: 0;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .page-header p {
+      margin: 0.35rem 0 0;
+      color: #64748b;
+      font-size: 0.97rem;
+    }
+
+    .header-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.75rem 1.1rem;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.16) 0%, rgba(59, 130, 246, 0.3) 100%);
+      color: #1d4ed8;
+      font-weight: 600;
+      box-shadow: 0 12px 28px rgba(59, 130, 246, 0.2);
+    }
+
+    .header-pill i {
+      font-size: 1.1rem;
+    }
+
+    .loading-state {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 4rem 2rem;
-      color: #7A1F2A;
+      gap: 1.5rem;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.1);
+      color: #1f2937;
     }
 
     .spinner {
-      width: 50px;
-      height: 50px;
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #D4AF37;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
+      border: 6px solid rgba(226, 232, 240, 0.8);
+      border-top-color: #6366f1;
       animation: spin 1s linear infinite;
-      margin-bottom: 1rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
     .mini-spinner {
-      width: 20px;
-      height: 20px;
-      border: 2px solid #f3f3f3;
-      border-top: 2px solid #D4AF37;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
+      border: 3px solid rgba(226, 232, 240, 0.8);
+      border-top-color: #6366f1;
       animation: spin 1s linear infinite;
     }
 
-    /* Enhanced Dropdown Styles */
-    .dropdown-wrapper {
+    .surface-card {
+      background: rgba(255, 255, 255, 0.94);
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(1.5rem, 2vw, 2rem);
+    }
+
+    .surface-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: clamp(1.5rem, 2vw, 1.75rem);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    .surface-header h2 {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .surface-subtitle {
+      display: block;
+      margin-top: 0.35rem;
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+
+    .filters-card {
+      gap: 0;
+    }
+
+    .filters-body {
+      display: flex;
+      flex-direction: column;
+      gap: 1.75rem;
+      padding: 0 clamp(1.8rem, 2.5vw, 2.4rem) clamp(1.8rem, 2.5vw, 2.4rem);
+    }
+
+    .filters-grid {
+      display: grid;
+      gap: clamp(1.25rem, 2vw, 1.75rem);
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .field-block {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .field-label {
+      font-weight: 600;
+      color: #1f2937;
+      font-size: 0.92rem;
+    }
+
+    .field-control {
       position: relative;
     }
 
-    .dropdown-enhanced {
-      position: relative !important;
-      display: block !important;
-      margin-top: 5px;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    .dropdown-control,
+    .text-input,
+    .form-control,
+    .form-select {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.32);
+      padding: 0.85rem 1rem;
+      background: linear-gradient(135deg, rgba(248, 250, 255, 0.95) 0%, rgba(241, 245, 249, 0.95) 100%);
+      color: #0f172a;
+      font-weight: 500;
+      transition: border 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
     }
 
-    .dropdown-enhanced:focus {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    .dropdown-control:focus,
+    .text-input:focus,
+    .form-control:focus,
+    .form-select:focus {
+      border-color: rgba(99, 102, 241, 0.65);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
+      outline: none;
+      transform: translateY(-1px);
+      background: #fff;
     }
 
-    .dropdown-spinner {
+    .dropdown-control:disabled,
+    .text-input:disabled {
+      background: rgba(241, 245, 249, 0.65);
+      color: #94a3b8;
+      cursor: not-allowed;
+      border-color: rgba(203, 213, 225, 0.7);
+    }
+
+    .inline-spinner {
       position: absolute;
-      right: 10px;
+      right: 12px;
       top: 50%;
       transform: translateY(-50%);
     }
 
-    /* Count Hint Styles */
     .count-hint {
-      margin-top: 0.5rem;
-      padding: 0.5rem;
-      background: rgba(212, 175, 55, 0.1);
-      border-radius: 6px;
-      border-left: 3px solid #D4AF37;
+      padding: 0.6rem 0.8rem;
+      border-radius: 12px;
+      background: rgba(99, 102, 241, 0.08);
+      border-left: 3px solid rgba(99, 102, 241, 0.4);
     }
 
     .hint-text {
       font-size: 0.85rem;
-      color: #7A1F2A;
+      color: #4f46e5;
       font-weight: 600;
     }
 
-    /* Success Highlight Animation */
+    .filter-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border-radius: 14px;
+      font-weight: 600;
+      padding: 0.85rem 1.65rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn i {
+      font-size: 1.05rem;
+    }
+
+    .primary-action {
+      background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+      color: #fff;
+      box-shadow: 0 18px 32px rgba(79, 70, 229, 0.24);
+    }
+
+    .primary-action:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 26px 48px rgba(79, 70, 229, 0.28);
+    }
+
+    .secondary-action {
+      background: rgba(148, 163, 184, 0.18);
+      color: #1f2937;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+    }
+
+    .secondary-action:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 36px rgba(148, 163, 184, 0.22);
+    }
+
+    .success-action {
+      background: rgba(34, 197, 94, 0.16);
+      color: #047857;
+      border: 1px solid rgba(34, 197, 94, 0.4);
+    }
+
+    .success-action:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 32px rgba(34, 197, 94, 0.22);
+    }
+
+    .danger-action {
+      background: rgba(248, 113, 113, 0.16);
+      color: #b91c1c;
+      border: 1px solid rgba(248, 113, 113, 0.36);
+    }
+
+    .danger-action:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 32px rgba(248, 113, 113, 0.26);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-sm {
+      padding: 0.55rem 1rem;
+      border-radius: 12px;
+      font-size: 0.85rem;
+    }
+
+    .table-card {
+      gap: 0;
+    }
+
+    .table-head {
+      align-items: flex-start;
+    }
+
+    .table-stats {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .stat-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.55rem 0.95rem;
+      border-radius: 14px;
+      background: rgba(99, 102, 241, 0.12);
+      color: #3730a3;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .stat-chip i {
+      font-size: 1rem;
+    }
+
+    .table-wrapper {
+      width: 100%;
+      padding: 0 clamp(1.5rem, 2vw, 2rem) clamp(1.5rem, 2vw, 2rem);
+    }
+
+    .modern-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 100%;
+      font-size: 0.95rem;
+      color: #1e293b;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    .modern-table thead tr {
+      background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+    }
+
+    .modern-table th {
+      padding: 1rem 1.25rem;
+      font-weight: 600;
+      text-align: left;
+      color: #312e81;
+      border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    .modern-table tbody tr {
+      transition: background-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .modern-table tbody tr:nth-child(even) {
+      background: rgba(248, 250, 255, 0.85);
+    }
+
+    .modern-table tbody tr:hover {
+      background: rgba(238, 242, 255, 0.92);
+      transform: translateY(-1px);
+      box-shadow: 0 12px 24px rgba(79, 70, 229, 0.08);
+    }
+
+    .modern-table td {
+      padding: 1rem 1.25rem;
+      vertical-align: middle;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+    }
+
+    .modern-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .image-cell {
+      width: 80px;
+    }
+
+    .costume-image {
+      width: 64px;
+      height: 64px;
+      object-fit: cover;
+      border-radius: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.1);
+    }
+
+    .category-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.4rem 0.9rem;
+      border-radius: 999px;
+      background: rgba(14, 165, 233, 0.15);
+      color: #0369a1;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .variant-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .variant-text span {
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .size-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 48px;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      background: rgba(15, 118, 110, 0.18);
+      color: #0f766e;
+      font-weight: 600;
+      font-size: 0.85rem;
+      letter-spacing: 0.02em;
+    }
+
+    .count-input {
+      width: 90px;
+      text-align: center;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.32);
+      padding: 0.6rem 0.75rem;
+      background: rgba(248, 250, 255, 0.95);
+      font-weight: 600;
+      color: #1f2937;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .count-input:focus {
+      border-color: rgba(99, 102, 241, 0.65);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+      outline: none;
+    }
+
+    .serial-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .serial-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.06);
+      color: #475569;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .actions-cell {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      justify-content: flex-end;
+    }
+
+    .actions-header {
+      text-align: right;
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 0.75rem;
+      padding: 4rem 1.5rem;
+      color: #94a3b8;
+    }
+
+    .empty-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 24px;
+      background: rgba(99, 102, 241, 0.14);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #4f46e5;
+      font-size: 1.8rem;
+      box-shadow: 0 18px 32px rgba(99, 102, 241, 0.18);
+    }
+
+    .empty-state h3 {
+      margin: 0;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      padding: 1.5rem;
+    }
+
+    .modal.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-dialog {
+      width: 100%;
+      max-width: 520px;
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow: 0 34px 72px rgba(15, 23, 42, 0.35);
+      background: transparent;
+    }
+
+    .modal-content {
+      border: none;
+      border-radius: 22px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.98);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 1.6rem 1.75rem;
+      background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+      color: #fff;
+    }
+
+    .modal-title {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 600;
+    }
+
+    .modal-subtitle {
+      display: block;
+      margin-top: 0.35rem;
+      font-size: 0.85rem;
+      opacity: 0.85;
+    }
+
+    .btn-close {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .btn-close:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .modal-body {
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      background: #f8fafc;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .form-group label {
+      font-weight: 600;
+      color: #1f2937;
+      font-size: 0.92rem;
+    }
+
+    .modal-footer {
+      padding: 1.5rem 1.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 1rem;
+      background: rgba(248, 250, 255, 0.82);
+    }
+
     .success-highlight {
-      background: rgba(40, 167, 69, 0.2) !important;
-      animation: successPulse 2s ease;
+      background: rgba(34, 197, 94, 0.15) !important;
+      animation: pulse 2s ease;
     }
 
-    /* Animations */
-    @keyframes slideInRight {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
+    @keyframes pulse {
+      0%, 100% { background: rgba(34, 197, 94, 0.15); }
+      50% { background: rgba(34, 197, 94, 0.3); }
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    @keyframes successPulse {
-      0%, 100% { background: rgba(40, 167, 69, 0.2); }
-      50% { background: rgba(40, 167, 69, 0.4); }
-    }
-
-    /* Mobile Responsive */
-    @media (max-width: 768px) {
-      .existing-costume-container {
-        padding: 1rem;
-      }
-
-      .page-header h2 {
-        font-size: 2rem;
-      }
-
-      .dropdown-row {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-      }
-
-      .table-header {
+    @media (max-width: 992px) {
+      .page-header {
         flex-direction: column;
         align-items: flex-start;
       }
 
+      .header-pill {
+        align-self: flex-start;
+      }
+
+      .filter-actions {
+        justify-content: center;
+      }
+
       .table-stats {
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-
-      .inventory-table {
-        font-size: 0.85rem;
-      }
-
-      .inventory-table th,
-      .inventory-table td {
-        padding: 0.5rem;
-      }
-
-      .actions-cell {
-        flex-direction: column;
+        justify-content: flex-start;
       }
 
       .modal-dialog {
-        width: 95%;
-        margin: 1rem;
-      }
-
-      .toast-container {
-        top: 10px;
-        right: 10px;
-        left: 10px;
-      }
-
-      .toast {
-        min-width: auto;
-        width: 100%;
+        max-width: 480px;
       }
     }
 
-    @media (max-width: 480px) {
-      .costume-image {
-        width: 40px;
-        height: 40px;
+    @media (max-width: 768px) {
+      .existing-costume {
+        padding: 1.25rem;
       }
 
-      .serial-numbers {
-        max-width: 100px;
+      .table-wrapper {
+        padding: 0 1rem 1.5rem;
       }
 
-      .count-input {
-        width: 60px;
+      .filters-body {
+        padding: 0 1.5rem 1.75rem;
+      }
+
+      .filter-actions {
+        flex-direction: column;
+      }
+
+      .filter-actions .btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .table-stats {
+        width: 100%;
+      }
+
+      .modal {
+        padding: 1rem;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .toast-stack {
+        right: 16px;
+        left: 16px;
+      }
+
+      .toast {
+        width: 100%;
+        min-width: auto;
+      }
+
+      .modern-table {
+        min-width: 100%;
+      }
+
+      .modal-dialog {
+        max-width: 100%;
+      }
+
+      .modal-header,
+      .modal-body,
+      .modal-footer {
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
       }
     }
   `]
@@ -1000,12 +1211,13 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
 
   onSizeChange(): void {
     this.selectedCount = 0;
-    
-    if (this.selectedSize) {
-      const selectedSizeObj = this.filteredSizes.find(s => s.id === this.selectedSize);
+
+    if (this.selectedSize !== null) {
+      const selectedSizeId = typeof this.selectedSize === 'string' ? Number(this.selectedSize) : this.selectedSize;
+      const selectedSizeObj = this.filteredSizes.find(s => s.id === selectedSizeId);
       this.maxAvailableCount = selectedSizeObj?.availableCount || 0;
       this.currentAvailableCount = this.maxAvailableCount;
-      this.selectedCount = Math.min(1, this.maxAvailableCount);
+      this.selectedCount = this.maxAvailableCount;
 
       // Load inventory for selected variant and size
       this.refreshInventory();
@@ -1016,9 +1228,6 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
   }
 
   onCountChange(): void {
-    if (this.selectedCount > this.maxAvailableCount) {
-      this.selectedCount = this.maxAvailableCount;
-    }
     if (this.selectedCount < 0) {
       this.selectedCount = 0;
     }
@@ -1065,15 +1274,20 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
       );
 
       if (existing) {
-        // Update existing item
-        const newCount = this.inventoryService.calculateNewTotal(existing.count, this.selectedCount);
-        existing.count = newCount;
-        existing.serialNumbers = [
-          ...existing.serialNumbers,
-          ...this.inventoryService.generateSerialNumbers(this.selectedCount)
-        ];
-        
-        this.inventoryService.showSuccess(`Updated existing item: ${this.selectedCount} items added. New total: ${newCount}`);
+        const previousCount = existing.count;
+        existing.count = this.selectedCount;
+
+        if (this.selectedCount > previousCount) {
+          const additional = this.selectedCount - previousCount;
+          existing.serialNumbers = [
+            ...existing.serialNumbers,
+            ...this.inventoryService.generateSerialNumbers(additional)
+          ];
+        } else if (this.selectedCount < previousCount) {
+          existing.serialNumbers = existing.serialNumbers.slice(0, this.selectedCount);
+        }
+
+        this.inventoryService.showSuccess(`Updated count: ${previousCount} → ${this.selectedCount}`);
         this.highlightRow(existing);
       } else {
         // Create new item
@@ -1143,8 +1357,7 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
       );
       
       if (existing) {
-        const newTotal = this.inventoryService.calculateNewTotal(existing.count, this.selectedCount);
-        return `Current: ${existing.count} → New: ${newTotal}`;
+        return `Current: ${existing.count} → New: ${this.selectedCount}`;
       } else {
         return `New entry: ${this.selectedCount} items`;
       }
