@@ -60,6 +60,26 @@ export const routes: Routes = [
         loadComponent: () => import('./components/admin/bulk-insert.component').then(m => m.BulkInsertComponent)
       },
       {
+        path: 'existing-costume',
+        loadComponent: () => import('./components/admin/existing-costume.component').then(m => m.ExistingCostumeComponent)
+      },
+      {
+        path: 'add-ornaments',
+        loadComponent: () => import('./components/admin/add-ornaments.component').then(m => m.AddOrnamentsComponent)
+      },
+      {
+        path: 'ornaments/bulk-insert',
+        loadComponent: () => import('./components/admin/ornaments-bulk-insert.component').then(m => m.OrnamentsBulkInsertComponent)
+      },
+      {
+        path: 'view-ornaments',
+        loadComponent: () => import('./components/admin/view-ornaments.component').then(m => m.ViewOrnamentsComponent)
+      },
+      {
+        path: 'existing-ornaments',
+        loadComponent: () => import('./components/admin/existing-ornaments.component').then(m => m.ExistingOrnamentsComponent)
+      },
+      {
         path: 'view-products',
         loadComponent: () => import('./components/admin/view-products.component').then(m => m.ViewProductsComponent)
       },
@@ -73,7 +93,7 @@ export const routes: Routes = [
       },
       {
         path: 'reports',
-        loadComponent: () => import('./components/admin/reports.component').then(m => m.ReportsComponent)
+        loadComponent: () => import('./components/admin/rental-inventory-report.component').then(m => m.RentalInventoryReportComponent)
       },
       {
         path: 'settings',

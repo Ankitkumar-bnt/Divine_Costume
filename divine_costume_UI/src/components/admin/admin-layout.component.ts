@@ -50,16 +50,16 @@ import { AuthService } from '../../services/auth.service';
               <i class="bi" [class.rotated]="isDropdownOpen('ornaments')"></i>
             </a>
             <div class="dropdown-menu" [class.show]="isDropdownOpen('ornaments')">
-              <a routerLink="/admin/ornaments/add" routerLinkActive="active" class="dropdown-item">
+              <a routerLink="/admin/add-ornaments" routerLinkActive="active" class="dropdown-item">
                 <span>Add Ornaments</span>
               </a>
               <a routerLink="/admin/ornaments/bulk-insert" routerLinkActive="active" class="dropdown-item">
                 <span>Bulk Insert</span>
               </a>
-              <a routerLink="/admin/ornaments/view" routerLinkActive="active" class="dropdown-item">
+              <a routerLink="/admin/view-ornaments" routerLinkActive="active" class="dropdown-item">
                 <span>View Ornaments</span>
               </a>
-              <a routerLink="/admin/ornaments/existing" routerLinkActive="active" class="dropdown-item">
+              <a routerLink="/admin/existing-ornaments" routerLinkActive="active" class="dropdown-item">
                 <span>Existing Ornaments</span>
               </a>
             </div>
@@ -71,7 +71,7 @@ import { AuthService } from '../../services/auth.service';
           <a routerLink="/admin/customers" routerLinkActive="active" class="nav-item">
             <span>Customers</span>
           </a>
-          <a routerLink="/admin/rental-inventory-report" routerLinkActive="active" class="nav-item">
+          <a routerLink="/admin/reports" routerLinkActive="active" class="nav-item">
             <span>Report</span>
           </a>
           <a routerLink="/admin/settings" routerLinkActive="active" class="nav-item">
@@ -267,6 +267,7 @@ import { AuthService } from '../../services/auth.service';
 
     .main-content {
       margin-left: 280px;
+      width: calc(100% - 280px);
       flex: 1;
       display: flex;
       flex-direction: column;
@@ -346,6 +347,7 @@ import { AuthService } from '../../services/auth.service';
 
       .main-content {
         margin-left: 0;
+        width: 100%;
       }
 
       /* Mobile overlay */
@@ -396,10 +398,10 @@ export class AdminLayoutComponent {
     if (route.includes('add-product/costume/new')) return 'Add New Costume';
     if (route.includes('add-product/costume')) return 'Costume Options';
     if (route.includes('existing-costume')) return 'Existing Costume';
-    if (route.includes('ornaments/add')) return 'Add Ornaments';
+    if (route.includes('add-ornaments')) return 'Add Ornaments';
     if (route.includes('ornaments/bulk-insert')) return 'Bulk Insert - Ornaments';
-    if (route.includes('ornaments/view')) return 'View Ornaments';
-    if (route.includes('ornaments/existing')) return 'Existing Ornaments';
+    if (route.includes('view-ornaments')) return 'View Ornaments';
+    if (route.includes('existing-ornaments')) return 'Existing Ornaments';
     if (route.includes('view-products')) return 'View Products';
     if (route.includes('bookings')) return 'Bookings / Rentals';
     if (route.includes('customers')) return 'Customers';

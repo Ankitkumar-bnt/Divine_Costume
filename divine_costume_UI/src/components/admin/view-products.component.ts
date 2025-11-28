@@ -363,9 +363,13 @@ import Swal from 'sweetalert2';
     </div>
   `,
   styles: [`
-    .view-products 
-      animation: fadeIn 0.4s ease;
-    }
+    .view-products {
+  height: auto !important;
+  min-height: 100% !important;
+  padding: clamp(1.5rem, 3vw, 2.75rem);
+  animation: fadeIn 0.4s ease;
+}
+
 
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
@@ -438,9 +442,9 @@ import Swal from 'sweetalert2';
       background: rgba(255, 255, 255, 0.92);
       border: 1px solid rgba(148, 163, 184, 0.15);
       backdrop-filter: blur(12px);
-      position: sticky;
-      top: clamp(0.5rem, 2vw, 1.25rem);
-      z-index: 15;
+      position: relative;
+      top: auto;
+      z-index: auto;
     }
 
     .search-field {

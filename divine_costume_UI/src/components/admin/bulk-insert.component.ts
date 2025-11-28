@@ -8,41 +8,333 @@ import Swal from 'sweetalert2';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="container">
-      <div class="card">
-        <div class="card-header">
-          <h5 class="mb-0">Bulk Insert (Excel)</h5>
-        </div>
-        <div class="card-body">
-          <div class="form-section">
-            <h6 class="section-title"><i class="bi bi-file-earmark-excel"></i> Upload Excel File</h6>
-            <div class="row g-3">
-              <div class="col-12">
-                <input type="file" class="form-control" (change)="onFileSelect($event)" accept=".xlsx,.xls">
-                <small class="text-muted">Upload an Excel file (.xlsx or .xls) with product data</small>
-              </div>
-              <div class="col-12" *ngIf="selectedFile">
-                <button type="button" class="btn btn-outline-primary" (click)="uploadExcel()">
-                  <i class="bi bi-upload"></i> Upload Excel
-                </button>
-              </div>
+    <div class="bulk-insert">
+      <div class="page-shell">
+        <header class="page-header">
+          <div>
+            <h1>Bulk Excel Upload</h1>
+            <p>Import curated costume data in a single action.</p>
+          </div>
+          <span class="header-pill">
+            <i class="bi bi-cloud-arrow-up"></i>
+            <span>.xls & .xlsx supported</span>
+          </span>
+        </header>
+
+        <section class="surface-card upload-card">
+          <div class="surface-header">
+            <div>
+              <h2>Upload Excel File</h2>
+              <span class="surface-subtitle">Select your prepared spreadsheet and trigger the ingest.</span>
             </div>
           </div>
-        </div>
+
+          <div class="upload-body">
+            <label class="upload-dropzone">
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                (change)="onFileSelect($event)"
+              >
+              <div class="dropzone-icon">
+                <i class="bi bi-file-earmark-arrow-up"></i>
+              </div>
+              <div class="dropzone-copy">
+                <strong>Click to browse</strong>
+                <span>or drag and drop your Excel file here</span>
+              </div>
+              <span class="file-hint">Maximum compatibility with the provided admin templates.</span>
+            </label>
+
+            <div class="file-info" *ngIf="selectedFile">
+              <div class="file-detail">
+                <i class="bi bi-file-earmark-spreadsheet"></i>
+                <div>
+                  <span class="file-name">{{ selectedFile.name }}</span>
+                  <span class="file-size">{{ selectedFile.size | number }} bytes</span>
+                </div>
+              </div>
+              <button type="button" class="btn primary-action" (click)="uploadExcel()">
+                <i class="bi bi-upload"></i>
+                Upload Excel
+              </button>
+            </div>
+
+            <p class="helper-text">
+              Ensure your worksheet tabs align with the inventory schema before ingesting.
+            </p>
+          </div>
+        </section>
       </div>
     </div>
   `,
   styles: [`
-    .container { padding: 1rem; }
-    .card { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: none; }
-    .card-header { background: linear-gradient(135deg, #5c1a1a 0%, #7d2424 100%); color: #fff; border-radius: 12px 12px 0 0; padding: 1.25rem 1.5rem; }
-    .card-body { padding: 2rem; }
-    .form-section { margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid #e9ecef; }
-    .section-title { color: #5c1a1a; font-weight: 600; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
-    .section-title i { color: #28a745; }
-    .btn { padding: 0.625rem 1.5rem; border-radius: 8px; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.3s ease; }
-    .btn-outline-primary { color: #5c1a1a; border-color: #5c1a1a; }
-    .btn-outline-primary:hover { background: #5c1a1a; border-color: #5c1a1a; color: #fff; }
+    .bulk-insert {
+      min-height: 100vh;
+      padding: clamp(1.5rem, 3vw, 2.75rem);
+      animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .page-shell {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(1.5rem, 2.5vw, 2.5rem);
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.25rem;
+      padding: clamp(1rem, 2vw, 1.5rem);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    }
+
+    .page-header h1 {
+      margin: 0;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .page-header p {
+      margin: 0.35rem 0 0;
+      color: #64748b;
+      font-size: 0.97rem;
+    }
+
+    .header-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.75rem 1.1rem;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.16) 0%, rgba(59, 130, 246, 0.3) 100%);
+      color: #1d4ed8;
+      font-weight: 600;
+      box-shadow: 0 12px 28px rgba(59, 130, 246, 0.2);
+    }
+
+    .header-pill i {
+      font-size: 1.1rem;
+    }
+
+    .surface-card {
+      background: rgba(255, 255, 255, 0.94);
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+    }
+
+    .surface-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+      padding: clamp(1.25rem, 2vw, 1.75rem);
+    }
+
+    .surface-header h2 {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .surface-subtitle {
+      display: block;
+      margin-top: 0.35rem;
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+
+    .upload-card {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(1.5rem, 2vw, 1.9rem);
+    }
+
+    .upload-body {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      padding: 0 clamp(1.75rem, 2.5vw, 2.25rem) clamp(1.75rem, 2.5vw, 2.25rem);
+    }
+
+    .upload-dropzone {
+      position: relative;
+      width: 100%;
+      min-height: 240px;
+      border: 2px dashed rgba(99, 102, 241, 0.35);
+      border-radius: 22px;
+      background: linear-gradient(135deg, rgba(238, 242, 255, 0.85) 0%, rgba(224, 231, 255, 0.9) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.85rem;
+      padding: 2.5rem clamp(1.5rem, 2vw, 2rem);
+      text-align: center;
+      cursor: pointer;
+      transition: border 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+      overflow: hidden;
+    }
+
+    .upload-dropzone input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .upload-dropzone:hover {
+      border-color: rgba(79, 70, 229, 0.6);
+      transform: translateY(-2px);
+      box-shadow: 0 22px 34px rgba(79, 70, 229, 0.18);
+    }
+
+    .dropzone-icon {
+      width: 74px;
+      height: 74px;
+      border-radius: 24px;
+      background: rgba(99, 102, 241, 0.18);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #4f46e5;
+      font-size: 2rem;
+      box-shadow: 0 18px 32px rgba(99, 102, 241, 0.18);
+    }
+
+    .dropzone-copy strong {
+      display: block;
+      font-size: 1.05rem;
+      color: #1e293b;
+    }
+
+    .dropzone-copy span {
+      display: block;
+      margin-top: 0.35rem;
+      color: #64748b;
+      font-size: 0.9rem;
+    }
+
+    .file-hint {
+      font-size: 0.82rem;
+      color: #6366f1;
+    }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.25rem;
+      padding: 1rem 1.25rem;
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+    }
+
+    .file-detail {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.85rem;
+      color: #1f2937;
+    }
+
+    .file-detail i {
+      font-size: 1.8rem;
+      color: #22c55e;
+      background: rgba(34, 197, 94, 0.12);
+      border-radius: 16px;
+      padding: 0.6rem;
+    }
+
+    .file-name {
+      display: block;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .file-size {
+      display: block;
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+
+    .btn {
+      border-radius: 14px;
+      font-weight: 600;
+      padding: 0.85rem 1.65rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      border: none;
+      cursor: pointer;
+    }
+
+    .primary-action {
+      background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+      color: #fff;
+      box-shadow: 0 18px 32px rgba(79, 70, 229, 0.25);
+    }
+
+    .primary-action:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 26px 48px rgba(79, 70, 229, 0.28);
+    }
+
+    .helper-text {
+      margin: 0;
+      font-size: 0.88rem;
+      color: #64748b;
+    }
+
+    @media (max-width: 768px) {
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .header-pill {
+        align-self: flex-start;
+      }
+
+      .file-info {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .bulk-insert {
+        padding: 1.25rem;
+      }
+
+      .upload-dropzone {
+        min-height: 200px;
+        padding: 2rem 1.5rem;
+      }
+    }
   `]
 })
 export class BulkInsertComponent {
