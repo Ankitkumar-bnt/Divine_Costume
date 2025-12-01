@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FooterComponent } from './footer.component';
- 
+import { WishlistService } from '../services/wishlist.service';
+
 interface CostumeProduct {
   id: number;
   name: string;
@@ -169,7 +170,10 @@ interface CostumeProduct {
             <div class="grid" *ngIf="filtered.length; else empty">
               <div class="card" *ngFor="let p of filtered; trackBy: trackById" [routerLink]="['/costumes', p.id]" (mousemove)="onCardMouseMove($event)">
                 <div class="thumb">
-                  <button type="button" class="wishlist-btn" [class.active]="isWished(p.id)" (click)="toggleWishlist(p.id); $event.stopPropagation()" aria-label="Add to wishlist" [attr.aria-pressed]="isWished(p.id)">♥</button>
+                  <button type="button" class="wishlist-btn" [class.active]="isWished(p.id)" (click)="toggleWishlist(p.id); $event.stopPropagation()" aria-label="Add to wishlist" [attr.aria-pressed]="isWished(p.id)">
+                    <svg *ngIf="!isWished(p.id)" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                    <svg *ngIf="isWished(p.id)" width="26" height="26" viewBox="0 0 24 24" fill="#dc2626" stroke="#dc2626" stroke-width="0"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                  </button>
                   <img class="img-primary" [src]="p.images[0]" [alt]="p.name">
                   <img class="img-secondary" [src]="p.images[1] || p.images[0]" [alt]="p.name">
                 </div>
@@ -204,7 +208,7 @@ interface CostumeProduct {
     .sort { border: 2px solid #D4AF37; background: #FFFDF9; border-radius: 8px; padding: .5rem .6rem; color: #7A1F2A; font-weight: 600; }
 
     .layout { display: grid; grid-template-columns: 300px 1fr; gap: 1rem; }
-    .sidebar { position: sticky; top: 110px; align-self: start; overflow-y: auto; max-height: calc(100vh - 130px); background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1rem; height: max-content; box-shadow: var(--soft-shadow); backdrop-filter: blur(8px); }
+    .sidebar { position: sticky; top: 110px; align-self: start; overflow: hidden; max-height: calc(100vh - 130px); background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1rem; height: max-content; box-shadow: var(--soft-shadow); backdrop-filter: blur(8px); }
     .filter-group { display: grid; gap: .5rem; margin-bottom: 1rem; }
     .filter-group h4 { margin: 0 0 .25rem; color: #0f172a; font-size: .95rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-weight: 700; }
     .filter-group label { display: flex; align-items: center; gap: .5rem; font-size: .95rem; color: #1B1B1B; padding: .15rem .25rem; border-radius: 8px; }
@@ -260,9 +264,9 @@ interface CostumeProduct {
     .desc { margin: 0; color: #1B1B1B; opacity: .8; font-size: .9rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
     .meta { display: none; }
     .price { color: #5c1a1a; font-weight: 800; margin-top: .25rem; }
-    .wishlist-btn { position: absolute; top: 10px; right: 10px; width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--glass-border); background: var(--glass-bg); color: #0f172a; display: inline-flex; align-items: center; justify-content: center; box-shadow: var(--soft-shadow); cursor: pointer; transition: transform .2s ease, color .2s ease, background-color .2s ease; z-index: 3; font-size: 20px; }
+    .wishlist-btn { position: absolute; top: 10px; right: 10px; width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--glass-border); background: var(--glass-bg); color: #1B1B1B; display: inline-flex; align-items: center; justify-content: center; box-shadow: var(--soft-shadow); cursor: pointer; transition: transform .2s ease; z-index: 3; }
     .wishlist-btn:hover { transform: translateY(-2px); }
-    .wishlist-btn.active { background: #fff; color: #e11d48; border-color: rgba(225,29,72,.35); }
+    .wishlist-btn.active { color: #dc2626; background: var(--glass-bg); border-color: var(--glass-border); }
     .tags { color: #1B1B1B; opacity: .7; font-size: .85rem; }
     .empty { text-align: center; color: #7A1F2A; padding: 2rem; border: 2px dashed #D4AF37; border-radius: 12px; background: #FFFDF9; }
 
@@ -313,7 +317,7 @@ export class CostumesListComponent implements OnInit {
     availability: false,
     items: false
   };
-  wishlist = new Set<number>();
+
   // PRICE slider state
   sliderMin = 0;
   sliderMax = 10000;
@@ -538,7 +542,10 @@ export class CostumesListComponent implements OnInit {
 
   filtered: CostumeProduct[] = [];
 
-  constructor(private route: ActivatedRoute) {}
+  constructor(
+    private route: ActivatedRoute,
+    private wishlistService: WishlistService
+  ) { }
 
   ngOnInit(): void {
     this.route.queryParamMap.subscribe((qp) => {
@@ -644,17 +651,17 @@ export class CostumesListComponent implements OnInit {
 
     switch (this.sortBy) {
       case 'price_asc':
-        res.sort((a,b) => a.pricePerDay - b.pricePerDay); break;
+        res.sort((a, b) => a.pricePerDay - b.pricePerDay); break;
       case 'price_desc':
-        res.sort((a,b) => b.pricePerDay - a.pricePerDay); break;
+        res.sort((a, b) => b.pricePerDay - a.pricePerDay); break;
       case 'popularity':
       case 'most_rented':
-        res.sort((a,b) => b.rentedCount - a.rentedCount); break;
+        res.sort((a, b) => b.rentedCount - a.rentedCount); break;
       case 'availability':
-        res.sort((a,b) => Number((b.available !== false)) - Number((a.available !== false))); break;
+        res.sort((a, b) => Number((b.available !== false)) - Number((a.available !== false))); break;
       case 'newest':
       default:
-        res.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        res.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
 
     this.filtered = res;
@@ -677,10 +684,33 @@ export class CostumesListComponent implements OnInit {
   }
 
   toggleWishlist(id: number) {
-    if (this.wishlist.has(id)) this.wishlist.delete(id); else this.wishlist.add(id);
+    const product = this.allProducts.find(p => p.id === id);
+    if (!product) return;
+
+    if (this.wishlistService.isInWishlist(id)) {
+      // Find the actual wishlist item to get its ID
+      const wishlistItems = this.wishlistService.getWishlistItems();
+      const existingItem = wishlistItems.find(item => item.productId === id);
+      if (existingItem) {
+        this.wishlistService.removeFromWishlist(existingItem.id);
+      }
+    } else {
+      const wishlistId = `${id}-${product.color}-${product.size}`;
+      this.wishlistService.addToWishlist({
+        id: wishlistId,
+        productId: id,
+        name: product.name,
+        description: product.description,
+        image: product.images[0],
+        color: product.color,
+        size: product.size,
+        rentPerDay: product.pricePerDay,
+        deposit: 1500 // Default deposit, adjust as needed
+      });
+    }
   }
 
-  isWished(id: number) { return this.wishlist.has(id); }
+  isWished(id: number) { return this.wishlistService.isInWishlist(id); }
 
   onCardMouseMove(ev: MouseEvent) {
     const el = ev.currentTarget as HTMLElement | null;

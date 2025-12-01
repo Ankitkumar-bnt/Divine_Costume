@@ -23,6 +23,10 @@ export const routes: Routes = [
     loadComponent: () => import('./components/cart.component').then(m => m.CartComponent)
   },
   {
+    path: 'wishlist',
+    loadComponent: () => import('./components/wishlist.component').then(m => m.WishlistComponent)
+  },
+  {
     path: 'login',
     loadComponent: () => import('./components/login.component').then(m => m.LoginComponent)
   },

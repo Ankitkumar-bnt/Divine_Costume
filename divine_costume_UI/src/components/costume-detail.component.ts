@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FooterComponent } from './footer.component';
 import { CartService } from '../services/cart.service';
-import Swal from 'sweetalert2';
+import { WishlistService } from '../services/wishlist.service';
+import { ToastService } from '../services/toast.service';
 
 interface VariantSize {
   size: string;
@@ -112,9 +113,9 @@ interface ProductDetailModel {
               <span class="btn-icon">🛒</span>
               {{ currentStock > 0 ? 'Add to Cart' : 'Out of Stock' }}
             </button>
-            <button class="btn-wishlist">
+            <button class="btn-wishlist" [class.active]="isInWishlist" (click)="toggleWishlist()">
               <span class="btn-icon">❤️</span>
-              Add to Wishlist
+              {{ isInWishlist ? 'In Wishlist' : 'Add to Wishlist' }}
             </button>
           </div>
           
@@ -452,9 +453,19 @@ interface ProductDetailModel {
       border: 2px solid #7A1F2A;
     }
 
+    .btn-wishlist.active {
+      background: #dc2626;
+      color: #fff;
+      border-color: #dc2626;
+    }
+
     .btn-wishlist:hover {
       background: #FFF8EE;
       transform: translateY(-2px);
+    }
+
+    .btn-wishlist.active:hover {
+      background: #b91c1c;
     }
 
     .btn-icon {
@@ -540,6 +551,7 @@ export class CostumeDetailComponent implements OnInit {
   activeImageIndex = 0;
   selectedSize: string | null = null;
   currentStock = 0;
+  isInWishlist = false;
 
   private catalog: ProductDetailModel[] = [
     {
@@ -592,7 +604,9 @@ export class CostumeDetailComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private cartService: CartService
+    private cartService: CartService,
+    private wishlistService: WishlistService,
+    private toastService: ToastService
   ) { }
 
   ngOnInit(): void {
@@ -601,6 +615,7 @@ export class CostumeDetailComponent implements OnInit {
     this.product = this.catalog.find(p => p.id === id) || this.catalog[0] || null;
     if (this.product) {
       this.selectColor(0);
+      this.updateWishlistState();
     }
   }
 
@@ -616,11 +631,13 @@ export class CostumeDetailComponent implements OnInit {
     const firstInStock = variant?.sizes.find(s => s.stock > 0) || null;
     this.selectedSize = firstInStock?.size || (variant?.sizes[0]?.size ?? null);
     this.updateStock();
+    this.updateWishlistState();
   }
 
   selectSize(size: string) {
     this.selectedSize = size;
     this.updateStock();
+    this.updateWishlistState();
   }
 
   private updateStock() {
@@ -645,16 +662,45 @@ export class CostumeDetailComponent implements OnInit {
       deposit: this.currentVariant.deposit
     });
 
-    // Show success message with SweetAlert2
-    Swal.fire({
-      icon: 'success',
-      title: 'Added to Cart!',
-      text: `${this.product.name} has been added to your cart.`,
-      showConfirmButton: false,
-      timer: 1500,
-      timerProgressBar: true
-    }).then(() => {
-      this.router.navigate(['/cart']);
-    });
+    // Show success toast with View Cart action
+    this.toastService.success(
+      'Added to Cart',
+      'View Cart',
+      () => {
+        this.router.navigate(['/cart']);
+      }
+    );
+  }
+
+  updateWishlistState() {
+    if (this.product) {
+      this.isInWishlist = this.wishlistService.isInWishlist(this.product.id);
+    }
+  }
+
+  toggleWishlist() {
+    if (!this.product || !this.currentVariant || !this.selectedSize) {
+      return;
+    }
+
+    const wishlistId = `${this.product.id}-${this.currentVariant.displayName}-${this.selectedSize}`;
+
+    if (this.isInWishlist) {
+      this.wishlistService.removeFromWishlist(wishlistId);
+      this.isInWishlist = false;
+    } else {
+      this.wishlistService.addToWishlist({
+        id: wishlistId,
+        productId: this.product.id,
+        name: this.product.name,
+        description: this.product.shortDescription,
+        image: this.currentImages[0],
+        color: this.currentVariant.displayName,
+        size: this.selectedSize,
+        rentPerDay: this.currentVariant.rentPerDay,
+        deposit: this.currentVariant.deposit
+      });
+      this.isInWishlist = true;
+    }
   }
 }
