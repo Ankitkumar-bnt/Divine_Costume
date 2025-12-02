@@ -1,6 +1,7 @@
 package com.rental.divine_costume.service;
 
 import com.rental.divine_costume.dto.requestdto.CostumePartRequestDto;
+import com.rental.divine_costume.dto.requestdto.ItemRequestDto;
 import com.rental.divine_costume.dto.responsedto.CostumeInventoryResponseDto;
 import com.rental.divine_costume.entity.items.CostumeCategory;
 import com.rental.divine_costume.entity.items.CostumeVariant;
@@ -35,4 +36,10 @@ public interface CostumeInventoryService {
     
     // Serial number operations
     List<String> getSerialNumbersByVariantAndSize(Long variantId, String size);
+    
+    // Duplication operations
+    Long duplicateCostume(Long costumeId, Integer additionalCount);
+    
+    // Batch add operations
+    Long addCostumesBatch(ItemRequestDto itemRequestDto, Integer count);
 }

@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class CostumeVariantRequestDto {
+    private Long id;
     private Long categoryId;
     private String variantDescription;
     private String style;

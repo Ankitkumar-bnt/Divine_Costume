@@ -2,13 +2,13 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { 
-  InventoryService, 
-  Category, 
-  VariantDescription, 
-  Size, 
+import {
+  InventoryService,
+  Category,
+  VariantDescription,
+  Size,
   CostumeInventory,
-  ToastMessage 
+  ToastMessage
 } from '../../services/inventory.service';
 
 @Component({
@@ -1107,7 +1107,7 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
   currentToast: ToastMessage | null = null;
   private subscriptions: Subscription[] = [];
 
-  constructor(public inventoryService: InventoryService) {}
+  constructor(public inventoryService: InventoryService) { }
 
   ngOnInit(): void {
     this.setupToastSubscription();
@@ -1192,7 +1192,7 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
     if (this.selectedVariant) {
       this.sizesLoading = true;
       const sizeSub = this.inventoryService.getSizeCountsByVariant(this.selectedVariant).subscribe({
-        next: (sizeCounts: {[key: string]: number}) => {
+        next: (sizeCounts: { [key: string]: number }) => {
           this.filteredSizes = this.inventoryService.mapSizeCounts(sizeCounts, this.selectedVariant!);
           this.sizesLoading = false;
         },
@@ -1238,7 +1238,7 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
     if (item.count < 0) {
       item.count = 0;
     }
-    
+
     // Update backend
     const updateSub = this.inventoryService.updateInventoryCount(item.id, item.count).subscribe({
       next: () => {
@@ -1258,57 +1258,177 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
   }
 
   addToInventoryTable(): void {
-    if (!this.canAddToTable()) return;
+    console.log('🔵 addToInventoryTable called');
+    console.log('Selected values:', {
+      category: this.selectedCategory,
+      variant: this.selectedVariant,
+      size: this.selectedSize,
+      count: this.selectedCount
+    });
+
+    if (!this.canAddToTable()) {
+      console.log('❌ canAddToTable returned false');
+      return;
+    }
 
     const category = this.categories.find(c => c.id === this.selectedCategory);
     const variant = this.filteredVariants.find(v => v.id === this.selectedVariant);
     const size = this.filteredSizes.find(s => s.id === this.selectedSize);
 
+    console.log('Found objects:', { category, variant, size });
+
     if (category && variant && size) {
       // Check for existing item with same category+variant+size
       const existing = this.inventoryService.findExistingInventoryItem(
-        this.inventoryData, 
-        this.selectedCategory!, 
-        this.selectedVariant!, 
+        this.inventoryData,
+        this.selectedCategory!,
+        this.selectedVariant!,
         size.size
       );
 
+      console.log('Existing item:', existing);
+      console.log('Inventory data:', this.inventoryData);
+
       if (existing) {
         const previousCount = existing.count;
-        existing.count = this.selectedCount;
+        console.log('Previous count:', previousCount, 'New count:', this.selectedCount);
 
+        // Check if count is being increased
         if (this.selectedCount > previousCount) {
           const additional = this.selectedCount - previousCount;
-          existing.serialNumbers = [
-            ...existing.serialNumbers,
-            ...this.inventoryService.generateSerialNumbers(additional)
-          ];
-        } else if (this.selectedCount < previousCount) {
-          existing.serialNumbers = existing.serialNumbers.slice(0, this.selectedCount);
-        }
+          console.log('🔼 Increasing count by:', additional);
 
-        this.inventoryService.showSuccess(`Updated count: ${previousCount} → ${this.selectedCount}`);
-        this.highlightRow(existing);
+          // Build ItemRequestDto for batch add API
+          const itemRequestDto = {
+            category: {
+              id: this.selectedCategory,
+              categoryName: category.categoryName
+            },
+            variant: {
+              id: this.selectedVariant,
+              categoryId: this.selectedCategory,
+              variantDescription: variant.variantDescription,
+              style: variant.style,
+              primaryColor: variant.primaryColor,
+              secondaryColor: variant.secondaryColor,
+              tertiaryColor: variant.tertiaryColor
+            },
+            costume: {
+              costumeVariantId: this.selectedVariant,
+              numberOfItems: 1,
+              size: size.size,
+              purchasePrice: 0,
+              rentalPricePerDay: 0,
+              deposit: 0,
+              isRentable: true
+            },
+            items: [],
+            images: []
+          };
+
+          console.log('📤 Calling addCostumesBatch API with:', itemRequestDto, 'count:', this.selectedCount);
+
+          // Call batch add API
+          const batchAddSub = this.inventoryService.addCostumesBatch(itemRequestDto, this.selectedCount).subscribe({
+            next: (createdCount: number) => {
+              console.log('✅ API Response - Created count:', createdCount);
+              if (createdCount > 0) {
+                this.inventoryService.showSuccess(`✅ Successfully created ${createdCount} new costume entries with incremented serial numbers (${previousCount + 1} to ${this.selectedCount})`);
+              } else {
+                this.inventoryService.showInfo(`ℹ️ No new entries created. Count already matches the requested value.`);
+              }
+
+              // Update the count in the UI
+              existing.count = this.selectedCount;
+
+              // Refresh inventory to get actual data from backend
+              this.refreshInventory();
+              this.clearFilters();
+            },
+            error: (error: any) => {
+              console.error('❌ API Error:', error);
+              this.inventoryService.showError('❌ Failed to add costume entries. Please check the console for details and try again.');
+              console.error('Error adding costumes in batch:', error);
+              console.error('Error details:', {
+                message: error.message,
+                status: error.status,
+                error: error.error
+              });
+            }
+          });
+          this.subscriptions.push(batchAddSub);
+        } else if (this.selectedCount < previousCount) {
+          // Handle count decrease (just show info message)
+          console.log('🔽 Count decrease detected');
+          this.inventoryService.showInfo(`ℹ️ Count decrease is not supported. Current count: ${previousCount}. To reduce, please delete individual entries.`);
+          this.clearFilters();
+        } else {
+          // Count is the same, no change needed
+          console.log('➡️ Count is the same');
+          this.inventoryService.showInfo('ℹ️ Count is already set to this value. No changes made.');
+          this.clearFilters();
+        }
       } else {
-        // Create new item
-        const newItem: CostumeInventory = {
-          id: Date.now(),
-          categoryId: this.selectedCategory!,
-          variantId: this.selectedVariant!,
-          categoryName: category.categoryName,
-          variantDescription: variant.variantDescription,
-          size: size.size,
-          count: this.selectedCount,
-          imageUrl: '/assets/placeholder-costume.jpg',
-          serialNumbers: this.inventoryService.generateSerialNumbers(this.selectedCount)
+        console.log('🆕 Creating new entries');
+        // Create new entries using batch add API
+        const itemRequestDto = {
+          category: {
+            id: this.selectedCategory,
+            categoryName: category.categoryName
+          },
+          variant: {
+            id: this.selectedVariant,
+            categoryId: this.selectedCategory,
+            variantDescription: variant.variantDescription,
+            style: variant.style,
+            primaryColor: variant.primaryColor,
+            secondaryColor: variant.secondaryColor,
+            tertiaryColor: variant.tertiaryColor
+          },
+          costume: {
+            costumeVariantId: this.selectedVariant,
+            numberOfItems: 1,
+            size: size.size,
+            purchasePrice: 0,
+            rentalPricePerDay: 0,
+            deposit: 0,
+            isRentable: true
+          },
+          items: [],
+          images: []
         };
 
-        this.inventoryData.push(newItem);
-        this.inventoryService.showSuccess(`${this.selectedCount} items added successfully!`);
-        this.highlightRow(newItem);
-      }
+        console.log('📤 Calling addCostumesBatch API for new entries with:', itemRequestDto, 'count:', this.selectedCount);
 
-      this.clearFilters();
+        // Call batch add API for new entries
+        const batchAddSub = this.inventoryService.addCostumesBatch(itemRequestDto, this.selectedCount).subscribe({
+          next: (createdCount: number) => {
+            console.log('✅ API Response - Created count:', createdCount);
+            if (createdCount > 0) {
+              this.inventoryService.showSuccess(`✅ Successfully created ${createdCount} new costume entries for ${variant.variantDescription} (Size: ${size.size})`);
+            } else {
+              this.inventoryService.showInfo(`ℹ️ No entries created. Please check if costumes already exist.`);
+            }
+
+            // Refresh inventory to get actual data from backend
+            this.refreshInventory();
+            this.clearFilters();
+          },
+          error: (error: any) => {
+            console.error('❌ API Error:', error);
+            this.inventoryService.showError('❌ Failed to create costume entries. Please check the console for details and try again.');
+            console.error('Error creating costumes in batch:', error);
+            console.error('Error details:', {
+              message: error.message,
+              status: error.status,
+              error: error.error
+            });
+          }
+        });
+        this.subscriptions.push(batchAddSub);
+      }
+    } else {
+      console.log('❌ Missing category, variant, or size');
     }
   }
 
@@ -1350,12 +1470,12 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
   getCountHint(): string {
     if (this.selectedSize && this.selectedCount > 0) {
       const existing = this.inventoryService.findExistingInventoryItem(
-        this.inventoryData, 
-        this.selectedCategory!, 
-        this.selectedVariant!, 
+        this.inventoryData,
+        this.selectedCategory!,
+        this.selectedVariant!,
         this.filteredSizes.find(s => s.id === this.selectedSize)?.size || ''
       );
-      
+
       if (existing) {
         return `Current: ${existing.count} → New: ${this.selectedCount}`;
       } else {
@@ -1444,7 +1564,7 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
     if (event.target.src.includes('data:image')) {
       return;
     }
-    
+
     event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjRjhGOUZBIiBzdHJva2U9IiNEREREREQiLz4KPHN2ZyB4PSIyMCIgeT0iMjAiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM5OTk5OTkiIHN0cm9rZS13aWR0aD0iMiI+CjxwYXRoIGQ9Im0yMSAxNS02LTYtNiA2Ii8+CjxwYXRoIGQ9Im05IDlhMyAzIDAgMSAwIDYgMGEzIDMgMCAwIDAtNiAweiIvPgo8L3N2Zz4KPC9zdmc+';
     event.target.alt = 'No image available';
   }

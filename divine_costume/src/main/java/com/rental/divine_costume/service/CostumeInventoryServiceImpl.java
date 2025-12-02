@@ -1,6 +1,7 @@
 package com.rental.divine_costume.service;
 
 import com.rental.divine_costume.dto.requestdto.CostumePartRequestDto;
+import com.rental.divine_costume.dto.requestdto.ItemRequestDto;
 import com.rental.divine_costume.dto.responsedto.CostumeInventoryResponseDto;
 import com.rental.divine_costume.entity.items.*;
 import com.rental.divine_costume.repository.*;
@@ -239,5 +240,148 @@ public class CostumeInventoryServiceImpl implements CostumeInventoryService {
                             .tertiaryColor(variant.getTertiaryColor())
                             .build();
                 }).collect(Collectors.toList());
+    }
+
+    @Override
+    public Long duplicateCostume(Long costumeId, Integer additionalCount) {
+        log.info("Duplicating costume ID: {} with {} additional copies", costumeId, additionalCount);
+        
+        if (additionalCount == null || additionalCount <= 0) {
+            log.warn("Invalid additional count: {}", additionalCount);
+            return 0L;
+        }
+        
+        // Find the source costume
+        Costume sourceCostume = costumeRepository.findById(costumeId)
+                .orElseThrow(() -> new RuntimeException("Costume not found with ID: " + costumeId));
+        
+        CostumeVariant variant = sourceCostume.getCostumeVariant();
+        if (variant == null || variant.getCategory() == null) {
+            throw new RuntimeException("Costume variant or category not found for costume ID: " + costumeId);
+        }
+        
+        // Get the maximum serial number for this variant/size combination
+        Integer maxSerialNumber = costumeRepository.findMaxSerialNumber(
+                variant.getCategory().getCategoryName(),
+                variant.getPrimaryColor(),
+                variant.getSecondaryColor(),
+                variant.getTertiaryColor(),
+                sourceCostume.getSize()
+        );
+        
+        if (maxSerialNumber == null) {
+            maxSerialNumber = 0;
+        }
+        
+        log.info("Current max serial number: {}", maxSerialNumber);
+        
+        // Create duplicate costumes with incremented serial numbers
+        List<Costume> duplicates = new ArrayList<>();
+        for (int i = 1; i <= additionalCount; i++) {
+            Costume duplicate = Costume.builder()
+                    .costumeVariant(variant)
+                    .numberOfItems(sourceCostume.getNumberOfItems())
+                    .size(sourceCostume.getSize())
+                    .serialNumber(maxSerialNumber + i)
+                    .purchasePrice(sourceCostume.getPurchasePrice())
+                    .rentalPricePerDay(sourceCostume.getRentalPricePerDay())
+                    .deposit(sourceCostume.getDeposit())
+                    .isRentable(sourceCostume.getIsRentable())
+                    .build();
+            duplicates.add(duplicate);
+        }
+        
+        // Save all duplicates
+        List<Costume> savedCostumes = costumeRepository.saveAll(duplicates);
+        log.info("Successfully created {} duplicate costume entries", savedCostumes.size());
+        
+        return (long) savedCostumes.size();
+    }
+    
+    @Override
+    public Long addCostumesBatch(ItemRequestDto itemRequestDto, Integer count) {
+        log.info("Adding costumes in batch with count: {}", count);
+        
+        if (count == null || count <= 0) {
+            log.warn("Invalid count: {}", count);
+            return 0L;
+        }
+        
+        if (itemRequestDto == null || itemRequestDto.getVariant() == null || itemRequestDto.getCostume() == null) {
+            throw new RuntimeException("ItemRequestDto, variant, or costume data is missing");
+        }
+        
+        // Extract variant ID from the request
+        Long variantId = itemRequestDto.getVariant().getId();
+        if (variantId == null) {
+            throw new RuntimeException("Variant ID is required");
+        }
+        
+        // Find the variant
+        CostumeVariant variant = variantRepository.findById(variantId)
+                .orElseThrow(() -> new RuntimeException("Variant not found with ID: " + variantId));
+        
+        if (variant.getCategory() == null) {
+            throw new RuntimeException("Variant category not found for variant ID: " + variantId);
+        }
+        
+        // Extract size from costume data
+        String size = itemRequestDto.getCostume().getSize();
+        if (size == null || size.trim().isEmpty()) {
+            throw new RuntimeException("Size is required");
+        }
+        
+        // Check if costumes already exist for this variant and size
+        List<Costume> existingCostumes = costumeRepository.findByVariantIdAndSize(variantId, size);
+        int existingCount = existingCostumes.size();
+        
+        log.info("Found {} existing costumes for variant ID: {} and size: {}", existingCount, variantId, size);
+        
+        // Calculate how many new entries to add
+        int additionalCount = count - existingCount;
+        
+        if (additionalCount <= 0) {
+            log.info("No additional costumes needed. Requested: {}, Existing: {}", count, existingCount);
+            return 0L;
+        }
+        
+        // Get the maximum serial number for this variant/size combination
+        Integer maxSerialNumber = costumeRepository.findMaxSerialNumber(
+                variant.getCategory().getCategoryName(),
+                variant.getPrimaryColor(),
+                variant.getSecondaryColor(),
+                variant.getTertiaryColor(),
+                size
+        );
+        
+        if (maxSerialNumber == null) {
+            maxSerialNumber = 0;
+        }
+        
+        log.info("Current max serial number: {}, adding {} new entries", maxSerialNumber, additionalCount);
+        
+        // Create new costume entries with incremented serial numbers
+        List<Costume> newCostumes = new ArrayList<>();
+        for (int i = 1; i <= additionalCount; i++) {
+            Costume newCostume = Costume.builder()
+                    .costumeVariant(variant)
+                    .numberOfItems(itemRequestDto.getCostume().getNumberOfItems())
+                    .size(size)
+                    .serialNumber(maxSerialNumber + i)
+                    .purchasePrice(itemRequestDto.getCostume().getPurchasePrice())
+                    .rentalPricePerDay(itemRequestDto.getCostume().getRentalPricePerDay())
+                    .deposit(itemRequestDto.getCostume().getDeposit())
+                    .isRentable(itemRequestDto.getCostume().getIsRentable() != null ? 
+                               itemRequestDto.getCostume().getIsRentable() : true)
+                    .build();
+            newCostumes.add(newCostume);
+        }
+        
+        // Save all new costumes
+        List<Costume> savedCostumes = costumeRepository.saveAll(newCostumes);
+        log.info("Successfully created {} new costume entries with serial numbers {} to {}", 
+                savedCostumes.size(), maxSerialNumber + 1, maxSerialNumber + additionalCount);
+        
+        return (long) savedCostumes.size();
     }
 }

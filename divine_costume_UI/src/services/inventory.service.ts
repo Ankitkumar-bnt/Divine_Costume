@@ -50,10 +50,10 @@ export interface ToastMessage {
 export class InventoryService {
   private readonly API_BASE = '/api/costume-inventory';
   private toastSubject = new BehaviorSubject<ToastMessage | null>(null);
-  
+
   public toast$ = this.toastSubject.asObservable();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // API Methods with enhanced error handling
   getCategories(): Observable<Category[]> {
@@ -73,13 +73,13 @@ export class InventoryService {
           error: error.error,
           headers: error.headers
         });
-        
+
         // If status is 200 but treated as error, it might be a parsing issue
         if (error.status === 200) {
           console.warn('⚠️ Status 200 but treated as error - likely response format issue');
           console.log('📄 Raw response body:', error.error);
         }
-        
+
         throw error;
       })
     );
@@ -96,9 +96,9 @@ export class InventoryService {
     );
   }
 
-  getSizeCountsByVariant(variantId: number): Observable<{[key: string]: number}> {
+  getSizeCountsByVariant(variantId: number): Observable<{ [key: string]: number }> {
     console.log('🔍 Fetching sizes for variant:', variantId);
-    return this.http.get<{[key: string]: any}>(`${this.API_BASE}/size-counts/variant/${variantId}`).pipe(
+    return this.http.get<{ [key: string]: any }>(`${this.API_BASE}/size-counts/variant/${variantId}`).pipe(
       tap(response => {
         console.log('✅ Sizes response:', response);
         console.log('📊 Response type:', typeof response);
@@ -139,8 +139,30 @@ export class InventoryService {
     return this.http.get<string[]>(`${this.API_BASE}/serial-numbers/variant/${variantId}/size/${encodeURIComponent(size)}`);
   }
 
+  duplicateCostume(costumeId: number, additionalCount: number): Observable<number> {
+    console.log('🔄 Duplicating costume ID:', costumeId, 'with count:', additionalCount);
+    return this.http.post<number>(`${this.API_BASE}/duplicate/${costumeId}?count=${additionalCount}`, {}).pipe(
+      tap(response => console.log('✅ Duplication response:', response)),
+      catchError((error: HttpErrorResponse) => {
+        console.error('❌ Duplication API Error:', error);
+        throw error;
+      })
+    );
+  }
+
+  addCostumesBatch(itemRequestDto: any, count: number): Observable<number> {
+    console.log('🔄 Adding costumes in batch with count:', count, 'ItemRequestDto:', itemRequestDto);
+    return this.http.post<number>(`${this.API_BASE}/batch-add?count=${count}`, itemRequestDto).pipe(
+      tap(response => console.log('✅ Batch add response:', response)),
+      catchError((error: HttpErrorResponse) => {
+        console.error('❌ Batch add API Error:', error);
+        throw error;
+      })
+    );
+  }
+
   // Utility Methods
-  mapSizeCounts(sizeCounts: {[key: string]: number}, variantId: number): Size[] {
+  mapSizeCounts(sizeCounts: { [key: string]: number }, variantId: number): Size[] {
     return Object.entries(sizeCounts).map(([size, count], index) => ({
       id: variantId * 1000 + index, // Generate consistent ID based on variant
       variantId: variantId,
@@ -170,14 +192,14 @@ export class InventoryService {
   }
 
   findExistingInventoryItem(
-    inventoryData: CostumeInventory[], 
-    categoryId: number, 
-    variantId: number, 
+    inventoryData: CostumeInventory[],
+    categoryId: number,
+    variantId: number,
     size: string
   ): CostumeInventory | undefined {
-    return inventoryData.find(item => 
-      item.categoryId === categoryId && 
-      item.variantId === variantId && 
+    return inventoryData.find(item =>
+      item.categoryId === categoryId &&
+      item.variantId === variantId &&
       item.size === size
     );
   }
@@ -194,7 +216,7 @@ export class InventoryService {
   // Toast Methods
   showToast(message: string, type: ToastMessage['type'] = 'info', duration: number = 3000): void {
     this.toastSubject.next({ message, type, duration });
-    
+
     // Auto-clear toast after duration
     setTimeout(() => {
       this.toastSubject.next(null);
