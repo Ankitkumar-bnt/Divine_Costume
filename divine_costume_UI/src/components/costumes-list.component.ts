@@ -4,23 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FooterComponent } from './footer.component';
 import { WishlistService } from '../services/wishlist.service';
-
-interface CostumeProduct {
-  id: number;
-  name: string;
-  description: string;
-  pricePerDay: number;
-  images: string[];
-  category: string;
-  size: string;
-  color: string;
-  fabric: string;
-  gender: 'men' | 'women' | 'unisex';
-  rentedCount: number;
-  createdAt: string; // ISO date
-  type?: 'Dhoti' | 'Frock' | 'Pant' | 'Sari';
-  available?: boolean;
-}
+import { CostumeService, CostumeProduct } from '../services/costume.service';
 
 @Component({
   selector: 'app-costumes-list',
@@ -75,12 +59,7 @@ interface CostumeProduct {
                 <span class="price-title">Price Range</span>
                 <button type="button" class="btn-price-clear" (click)="clearPrice()">CLEAR</button>
               </div>
-              <div class="range-container">
-                <input type="range" class="range" [min]="sliderMin" [max]="sliderMax" [step]="sliderStep" [(ngModel)]="sliderMinValue" (input)="onMinRangeInput()" [style.background]="priceTrackBackground">
-                <input type="range" class="range range-max" [min]="sliderMin" [max]="sliderMax" [step]="sliderStep" [(ngModel)]="sliderMaxValue" (input)="onMaxRangeInput()" [style.background]="priceTrackBackground">
-                <span class="range-bubble" [style.left.%]="sliderMinPercent">₹{{ sliderMinValue }}</span>
-                <span class="range-bubble range-bubble-max" [style.left.%]="sliderMaxPercent">₹{{ sliderMaxValue }}</span>
-              </div>
+
               <div class="range-inputs">
                 <select class="price-select" [(ngModel)]="priceMinSelectValue" (ngModelChange)="onPriceSelectChange('min', $event)">
                   <option [ngValue]="null">Min</option>
@@ -88,6 +67,7 @@ interface CostumeProduct {
                   <option *ngIf="priceMinSelectValue != null && !isPresetPrice(priceMinSelectValue)" [ngValue]="priceMinSelectValue">₹{{ priceMinSelectValue }}</option>
                 </select>
                 <select class="price-select" [(ngModel)]="priceMaxSelectValue" (ngModelChange)="onPriceSelectChange('max', $event)">
+                 <option [ngValue]="null">Max</option>
                   <option *ngFor="let v of priceOptions" [ngValue]="v">₹{{ v }}</option>
                   <option *ngIf="priceMaxSelectValue != null && !isPresetPrice(priceMaxSelectValue)" [ngValue]="priceMaxSelectValue">₹{{ priceMaxSelectValue }}</option>
                 </select>
@@ -101,17 +81,6 @@ interface CostumeProduct {
               <div class="filter-body" *ngIf="panelsOpen.size">
                 <label *ngFor="let s of sizes">
                   <input type="checkbox" [ngModel]="selectedSizes.has(s)" (ngModelChange)="toggleSize(s, $event)"> {{ s }}
-                </label>
-              </div>
-            </div>
-
-            <div class="filter-group">
-              <h4 class="filter-header" (click)="togglePanel('type')">
-                Type <span class="chev">{{ panelsOpen.type ? '▾' : '▸' }}</span>
-              </h4>
-              <div class="filter-body" *ngIf="panelsOpen.type">
-                <label *ngFor="let t of types">
-                  <input type="checkbox" [ngModel]="selectedTypes.has(t)" (ngModelChange)="toggleType(t, $event)"> {{ t }}
                 </label>
               </div>
             </div>
@@ -135,8 +104,6 @@ interface CostumeProduct {
                 <label><input type="radio" name="gender" value="men" [(ngModel)]="gender" (ngModelChange)="applyFilters()"> Men</label>
               </div>
             </div>
-
-            
 
             <div class="filter-group">
               <h4 class="filter-header" (click)="togglePanel('items')">
@@ -207,8 +174,9 @@ interface CostumeProduct {
     .btn-filters { display: none; background: #D4AF37; color: #7A1F2A; border: 2px solid #D4AF37; padding: .5rem .9rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
     .sort { border: 2px solid #D4AF37; background: #FFFDF9; border-radius: 8px; padding: .5rem .6rem; color: #7A1F2A; font-weight: 600; }
 
-    .layout { display: grid; grid-template-columns: 300px 1fr; gap: 1rem; }
-    .sidebar { position: sticky; top: 110px; align-self: start; overflow: hidden; max-height: calc(100vh - 130px); background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1rem; height: max-content; box-shadow: var(--soft-shadow); backdrop-filter: blur(8px); }
+    .layout { display: grid; grid-template-columns: 350px 1fr; gap: 1rem; }
+    .sidebar { position: sticky; top: 110px; align-self: start; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; max-height: calc(100vh - 130px); background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1rem; height: max-content; box-shadow: var(--soft-shadow); backdrop-filter: blur(8px); }
+    .sidebar::-webkit-scrollbar { display: none; }
     .filter-group { display: grid; gap: .5rem; margin-bottom: 1rem; }
     .filter-group h4 { margin: 0 0 .25rem; color: #0f172a; font-size: .95rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-weight: 700; }
     .filter-group label { display: flex; align-items: center; gap: .5rem; font-size: .95rem; color: #1B1B1B; padding: .15rem .25rem; border-radius: 8px; }
@@ -219,14 +187,6 @@ interface CostumeProduct {
     .price-header { display: flex; align-items: center; justify-content: space-between; }
     .price-title { color: #0f172a; font-weight: 800; }
     .btn-price-clear { background: transparent; border: none; color: #0f172a; font-weight: 700; cursor: pointer; padding: 0; }
-    .range-container { position: relative; height: 60px; margin-top: .75rem; }
-    .range-container .range { position: absolute; left: 0; right: 0; top: 32px; height: 6px; border-radius: 999px; outline: none; -webkit-appearance: none; background: rgba(0,0,0,.25); pointer-events: none; transition: background .2s ease; }
-    .range-container .range::-webkit-slider-thumb { -webkit-appearance: none; pointer-events: all; width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, #2a2a2a, #000); border: 2px solid #fff; box-shadow: 0 6px 14px rgba(0,0,0,.35); cursor: pointer; }
-    .range-container .range::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, #2a2a2a, #000); border: 2px solid #fff; box-shadow: 0 6px 14px rgba(0,0,0,.35); cursor: pointer; }
-    .range-container .range::-webkit-slider-runnable-track { height: 6px; border-radius: 999px; }
-    .range-container .range::-moz-range-track { height: 6px; border-radius: 999px; background: transparent; }
-    .range-container .range-bubble { position: absolute; top: 0; transform: translateX(-50%); padding: .2rem .6rem; border-radius: 999px; font-size: .75rem; font-weight: 700; color: #fff; background: rgba(0,0,0,.88); box-shadow: 0 8px 18px rgba(0,0,0,.25); pointer-events: none; }
-    .range-container .range-bubble::after { content: ''; position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); width: 8px; height: 8px; background: inherit; clip-path: polygon(50% 100%, 0 0, 100% 0); }
     .range-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-top: .5rem; }
     .price-select { border: 1px solid var(--glass-border); background: #fff; border-radius: 12px; padding: .4rem .5rem; color: #0f172a; font-weight: 600; }
     .btn-clear { width: 100%; border: 1px solid var(--glass-border); background: linear-gradient(90deg, var(--pastel-peach), var(--pastel-beige)); color: #0f172a; border-radius: 999px; padding: .6rem .9rem; cursor: pointer; font-weight: 700; box-shadow: var(--soft-shadow); }
@@ -292,14 +252,12 @@ export class CostumesListComponent implements OnInit {
   categories: string[] = [];
   sizes: string[] = [];
   colors: string[] = [];
-  types: Array<'Dhoti' | 'Frock' | 'Pant' | 'Sari'> = [];
   itemsOptions: string[] = ['Ghungroo', 'Bangles', 'Necklace', 'Belt', 'Earrings'];
 
   // selected filters
   selectedCategories = new Set<string>();
   selectedSizes = new Set<string>();
   selectedColors = new Set<string>();
-  selectedTypes = new Set<'Dhoti' | 'Frock' | 'Pant' | 'Sari'>();
   selectedItems = new Set<string>();
   priceMin: number | null = null;
   priceMax: number | null = null;
@@ -307,12 +265,11 @@ export class CostumesListComponent implements OnInit {
   sortBy: 'price_asc' | 'price_desc' | 'newest' | 'most_rented' | 'popularity' | 'availability' = 'newest';
   availableOnly = false;
   mobileFiltersOpen = false;
-  panelsOpen: Record<'category' | 'size' | 'color' | 'gender' | 'type' | 'dates' | 'availability' | 'items', boolean> = {
+  panelsOpen: Record<'category' | 'size' | 'color' | 'gender' | 'dates' | 'availability' | 'items', boolean> = {
     category: false,
     size: false,
     color: false,
     gender: false,
-    type: false,
     dates: false,
     availability: false,
     items: false
@@ -321,230 +278,23 @@ export class CostumesListComponent implements OnInit {
   // PRICE slider state
   sliderMin = 0;
   sliderMax = 10000;
-  sliderStep = 250;
-  sliderMinValue = this.sliderMin;
-  sliderMaxValue = this.sliderMax;
   priceOptions: number[] = [0, 250, 500, 750, 1000, 1500, 2000, 5000, 10000];
   priceMinSelectValue: number | null = null; // null => "Min"
-  priceMaxSelectValue: number = this.sliderMax;
+  priceMaxSelectValue: number | null = null; // null => "Max"
 
   isPresetPrice(value: number): boolean {
     return this.priceOptions.includes(value);
   }
 
   // data
-  allProducts: CostumeProduct[] = [
-    {
-      id: 1,
-      name: 'Bharatanatyam Temple Silk',
-      description: 'Handwoven silk with zari border, classic temple pattern.',
-      pricePerDay: 799,
-      images: [
-        'https://images.pexels.com/photos/16032227/pexels-photo-16032227.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/16032233/pexels-photo-16032233.jpeg?auto=compress&cs=tinysrgb&w=800'
-      ],
-      category: 'Bharatanatyam',
-      size: 'M',
-      color: 'Red',
-      fabric: 'Silk Blend',
-      gender: 'women',
-      rentedCount: 132,
-      createdAt: '2025-10-22'
-    },
-    {
-      id: 2,
-      name: 'Kathak Ghagra Set',
-      description: 'Lightweight flare with mirror work dupatta.',
-      pricePerDay: 699,
-      images: [
-        'https://images.pexels.com/photos/16747574/pexels-photo-16747574.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/16747576/pexels-photo-16747576.jpeg?auto=compress&cs=tinysrgb&w=800'
-      ],
-      category: 'Kathak',
-      size: 'L',
-      color: 'Pink',
-      fabric: 'Viscose Rayon',
-      gender: 'women',
-      rentedCount: 98,
-      createdAt: '2025-09-18'
-    },
-    {
-      id: 3,
-      name: 'Kuchipudi Brocade Set',
-      description: 'Rich brocade with contrasting pleats.',
-      pricePerDay: 749,
-      images: [
-        'https://images.pexels.com/photos/2909617/pexels-photo-2909617.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/2861633/pexels-photo-2861633.jpeg?auto=compress&cs=tinysrgb&w=800'
-      ],
-      category: 'Kuchipudi',
-      size: 'S',
-      color: 'Green',
-      fabric: 'Brocade',
-      gender: 'women',
-      rentedCount: 185,
-      createdAt: '2025-07-10'
-    },
-    {
-      id: 4,
-      name: 'Mohiniyattam Kasavu',
-      description: 'Ivory kasavu with gold zari and elegant flow.',
-      pricePerDay: 829,
-      images: [
-        'https://images.pexels.com/photos/3992655/pexels-photo-3992655.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/2929967/pexels-photo-2929967.jpeg?auto=compress&cs=tinysrgb&w=800'
-      ],
-      category: 'Mohiniyattam',
-      size: 'M',
-      color: 'Gold',
-      fabric: 'Silk Blend',
-      gender: 'women',
-      rentedCount: 74,
-      createdAt: '2025-06-05'
-    },
-    {
-      id: 5,
-      name: 'Bharatanatyam Practice Cotton',
-      description: 'Breathable cotton for rehearsals and practice.',
-      pricePerDay: 399,
-      images: [
-        'https://images.pexels.com/photos/14443374/pexels-photo-14443374.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/14443371/pexels-photo-14443371.jpeg?auto=compress&cs=tinysrgb&w=800'
-      ],
-      category: 'Bharatanatyam',
-      size: 'XL',
-      color: 'Blue',
-      fabric: 'Pure Cotton',
-      gender: 'women',
-      rentedCount: 221,
-      createdAt: '2025-08-01'
-    },
-    {
-      id: 6,
-      name: 'Kathak Angrakha (Men)',
-      description: 'Structured angrakha silhouette with churidar.',
-      pricePerDay: 649,
-      images: [
-        'https://images.pexels.com/photos/1802353/pexels-photo-1802353.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/2531553/pexels-photo-2531553.jpeg?auto=compress&cs=tinysrgb&w=800'
-      ],
-      category: 'Kathak',
-      size: 'L',
-      color: 'White',
-      fabric: 'Cotton Blend',
-      gender: 'men',
-      rentedCount: 65,
-      createdAt: '2025-05-15'
-    },
-    {
-      id: 7,
-      name: 'Bharatanatyam Contrast Silk',
-      description: 'Dual-tone silk with bold contrast pleats.',
-      pricePerDay: 899,
-      images: [
-        'https://images.pexels.com/photos/887353/pexels-photo-887353.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/14443373/pexels-photo-14443373.jpeg?auto=compress&cs=tinysrgb&w=800'
-      ],
-      category: 'Bharatanatyam',
-      size: 'M',
-      color: 'Purple',
-      fabric: 'Silk Blend',
-      gender: 'women',
-      rentedCount: 142,
-      createdAt: '2025-10-10'
-    },
-    {
-      id: 8,
-      name: 'Kuchipudi Cotton Blend',
-      description: 'Comfort cotton blend for stage performance.',
-      pricePerDay: 459,
-      images: [
-        'https://images.pexels.com/photos/2082111/pexels-photo-2082111.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1840021/pexels-photo-1840021.jpeg?auto=compress&cs=tinysrgb&w=800'
-      ],
-      category: 'Kuchipudi',
-      size: 'S',
-      color: 'Green',
-      fabric: 'Cotton Blend',
-      gender: 'women',
-      rentedCount: 31,
-      createdAt: '2025-03-28'
-    },
-    {
-      id: 9,
-      name: 'Mohiniyattam Kasavu (Men)',
-      description: 'Traditional kasavu veshti and angavastram.',
-      pricePerDay: 559,
-      images: [
-        'https://images.pexels.com/photos/17019050/pexels-photo-17019050.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/17019046/pexels-photo-17019046.jpeg?auto=compress&cs=tinysrgb&w=800'
-      ],
-      category: 'Mohiniyattam',
-      size: 'L',
-      color: 'Gold',
-      fabric: 'Cotton Rayon',
-      gender: 'men',
-      rentedCount: 27,
-      createdAt: '2025-04-12'
-    },
-    {
-      id: 10,
-      name: 'Fusion Practice Wear',
-      description: 'Stretchable practice wear for contemporary routines.',
-      pricePerDay: 299,
-      images: [
-        'https://images.pexels.com/photos/1792214/pexels-photo-1792214.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1800065/pexels-photo-1800065.jpeg?auto=compress&cs=tinysrgb&w=800'
-      ],
-      category: 'Practice',
-      size: 'M',
-      color: 'Black',
-      fabric: 'Polyester',
-      gender: 'unisex',
-      rentedCount: 312,
-      createdAt: '2025-11-01'
-    },
-    {
-      id: 11,
-      name: 'Bharatanatyam Silk (Kids)',
-      description: 'Vibrant kids silk set with soft lining.',
-      pricePerDay: 499,
-      images: [
-        'https://images.pexels.com/photos/1267697/pexels-photo-1267697.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1267698/pexels-photo-1267698.jpeg?auto=compress&cs=tinysrgb&w=800'
-      ],
-      category: 'Bharatanatyam',
-      size: 'S',
-      color: 'Yellow',
-      fabric: 'Silk Blend',
-      gender: 'women',
-      rentedCount: 202,
-      createdAt: '2025-09-01'
-    },
-    {
-      id: 12,
-      name: 'Kathak Silk Blend (Men)',
-      description: 'Silk blend with subtle sheen and comfort.',
-      pricePerDay: 729,
-      images: [
-        'https://images.pexels.com/photos/139829/pexels-photo-139829.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/184899/pexels-photo-184899.jpeg?auto=compress&cs=tinysrgb&w=800'
-      ],
-      category: 'Kathak',
-      size: 'XL',
-      color: 'Beige',
-      fabric: 'Silk Blend',
-      gender: 'men',
-      rentedCount: 51,
-      createdAt: '2025-01-22'
-    }
-  ];
+  allProducts: CostumeProduct[] = [];
 
   filtered: CostumeProduct[] = [];
 
   constructor(
     private route: ActivatedRoute,
-    private wishlistService: WishlistService
+    private wishlistService: WishlistService,
+    private costumeService: CostumeService
   ) { }
 
   ngOnInit(): void {
@@ -553,25 +303,35 @@ export class CostumesListComponent implements OnInit {
       this.returnDate = qp.get('returnDate');
     });
 
-    this.initFacetOptions();
-    this.applyFilters();
+    // Fetch costumes from backend
+    this.costumeService.getAllCostumes().subscribe({
+      next: (costumes) => {
+        this.allProducts = costumes;
+        this.initFacetOptions();
+        this.applyFilters();
+      },
+      error: (error) => {
+        console.error('Error fetching costumes:', error);
+        // Initialize with empty data on error
+        this.allProducts = [];
+        this.initFacetOptions();
+        this.applyFilters();
+      }
+    });
   }
 
   initFacetOptions() {
     const cats = new Set<string>();
     const sizes = new Set<string>();
     const colors = new Set<string>();
-    const types = new Set<'Dhoti' | 'Frock' | 'Pant' | 'Sari'>();
     for (const p of this.allProducts) {
-      cats.add(p.category);
-      sizes.add(p.size);
-      colors.add(p.color);
-      if (p.type) types.add(p.type);
+      if (p.category) cats.add(p.category);
+      if (p.size) sizes.add(p.size);
+      if (p.color) colors.add(p.color);
     }
     this.categories = Array.from(cats).sort();
     this.sizes = Array.from(sizes).sort();
     this.colors = Array.from(colors).sort();
-    this.types = Array.from(types).sort();
   }
 
   toggleCategory(c: string, checked: boolean) {
@@ -625,9 +385,6 @@ export class CostumesListComponent implements OnInit {
     if (this.selectedColors.size) {
       res = res.filter(p => this.selectedColors.has(p.color));
     }
-    if (this.selectedTypes.size) {
-      res = res.filter(p => p.type != null && this.selectedTypes.has(p.type));
-    }
     if (this.gender !== 'all') {
       res = res.filter(p => p.gender === this.gender || p.gender === 'unisex');
     }
@@ -669,13 +426,8 @@ export class CostumesListComponent implements OnInit {
 
   trackById(_: number, item: CostumeProduct) { return item.id; }
 
-  togglePanel(section: 'category' | 'size' | 'color' | 'gender' | 'type' | 'dates' | 'availability' | 'items') {
+  togglePanel(section: 'category' | 'size' | 'color' | 'gender' | 'dates' | 'availability' | 'items') {
     this.panelsOpen[section] = !this.panelsOpen[section];
-  }
-
-  toggleType(t: 'Dhoti' | 'Frock' | 'Pant' | 'Sari', checked: boolean) {
-    checked ? this.selectedTypes.add(t) : this.selectedTypes.delete(t);
-    this.applyFilters();
   }
 
   toggleItem(it: string) {
@@ -723,70 +475,44 @@ export class CostumesListComponent implements OnInit {
   }
 
   // PRICE handlers
-  private clampPriceValues() {
-    if (this.sliderMinValue > this.sliderMaxValue) {
-      this.sliderMinValue = this.sliderMaxValue;
-    }
-    if (this.sliderMinValue < this.sliderMin) this.sliderMinValue = this.sliderMin;
-    if (this.sliderMaxValue > this.sliderMax) this.sliderMaxValue = this.sliderMax;
-  }
 
-  get priceTrackBackground(): string {
-    const range = this.sliderMax - this.sliderMin;
-    const minPct = ((this.sliderMinValue - this.sliderMin) / range) * 100;
-    const maxPct = ((this.sliderMaxValue - this.sliderMin) / range) * 100;
-    return `linear-gradient(to right, rgba(0,0,0,.15) ${minPct}%, #050505 ${minPct}%, #050505 ${maxPct}%, rgba(0,0,0,.15) ${maxPct}%)`;
-  }
 
-  get sliderMinPercent(): number {
-    const range = this.sliderMax - this.sliderMin;
-    return ((this.sliderMinValue - this.sliderMin) / range) * 100;
-  }
 
-  get sliderMaxPercent(): number {
-    const range = this.sliderMax - this.sliderMin;
-    return ((this.sliderMaxValue - this.sliderMin) / range) * 100;
-  }
 
-  onMinRangeInput() {
-    if (this.sliderMinValue > this.sliderMaxValue) {
-      this.sliderMinValue = this.sliderMaxValue;
-    }
-    this.priceMinSelectValue = this.sliderMinValue === this.sliderMin ? null : this.sliderMinValue;
-    this.onPriceChange(this.sliderMinValue, this.sliderMaxValue);
-  }
 
-  onMaxRangeInput() {
-    if (this.sliderMaxValue < this.sliderMinValue) {
-      this.sliderMaxValue = this.sliderMinValue;
-    }
-    this.priceMaxSelectValue = this.sliderMaxValue;
-    this.onPriceChange(this.sliderMinValue, this.sliderMaxValue);
-  }
+
+
+
+
+
+
 
   onPriceSelectChange(which: 'min' | 'max', value: number | null) {
+    let currentMin = this.priceMinSelectValue === null ? this.sliderMin : this.priceMinSelectValue;
+    let currentMax = this.priceMaxSelectValue === null ? this.sliderMax : this.priceMaxSelectValue;
+
     if (which === 'min') {
-      this.sliderMinValue = value == null ? this.sliderMin : value;
-      if (this.sliderMinValue > this.sliderMaxValue) {
-        this.sliderMaxValue = this.sliderMinValue;
-      }
+      currentMin = value === null ? this.sliderMin : value;
       this.priceMinSelectValue = value;
-    } else {
-      this.sliderMaxValue = value == null ? this.sliderMax : Number(value);
-      if (this.sliderMaxValue < this.sliderMinValue) {
-        this.sliderMinValue = this.sliderMaxValue;
+      if (currentMin > currentMax) {
+        currentMax = currentMin;
+        this.priceMaxSelectValue = currentMax;
       }
-      this.priceMaxSelectValue = this.sliderMaxValue;
+    } else {
+      currentMax = value === null ? this.sliderMax : value;
+      this.priceMaxSelectValue = currentMax;
+      if (currentMax < currentMin) {
+        currentMin = currentMax;
+        this.priceMinSelectValue = currentMin === this.sliderMin ? null : currentMin;
+      }
     }
-    this.onPriceChange(this.sliderMinValue, this.sliderMaxValue);
+    this.onPriceChange(currentMin, currentMax);
   }
 
   clearPrice() {
-    this.sliderMinValue = this.sliderMin;
-    this.sliderMaxValue = this.sliderMax;
     this.priceMinSelectValue = null;
     this.priceMaxSelectValue = this.sliderMax;
-    this.onPriceChange(this.sliderMinValue, this.sliderMaxValue);
+    this.onPriceChange(this.sliderMin, this.sliderMax);
   }
 
   onPriceChange(min: number, max: number) {

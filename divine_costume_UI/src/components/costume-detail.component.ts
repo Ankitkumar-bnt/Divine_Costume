@@ -5,27 +5,11 @@ import { FooterComponent } from './footer.component';
 import { CartService } from '../services/cart.service';
 import { WishlistService } from '../services/wishlist.service';
 import { ToastService } from '../services/toast.service';
+import { CostumeService, CostumeDetailModel, CostumeVariantDetail } from '../services/costume.service';
 
 interface VariantSize {
   size: string;
   stock: number;
-}
-
-interface ProductVariant {
-  colorKey: string;
-  displayName: string;
-  thumbnail: string;
-  images: string[];
-  rentPerDay: number;
-  deposit: number;
-  sizes: VariantSize[];
-}
-
-interface ProductDetailModel {
-  id: number;
-  name: string;
-  shortDescription: string;
-  variants: ProductVariant[];
 }
 
 @Component({
@@ -545,77 +529,41 @@ interface ProductDetailModel {
   `]
 })
 export class CostumeDetailComponent implements OnInit {
-  product: ProductDetailModel | null = null;
-  currentVariant: ProductVariant | null = null;
+  product: CostumeDetailModel | null = null;
+  currentVariant: CostumeVariantDetail | null = null;
   currentImages: string[] = [];
   activeImageIndex = 0;
   selectedSize: string | null = null;
   currentStock = 0;
   isInWishlist = false;
 
-  private catalog: ProductDetailModel[] = [
-    {
-      id: 1,
-      name: 'Bharatanatyam Temple Silk',
-      shortDescription: 'Handwoven silk with zari border, classic temple pattern.',
-      variants: [
-        {
-          colorKey: 'red',
-          displayName: 'Red',
-          thumbnail: 'https://images.pexels.com/photos/16032227/pexels-photo-16032227.jpeg?auto=compress&cs=tinysrgb&w=200',
-          images: [
-            'https://images.pexels.com/photos/16032227/pexels-photo-16032227.jpeg?auto=compress&cs=tinysrgb&w=1200',
-            'https://images.pexels.com/photos/16032233/pexels-photo-16032233.jpeg?auto=compress&cs=tinysrgb&w=1200',
-            'https://images.pexels.com/photos/887353/pexels-photo-887353.jpeg?auto=compress&cs=tinysrgb&w=1200'
-          ],
-          rentPerDay: 799,
-          deposit: 1500,
-          sizes: [
-            { size: '6', stock: 3 },
-            { size: '7', stock: 0 },
-            { size: '8', stock: 2 },
-            { size: '9', stock: 5 },
-            { size: '10', stock: 1 }
-          ]
-        },
-        {
-          colorKey: 'blue',
-          displayName: 'Blue',
-          thumbnail: 'https://images.pexels.com/photos/14443374/pexels-photo-14443374.jpeg?auto=compress&cs=tinysrgb&w=200',
-          images: [
-            'https://images.pexels.com/photos/14443374/pexels-photo-14443374.jpeg?auto=compress&cs=tinysrgb&w=1200',
-            'https://images.pexels.com/photos/14443371/pexels-photo-14443371.jpeg?auto=compress&cs=tinysrgb&w=1200',
-            'https://images.pexels.com/photos/1792214/pexels-photo-1792214.jpeg?auto=compress&cs=tinysrgb&w=1200'
-          ],
-          rentPerDay: 829,
-          deposit: 1600,
-          sizes: [
-            { size: '6', stock: 1 },
-            { size: '7', stock: 4 },
-            { size: '8', stock: 2 },
-            { size: '9', stock: 0 },
-            { size: '10', stock: 3 }
-          ]
-        }
-      ]
-    }
-  ];
-
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private cartService: CartService,
     private wishlistService: WishlistService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private costumeService: CostumeService
   ) { }
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
     const id = idParam ? Number(idParam) : NaN;
-    this.product = this.catalog.find(p => p.id === id) || this.catalog[0] || null;
-    if (this.product) {
-      this.selectColor(0);
-      this.updateWishlistState();
+
+    if (!isNaN(id)) {
+      this.costumeService.getCostumeDetail(id).subscribe({
+        next: (product) => {
+          this.product = product;
+          if (this.product && this.product.variants.length > 0) {
+            this.selectColor(0);
+            this.updateWishlistState();
+          }
+        },
+        error: (error) => {
+          console.error('Error fetching costume detail:', error);
+          this.product = null;
+        }
+      });
     }
   }
 
