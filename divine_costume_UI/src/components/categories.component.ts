@@ -64,7 +64,7 @@ interface Category {
     @media (min-width: 901px) { .categories-container { padding: 0; } }
 
     /* grid (avoid .row to prevent Bootstrap interference) */
-    .cards-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; max-width: 1200px; width: 100%; margin: 0 auto; padding: 0 1rem; justify-content: center; justify-items: stretch; align-items: stretch; box-sizing: border-box; }
+    .cards-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; max-width: 1200px; width: 100%; margin: 0 auto; padding: 0 1rem; justify-content: center; justify-items: stretch; align-items: stretch; box-sizing: border-box; }
     .category-col { width: 100%; }
     @media (max-width: 900px) { .cards-grid { grid-template-columns: 1fr; max-width: 700px; padding: 0 1rem; } }
 
@@ -242,6 +242,13 @@ export class CategoriesComponent {
       description: 'Authentic traditional jewellery and accessories that complete the divine look.',
       image: 'https://images.pexels.com/photos/2697787/pexels-photo-2697787.jpeg?auto=compress&cs=tinysrgb&w=1200',
       buttonText: 'View Ornaments'
+    },
+    {
+      key: 'ornaments',
+      title: 'Accessories',
+      description: 'Ghungroos, belts, bangles and other essential dance accessories to match your costumes.',
+      image: 'https://images.pexels.com/photos/20855981/pexels-photo-20855981.jpeg?auto=compress&cs=tinysrgb&w=1200',
+      buttonText: 'View Accessories'
     }
   ];
 

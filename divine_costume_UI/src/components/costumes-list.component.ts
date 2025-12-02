@@ -13,146 +13,216 @@ import { CostumeService, CostumeProduct } from '../services/costume.service';
   template: `
     <section class="plp">
       <div class="container">
+        <!-- Mobile Filter Toggle -->
         <header class="plp-header">
-          <div class="actions">
-            <button class="btn-filters" (click)="mobileFiltersOpen = !mobileFiltersOpen">Filters</button>
-          </div>
+          <button class="btn-filters" (click)="mobileFiltersOpen = !mobileFiltersOpen">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="4" y1="6" x2="20" y2="6"></line>
+              <line x1="4" y1="12" x2="20" y2="12"></line>
+              <line x1="4" y1="18" x2="20" y2="18"></line>
+            </svg>
+            Filters
+          </button>
         </header>
 
         <div class="layout">
+          <!-- Sidebar Filters -->
           <aside class="sidebar" [class.open]="mobileFiltersOpen">
-            <div class="filter-group">
-              <h4 class="filter-header" (click)="togglePanel('category')">
-                Category <span class="chev">{{ panelsOpen.category ? '▾' : '▸' }}</span>
-              </h4>
-              <div class="filter-body" *ngIf="panelsOpen.category">
-                <label *ngFor="let c of categories">
-                  <input type="checkbox" [ngModel]="selectedCategories.has(c)" (ngModelChange)="toggleCategory(c, $event)"> {{ c }}
-                </label>
+            <div class="sidebar-content">
+              <div class="sidebar-header">
+                <h3 class="sidebar-title">Filters</h3>
+                <button class="btn-close" (click)="mobileFiltersOpen = false">✕</button>
               </div>
-            </div>
 
-            <div class="filter-group">
-              <h4 class="filter-header" (click)="togglePanel('dates')">
-                Availability <span class="chev">{{ panelsOpen.dates ? '▾' : '▸' }}</span>
-              </h4>
-              <div class="filter-body date-range" *ngIf="panelsOpen.dates">
-                <div class="date-input">
-                  <span class="icon">📅</span>
-                  <div class="date-field">
-                    <span class="date-label">Pickup date</span>
-                    <input type="date" [(ngModel)]="pickupDate" (change)="onDateFilterChange(pickupDate, returnDate)" placeholder="Pickup" [title]="formatDate(pickupDate)"/>
+              <div class="filters-scroll">
+                <!-- Category -->
+                <div class="filter-group">
+                  <h4 class="filter-header" (click)="togglePanel('category')">
+                    <span>Category</span>
+                    <span class="chev">{{ panelsOpen.category ? '−' : '+' }}</span>
+                  </h4>
+                  <div class="filter-body" *ngIf="panelsOpen.category">
+                    <label *ngFor="let c of categories">
+                      <input type="checkbox" [ngModel]="selectedCategories.has(c)" (ngModelChange)="toggleCategory(c, $event)">
+                      <span>{{ c }}</span>
+                    </label>
                   </div>
                 </div>
-                <div class="date-input">
-                  <span class="icon">📅</span>
-                  <div class="date-field">
-                    <span class="date-label">Return date</span>
-                    <input type="date" [(ngModel)]="returnDate" (change)="onDateFilterChange(pickupDate, returnDate)" placeholder="Return" [title]="formatDate(returnDate)"/>
+
+                <div class="filter-divider"></div>
+
+                <!-- Availability -->
+                <div class="filter-group">
+                  <h4 class="filter-header" (click)="togglePanel('dates')">
+                    <span>Availability</span>
+                    <span class="chev">{{ panelsOpen.dates ? '−' : '+' }}</span>
+                  </h4>
+                  <div class="filter-body date-range" *ngIf="panelsOpen.dates">
+                    <div class="date-input">
+                      <span class="date-label">Pickup</span>
+                      <input type="date" [(ngModel)]="pickupDate" (change)="onDateFilterChange(pickupDate, returnDate)"/>
+                    </div>
+                    <div class="date-input">
+                      <span class="date-label">Return</span>
+                      <input type="date" [(ngModel)]="returnDate" (change)="onDateFilterChange(pickupDate, returnDate)"/>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="filter-divider"></div>
+
+                <!-- Price Range -->
+                <div class="filter-group">
+                  <div class="price-header">
+                    <span class="price-title">Price Range</span>
+                    <button type="button" class="btn-price-clear" (click)="clearPrice()">Clear</button>
+                  </div>
+                  <div class="range-inputs">
+                    <select class="price-select" [(ngModel)]="priceMinSelectValue" (ngModelChange)="onPriceSelectChange('min', $event)">
+                      <option [ngValue]="null">Min</option>
+                      <option *ngFor="let v of priceOptions" [ngValue]="v">₹{{ v }}</option>
+                      <option *ngIf="priceMinSelectValue != null && !isPresetPrice(priceMinSelectValue)" [ngValue]="priceMinSelectValue">₹{{ priceMinSelectValue }}</option>
+                    </select>
+                    <select class="price-select" [(ngModel)]="priceMaxSelectValue" (ngModelChange)="onPriceSelectChange('max', $event)">
+                      <option [ngValue]="null">Max</option>
+                      <option *ngFor="let v of priceOptions" [ngValue]="v">₹{{ v }}</option>
+                      <option *ngIf="priceMaxSelectValue != null && !isPresetPrice(priceMaxSelectValue)" [ngValue]="priceMaxSelectValue">₹{{ priceMaxSelectValue }}</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="filter-divider"></div>
+
+                <!-- Size -->
+                <div class="filter-group">
+                  <h4 class="filter-header" (click)="togglePanel('size')">
+                    <span>Size</span>
+                    <span class="chev">{{ panelsOpen.size ? '−' : '+' }}</span>
+                  </h4>
+                  <div class="filter-body" *ngIf="panelsOpen.size">
+                    <label *ngFor="let s of sizes">
+                      <input type="checkbox" [ngModel]="selectedSizes.has(s)" (ngModelChange)="toggleSize(s, $event)">
+                      <span>{{ s }}</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="filter-divider"></div>
+
+                <!-- Colors -->
+                <div class="filter-group">
+                  <h4 class="filter-header" (click)="togglePanel('color')">
+                    <span>Colors</span>
+                    <span class="chev">{{ panelsOpen.color ? '−' : '+' }}</span>
+                  </h4>
+                  <div class="filter-body chips" *ngIf="panelsOpen.color">
+                    <button type="button" class="chip" *ngFor="let col of colors" [class.active]="selectedColors.has(col)" (click)="toggleColor(col, !selectedColors.has(col))">{{ col }}</button>
+                  </div>
+                </div>
+
+                <div class="filter-divider"></div>
+
+                <!-- Ideal For -->
+                <div class="filter-group">
+                  <h4 class="filter-header" (click)="togglePanel('gender')">
+                    <span>Ideal For</span>
+                    <span class="chev">{{ panelsOpen.gender ? '−' : '+' }}</span>
+                  </h4>
+                  <div class="filter-body" *ngIf="panelsOpen.gender">
+                    <label>
+                      <input type="radio" name="gender" value="all" [(ngModel)]="gender" (ngModelChange)="applyFilters()">
+                      <span>All</span>
+                    </label>
+                    <label>
+                      <input type="radio" name="gender" value="women" [(ngModel)]="gender" (ngModelChange)="applyFilters()">
+                      <span>Women</span>
+                    </label>
+                    <label>
+                      <input type="radio" name="gender" value="men" [(ngModel)]="gender" (ngModelChange)="applyFilters()">
+                      <span>Men</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="filter-divider"></div>
+
+                <!-- Items -->
+                <div class="filter-group">
+                  <h4 class="filter-header" (click)="togglePanel('items')">
+                    <span>Accessories</span>
+                    <span class="chev">{{ panelsOpen.items ? '−' : '+' }}</span>
+                  </h4>
+                  <div class="filter-body chips" *ngIf="panelsOpen.items">
+                    <button type="button" class="chip" *ngFor="let it of itemsOptions" [class.active]="selectedItems.has(it)" (click)="toggleItem(it)">{{ it }}</button>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div class="filter-group price-block">
-              <div class="price-header">
-                <span class="price-title">Price Range</span>
-                <button type="button" class="btn-price-clear" (click)="clearPrice()">CLEAR</button>
-              </div>
-
-              <div class="range-inputs">
-                <select class="price-select" [(ngModel)]="priceMinSelectValue" (ngModelChange)="onPriceSelectChange('min', $event)">
-                  <option [ngValue]="null">Min</option>
-                  <option *ngFor="let v of priceOptions" [ngValue]="v">₹{{ v }}</option>
-                  <option *ngIf="priceMinSelectValue != null && !isPresetPrice(priceMinSelectValue)" [ngValue]="priceMinSelectValue">₹{{ priceMinSelectValue }}</option>
-                </select>
-                <select class="price-select" [(ngModel)]="priceMaxSelectValue" (ngModelChange)="onPriceSelectChange('max', $event)">
-                 <option [ngValue]="null">Max</option>
-                  <option *ngFor="let v of priceOptions" [ngValue]="v">₹{{ v }}</option>
-                  <option *ngIf="priceMaxSelectValue != null && !isPresetPrice(priceMaxSelectValue)" [ngValue]="priceMaxSelectValue">₹{{ priceMaxSelectValue }}</option>
-                </select>
+              <!-- Sticky Apply Button -->
+              <div class="sidebar-footer">
+                <button class="btn-clear" (click)="clearFilters()">Clear All Filters</button>
               </div>
             </div>
-
-            <div class="filter-group">
-              <h4 class="filter-header" (click)="togglePanel('size')">
-                Size <span class="chev">{{ panelsOpen.size ? '▾' : '▸' }}</span>
-              </h4>
-              <div class="filter-body" *ngIf="panelsOpen.size">
-                <label *ngFor="let s of sizes">
-                  <input type="checkbox" [ngModel]="selectedSizes.has(s)" (ngModelChange)="toggleSize(s, $event)"> {{ s }}
-                </label>
-              </div>
-            </div>
-
-            <div class="filter-group">
-              <h4 class="filter-header" (click)="togglePanel('color')">
-                Colors <span class="chev">{{ panelsOpen.color ? '▾' : '▸' }}</span>
-              </h4>
-              <div class="filter-body chips" *ngIf="panelsOpen.color">
-                <button type="button" class="chip" *ngFor="let col of colors" [class.active]="selectedColors.has(col)" (click)="toggleColor(col, !selectedColors.has(col))">{{ col }}</button>
-              </div>
-            </div>
-
-            <div class="filter-group">
-              <h4 class="filter-header" (click)="togglePanel('gender')">
-                Ideal For <span class="chev">{{ panelsOpen.gender ? '▾' : '▸' }}</span>
-              </h4>
-              <div class="filter-body" *ngIf="panelsOpen.gender">
-                <label><input type="radio" name="gender" value="all" [(ngModel)]="gender" (ngModelChange)="applyFilters()"> All</label>
-                <label><input type="radio" name="gender" value="women" [(ngModel)]="gender" (ngModelChange)="applyFilters()"> Women</label>
-                <label><input type="radio" name="gender" value="men" [(ngModel)]="gender" (ngModelChange)="applyFilters()"> Men</label>
-              </div>
-            </div>
-
-            <div class="filter-group">
-              <h4 class="filter-header" (click)="togglePanel('items')">
-                Items <span class="chev">{{ panelsOpen.items ? '▾' : '▸' }}</span>
-              </h4>
-              <div class="filter-body chips" *ngIf="panelsOpen.items">
-                <button type="button" class="chip" *ngFor="let it of itemsOptions" [class.active]="selectedItems.has(it)" (click)="toggleItem(it)">{{ it }}</button>
-              </div>
-            </div>
-
-            <button class="btn-clear" (click)="clearFilters()">Clear all</button>
           </aside>
 
+          <!-- Main Results -->
           <main class="results">
             <div class="results-bar">
-              <div class="results-left">{{ filtered.length }} results</div>
+              <div class="results-left">
+                <span class="results-count">{{ filtered.length }}</span>
+                <span class="results-label">Results</span>
+              </div>
               <div class="results-right">
                 <div class="search-wrap">
-                  <span class="icon">🔍</span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
                   <input class="search-input" type="text" [(ngModel)]="searchQuery" (ngModelChange)="applyFilters()" placeholder="Search costumes..." />
                 </div>
                 <select class="sort" [(ngModel)]="sortBy" (ngModelChange)="applyFilters()">
-                  <option value="newest">Newest</option>
+                  <option value="newest">Newest First</option>
                   <option value="price_asc">Price: Low to High</option>
                   <option value="price_desc">Price: High to Low</option>
-                  <option value="popularity">Popularity</option>
+                  <option value="popularity">Most Popular</option>
                   <option value="availability">Availability</option>
                 </select>
               </div>
             </div>
+
             <div class="grid" *ngIf="filtered.length; else empty">
-              <div class="card" *ngFor="let p of filtered; trackBy: trackById" [routerLink]="['/costumes', p.id]" (mousemove)="onCardMouseMove($event)">
-                <div class="thumb">
-                  <button type="button" class="wishlist-btn" [class.active]="isWished(p.id)" (click)="toggleWishlist(p.id); $event.stopPropagation()" aria-label="Add to wishlist" [attr.aria-pressed]="isWished(p.id)">
-                    <svg *ngIf="!isWished(p.id)" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                    <svg *ngIf="isWished(p.id)" width="26" height="26" viewBox="0 0 24 24" fill="#dc2626" stroke="#dc2626" stroke-width="0"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+              <div class="card" *ngFor="let p of filtered; trackBy: trackById" [routerLink]="['/costumes', p.id]">
+                <div class="card-image">
+                  <button type="button" class="wishlist-btn" [class.active]="isWished(p.id)" (click)="toggleWishlist(p.id); $event.stopPropagation()" aria-label="Add to wishlist">
+                    <svg *ngIf="!isWished(p.id)" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                    <svg *ngIf="isWished(p.id)" width="22" height="22" viewBox="0 0 24 24" fill="#dc2626" stroke="#dc2626" stroke-width="2">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
                   </button>
-                  <img class="img-primary" [src]="p.images[0]" [alt]="p.name">
-                  <img class="img-secondary" [src]="p.images[1] || p.images[0]" [alt]="p.name">
+                  <img [src]="p.images[0]" [alt]="p.name" class="product-img">
                 </div>
-                <div class="content">
-                  <h3 class="name">{{ p.name }}</h3>
-                  <p class="desc">{{ p.description }}</p>
-                  <div class="price">₹{{ p.pricePerDay }}/day</div>
+                <div class="card-content">
+                  <h3 class="product-name">{{ p.name }}</h3>
+                  <p class="product-desc">{{ p.description }}</p>
+                  <div class="product-price">
+                    <span class="price-amount">₹{{ p.pricePerDay }}</span>
+                    <span class="price-period">/day</span>
+                  </div>
                 </div>
               </div>
             </div>
+
             <ng-template #empty>
-              <div class="empty">No products match your filters.</div>
+              <div class="empty-state">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <h3>No costumes found</h3>
+                <p>Try adjusting your filters or search terms</p>
+              </div>
             </ng-template>
           </main>
         </div>
@@ -161,86 +231,692 @@ import { CostumeService, CostumeProduct } from '../services/costume.service';
     <app-footer></app-footer>
   `,
   styles: [`
-    :host { display: block; }
-    .plp { padding: 1rem 0 2rem; background: linear-gradient(180deg, var(--pastel-beige), #fff); }
-    .container { max-width: 1280px; margin: 0 auto; padding: 0 1rem; }
-
-    .plp-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
-    .title-group { display: flex; align-items: baseline; gap: 1rem; }
-    .title { color: #7A1F2A; margin: 0; font-size: 1.75rem; }
-    .dates { display: flex; gap: .75rem; color: #7A1F2A; font-weight: 600; }
-    .actions { display: flex; align-items: center; gap: .75rem; }
-    .back-link { color: #7A1F2A; text-decoration: none; font-weight: 600; }
-    .btn-filters { display: none; background: #D4AF37; color: #7A1F2A; border: 2px solid #D4AF37; padding: .5rem .9rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
-    .sort { border: 2px solid #D4AF37; background: #FFFDF9; border-radius: 8px; padding: .5rem .6rem; color: #7A1F2A; font-weight: 600; }
-
-    .layout { display: grid; grid-template-columns: 350px 1fr; gap: 1rem; }
-    .sidebar { position: sticky; top: 110px; align-self: start; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; max-height: calc(100vh - 130px); background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1rem; height: max-content; box-shadow: var(--soft-shadow); backdrop-filter: blur(8px); }
-    .sidebar::-webkit-scrollbar { display: none; }
-    .filter-group { display: grid; gap: .5rem; margin-bottom: 1rem; }
-    .filter-group h4 { margin: 0 0 .25rem; color: #0f172a; font-size: .95rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-weight: 700; }
-    .filter-group label { display: flex; align-items: center; gap: .5rem; font-size: .95rem; color: #1B1B1B; padding: .15rem .25rem; border-radius: 8px; }
-    .filter-group label:hover { background: rgba(15,23,42,0.04); }
-    .chips { display: flex; flex-wrap: wrap; gap: .5rem; }
-    .chip { border: 1px solid var(--glass-border); background: var(--glass-bg); color: #0f172a; padding: .35rem .6rem; border-radius: 999px; cursor: pointer; box-shadow: var(--soft-shadow); }
-    .chip.active { background: linear-gradient(90deg, var(--pastel-lavender), var(--pastel-mint)); }
-    .price-header { display: flex; align-items: center; justify-content: space-between; }
-    .price-title { color: #0f172a; font-weight: 800; }
-    .btn-price-clear { background: transparent; border: none; color: #0f172a; font-weight: 700; cursor: pointer; padding: 0; }
-    .range-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-top: .5rem; }
-    .price-select { border: 1px solid var(--glass-border); background: #fff; border-radius: 12px; padding: .4rem .5rem; color: #0f172a; font-weight: 600; }
-    .btn-clear { width: 100%; border: 1px solid var(--glass-border); background: linear-gradient(90deg, var(--pastel-peach), var(--pastel-beige)); color: #0f172a; border-radius: 999px; padding: .6rem .9rem; cursor: pointer; font-weight: 700; box-shadow: var(--soft-shadow); }
-    .btn-clear:hover { transform: translateY(-1px); }
-    .more-link { background: transparent; border: none; color: #7A1F2A; font-weight: 700; cursor: pointer; padding: 0; text-decoration: underline; justify-self: start; }
-
-    .results { min-width: 0; }
-    .results-bar { display: grid; grid-template-columns: 1fr auto; gap: .75rem; align-items: center; margin-bottom: .75rem; }
-    .results-left { color: #5c1a1a; font-weight: 700; }
-    .results-right { display: flex; align-items: center; gap: .5rem; }
-    .results-right .sort { border: 1px solid var(--glass-border); background: var(--glass-bg); border-radius: 12px; padding: .5rem .8rem; color: #0f172a; font-weight: 600; box-shadow: var(--soft-shadow); }
-    .search-wrap { display: inline-flex; align-items: center; gap: .4rem; background: var(--glass-bg); border: 1px solid var(--glass-border); padding: .4rem .6rem; border-radius: 12px; box-shadow: var(--soft-shadow); }
-    .search-input { border: none; outline: none; background: transparent; color: #0f172a; min-width: 220px; }
-    .date-range { display: flex; flex-direction: column; gap: .75rem; }
-    .date-input { position: relative; display: flex; align-items: flex-start; gap: .4rem; background: #fff; border: 1px solid var(--glass-border); border-radius: 12px; padding: .4rem .7rem; box-shadow: var(--soft-shadow); }
-    .date-input .icon { font-size: .9rem; }
-    .date-field { display: flex; flex-direction: column; gap: .15rem; width: 100%; }
-    .date-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: #475569; font-weight: 600; }
-    .date-input input[type="date"] { border: none; outline: none; background: transparent; color: #1B1B1B; padding: .15rem 0; font-weight: 600; }
-    .date-input .date-display { position: absolute; bottom: -1.1rem; left: .75rem; font-size: .75rem; color: #7A1F2A; }
-    .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
-
-    .card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; transition: box-shadow .25s ease, transform .25s ease; box-shadow: var(--soft-shadow); position: relative; }
-    .card::before { content: ''; position: absolute; inset: -20px; background: radial-gradient(120px 60px at var(--x, 50%) var(--y, 0%), rgba(234,230,255,.35), rgba(230,255,245,.2), transparent); opacity: 0; transition: opacity .3s ease; pointer-events: none; }
-    .card:hover { transform: translateY(-4px); }
-    .card:hover::before { opacity: 1; }
-    .thumb { position: relative; height: 240px; overflow: hidden; background: linear-gradient(180deg, var(--pastel-lavender), var(--pastel-mint)); }
-    .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .3s ease, transform .3s ease; z-index: 1; }
-    .img-secondary { opacity: 0; transform: scale(1.05); }
-    .card:hover .img-primary { opacity: 0; transform: scale(1.05); }
-    .card:hover .img-secondary { opacity: 1; transform: scale(1.02); animation: panX 8s ease-in-out infinite; }
-    @keyframes panX { 0% { transform: scale(1.05) translateX(0); } 50% { transform: scale(1.05) translateX(-8%); } 100% { transform: scale(1.05) translateX(0); } }
-    .content { padding: .75rem .9rem; display: grid; grid-template-rows: auto 1fr auto; gap: .3rem; min-height: 132px; }
-    .name { margin: 0; color: #5c1a1a; font-size: 1.05rem; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
-    .desc { margin: 0; color: #1B1B1B; opacity: .8; font-size: .9rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
-    .meta { display: none; }
-    .price { color: #5c1a1a; font-weight: 800; margin-top: .25rem; }
-    .wishlist-btn { position: absolute; top: 10px; right: 10px; width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--glass-border); background: var(--glass-bg); color: #1B1B1B; display: inline-flex; align-items: center; justify-content: center; box-shadow: var(--soft-shadow); cursor: pointer; transition: transform .2s ease; z-index: 3; }
-    .wishlist-btn:hover { transform: translateY(-2px); }
-    .wishlist-btn.active { color: #dc2626; background: var(--glass-bg); border-color: var(--glass-border); }
-    .tags { color: #1B1B1B; opacity: .7; font-size: .85rem; }
-    .empty { text-align: center; color: #7A1F2A; padding: 2rem; border: 2px dashed #D4AF37; border-radius: 12px; background: #FFFDF9; }
-
-    @media (max-width: 1199px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-    @media (max-width: 991px) {
-      .layout { grid-template-columns: 1fr; }
-      .btn-filters { display: inline-block; background: linear-gradient(90deg, var(--pastel-peach), var(--pastel-beige)); color: #0f172a; border: 1px solid var(--glass-border); border-radius: 12px; }
-      .sidebar { display: none; position: static; max-height: none; overflow: visible; }
-      .sidebar.open { display: block; }
-      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .results-bar { grid-template-columns: 1fr; }
-      .results-right { justify-self: start; }
+    /* ========== GLOBAL & CONTAINER ========== */
+    :host {
+      display: block;
+      background: linear-gradient(135deg, #FFF8F0 0%, #FFFBF5 50%, #FFF5EB 100%);
+      min-height: 100vh;
     }
-    @media (max-width: 575px) { .grid { grid-template-columns: 1fr; } .thumb { height: 200px; } .content { min-height: 120px; } }
+
+    .plp {
+      padding: 2rem 0 3rem;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ========== HEADER ========== */
+    .plp-header {
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+
+    .btn-filters {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #fff;
+      border: 1px solid rgba(122, 31, 42, 0.15);
+      border-radius: 12px;
+      padding: 0.75rem 1.25rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #7A1F2A;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .btn-filters:hover {
+      background: #7A1F2A;
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(122, 31, 42, 0.15);
+    }
+
+    .btn-filters svg {
+      stroke: currentColor;
+    }
+
+    /* ========== LAYOUT ========== */
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    /* ========== SIDEBAR ========== */
+    .sidebar {
+      position: sticky;
+      top: 1.5rem;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+      height: calc(100vh - 3rem);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-content {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .sidebar-header {
+      padding: 1.5rem 1.25rem 1rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .sidebar-title {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #7A1F2A;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .btn-close {
+      display: none;
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: rgba(122, 31, 42, 0.08);
+      border-radius: 8px;
+      color: #7A1F2A;
+      font-size: 1.25rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-close:hover {
+      background: #7A1F2A;
+      color: #fff;
+    }
+
+  .filters-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1rem 1.25rem;
+  position: relative;
+  mask-image: linear-gradient(to bottom,
+    transparent 0,
+    black 20px,
+    black calc(100% - 20px),
+    transparent 100%);
+}
+
+
+    .filters-scroll::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Opera */
+    }
+
+    .filter-group {
+      margin-bottom: 0.5rem;
+    }
+
+    .filter-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0;
+      padding: 0.75rem 0;
+      font-size: 0.875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #2C2C2C;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .filter-header:hover {
+      color: #7A1F2A;
+    }
+
+    .filter-header .chev {
+      font-size: 1.25rem;
+      font-weight: 400;
+      color: #7A1F2A;
+    }
+
+    .filter-body {
+      padding: 0.5rem 0 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .filter-body label {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.375rem 0.5rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: #444;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-body label:hover {
+      background: rgba(122, 31, 42, 0.04);
+    }
+
+    .filter-body input[type="checkbox"],
+    .filter-body input[type="radio"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #7A1F2A;
+      cursor: pointer;
+    }
+
+    .filter-divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.08), transparent);
+      margin: 0.75rem 0;
+    }
+
+    /* Price Filter */
+    .price-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+    }
+
+    .price-title {
+      font-size: 0.875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #2C2C2C;
+    }
+
+    .btn-price-clear {
+      background: none;
+      border: none;
+      color: #7A1F2A;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .btn-price-clear:hover {
+      background: rgba(122, 31, 42, 0.08);
+    }
+
+    .range-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .price-select {
+      padding: 0.5rem 0.625rem;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 10px;
+      background: #FAFAFA;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #2C2C2C;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .price-select:hover,
+    .price-select:focus {
+      border-color: #7A1F2A;
+      background: #fff;
+      outline: none;
+    }
+
+    /* Date Filter */
+    .date-range {
+      gap: 0.75rem;
+    }
+
+    .date-input {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+    }
+
+    .date-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #666;
+    }
+
+    .date-input input[type="date"] {
+      padding: 0.5rem 0.625rem;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 10px;
+      background: #FAFAFA;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #2C2C2C;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .date-input input[type="date"]:hover,
+    .date-input input[type="date"]:focus {
+      border-color: #7A1F2A;
+      background: #fff;
+      outline: none;
+    }
+
+    /* Chips */
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .chip {
+      padding: 0.5rem 0.875rem;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 20px;
+      background: #FAFAFA;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: #444;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .chip:hover {
+      border-color: #7A1F2A;
+      background: rgba(122, 31, 42, 0.04);
+      color: #7A1F2A;
+    }
+
+    .chip.active {
+      background: #7A1F2A;
+      border-color: #7A1F2A;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* Sidebar Footer */
+    .sidebar-footer {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid rgba(0, 0, 0, 0.06);
+      background: linear-gradient(to top, rgba(255, 248, 240, 0.5), transparent);
+      flex-shrink: 0;
+    }
+
+    .btn-clear {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      border: 2px solid #7A1F2A;
+      border-radius: 12px;
+      background: #fff;
+      color: #7A1F2A;
+      font-size: 0.875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-clear:hover {
+      background: #7A1F2A;
+      color: #fff;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(122, 31, 42, 0.2);
+    }
+
+    /* ========== RESULTS ========== */
+    .results {
+      min-width: 0;
+    }
+
+    .results-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      padding: 1rem 1.5rem;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .results-left {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+    }
+
+    .results-count {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #7A1F2A;
+    }
+
+    .results-label {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #666;
+    }
+
+    .results-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .search-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.625rem 1rem;
+      background: #FAFAFA;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+      transition: all 0.2s;
+    }
+
+    .search-wrap:focus-within {
+      background: #fff;
+      border-color: #7A1F2A;
+      box-shadow: 0 0 0 3px rgba(122, 31, 42, 0.08);
+    }
+
+    .search-wrap svg {
+      color: #999;
+    }
+
+    .search-input {
+      border: none;
+      background: none;
+      outline: none;
+      font-size: 0.9rem;
+      color: #2C2C2C;
+      min-width: 200px;
+    }
+
+    .search-input::placeholder {
+      color: #999;
+    }
+
+    .sort {
+      padding: 0.625rem 1rem;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+      background: #FAFAFA;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #2C2C2C;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .sort:hover,
+    .sort:focus {
+      background: #fff;
+      border-color: #7A1F2A;
+      outline: none;
+    }
+
+    /* ========== PRODUCT GRID ========== */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 32px rgba(122, 31, 42, 0.15);
+    }
+
+    .card-image {
+      position: relative;
+      background: #ffffff;
+      height: 320px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .product-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 0;
+      transition: transform 0.4s ease;
+    }
+
+    .card:hover .product-img {
+      transform: scale(1.05);
+    }
+
+    .wishlist-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 44px;
+      height: 44px;
+      border: none;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+    }
+
+    .wishlist-btn:hover {
+      transform: scale(1.1);
+      background: #fff;
+    }
+
+    .wishlist-btn svg {
+      color: #7A1F2A;
+    }
+
+    .wishlist-btn.active {
+      background: rgba(220, 38, 38, 0.1);
+    }
+
+    .card-content {
+      padding: 1.25rem 1.5rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .product-name {
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #2C2C2C;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .product-desc {
+      margin: 0;
+      font-size: 0.875rem;
+      color: #666;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .product-price {
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: baseline;
+      gap: 0.25rem;
+    }
+
+    .price-amount {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #7A1F2A;
+    }
+
+    .price-period {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #999;
+    }
+
+    /* ========== EMPTY STATE ========== */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+      text-align: center;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    }
+
+    .empty-state svg {
+      color: #D4AF37;
+      margin-bottom: 1.5rem;
+      opacity: 0.5;
+    }
+
+    .empty-state h3 {
+      margin: 0 0 0.5rem;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #2C2C2C;
+    }
+
+    .empty-state p {
+      margin: 0;
+      font-size: 1rem;
+      color: #999;
+    }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 1200px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 991px) {
+      .plp-header {
+        display: block;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        max-width: 360px;
+        height: 100vh;
+        max-height: 100vh;
+        z-index: 1000;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        border-radius: 0;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .btn-close {
+        display: flex;
+      }
+
+      .results-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+      }
+
+      .results-left {
+        justify-content: center;
+      }
+
+      .results-right {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .search-wrap {
+        width: 100%;
+      }
+
+      .search-input {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .sort {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 0 1rem;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+      }
+
+      .card-image {
+        height: 280px;
+      }
+    }
   `]
 })
 export class CostumesListComponent implements OnInit {
@@ -463,29 +1139,6 @@ export class CostumesListComponent implements OnInit {
   }
 
   isWished(id: number) { return this.wishlistService.isInWishlist(id); }
-
-  onCardMouseMove(ev: MouseEvent) {
-    const el = ev.currentTarget as HTMLElement | null;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const x = ev.clientX - rect.left;
-    const y = ev.clientY - rect.top;
-    el.style.setProperty('--x', `${x}px`);
-    el.style.setProperty('--y', `${y}px`);
-  }
-
-  // PRICE handlers
-
-
-
-
-
-
-
-
-
-
-
 
   onPriceSelectChange(which: 'min' | 'max', value: number | null) {
     let currentMin = this.priceMinSelectValue === null ? this.sliderMin : this.priceMinSelectValue;

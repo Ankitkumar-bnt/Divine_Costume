@@ -43,6 +43,7 @@ import { CartService } from '../services/cart.service';
             <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeMenu()">Home</a></li>
             <li><a routerLink="/costumes" routerLinkActive="active" (click)="closeMenu()">Costumes</a></li>
             <li><a routerLink="/ornaments" routerLinkActive="active" (click)="closeMenu()">Ornaments</a></li>
+            <li><a routerLink="/" fragment="accessories" (click)="closeMenu()">Accessories</a></li>
             <li><a routerLink="/" fragment="gallery" (click)="closeMenu()">Divine Gallery</a></li>
             <li><a routerLink="/" fragment="about" (click)="closeMenu()">About Us</a></li>
             <li><a routerLink="/" fragment="contact" (click)="closeMenu()">Contact Us</a></li>
@@ -134,7 +135,7 @@ import { CartService } from '../services/cart.service';
       gap: 1rem;
       align-items: center;
       position: absolute;
-      left: 50%;
+      left: 60%;
       transform: translateX(-50%);
       flex-wrap: nowrap;
       white-space: nowrap;

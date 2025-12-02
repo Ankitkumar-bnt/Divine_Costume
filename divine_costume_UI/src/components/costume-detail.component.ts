@@ -103,20 +103,6 @@ interface VariantSize {
             </button>
           </div>
           
-          <div class="features">
-            <div class="feature-item">
-              <span class="icon">✨</span>
-              <span>Premium Quality</span>
-            </div>
-            <div class="feature-item">
-              <span class="icon">🧼</span>
-              <span>Dry Cleaned</span>
-            </div>
-            <div class="feature-item">
-              <span class="icon">🚚</span>
-              <span>Home Delivery</span>
-            </div>
-          </div>
         </div>
       </div>
     </section>
@@ -191,7 +177,7 @@ interface VariantSize {
     .main-image {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       transition: transform 0.3s ease;
     }
 
