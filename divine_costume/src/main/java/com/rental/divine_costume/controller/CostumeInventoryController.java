@@ -1,6 +1,7 @@
 package com.rental.divine_costume.controller;
 
 import com.rental.divine_costume.dto.requestdto.CostumePartRequestDto;
+import com.rental.divine_costume.dto.requestdto.ItemRequestDto;
 import com.rental.divine_costume.dto.responsedto.CostumeInventoryResponseDto;
 import com.rental.divine_costume.entity.items.CostumeCategory;
 import com.rental.divine_costume.entity.items.CostumeVariant;
@@ -176,6 +177,40 @@ public class CostumeInventoryController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
             log.error("Error removing costume part {}: ", partId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/duplicate/{costumeId}")
+    public ResponseEntity<Long> duplicateCostume(
+            @PathVariable Long costumeId,
+            @RequestParam Integer count) {
+        log.info("POST /api/costume-inventory/duplicate/{} - Duplicating costume with count: {}", costumeId, count);
+        try {
+            Long createdCount = costumeInventoryService.duplicateCostume(costumeId, count);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdCount);
+        } catch (RuntimeException e) {
+            log.error("Error duplicating costume {}: ", costumeId, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (Exception e) {
+            log.error("Error duplicating costume {}: ", costumeId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    @PostMapping("/batch-add")
+    public ResponseEntity<Long> addCostumesBatch(
+            @RequestBody ItemRequestDto itemRequestDto,
+            @RequestParam Integer count) {
+        log.info("POST /api/costume-inventory/batch-add - Adding costumes in batch with count: {}", count);
+        try {
+            Long createdCount = costumeInventoryService.addCostumesBatch(itemRequestDto, count);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdCount);
+        } catch (RuntimeException e) {
+            log.error("Error adding costumes in batch: ", e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (Exception e) {
+            log.error("Error adding costumes in batch: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
