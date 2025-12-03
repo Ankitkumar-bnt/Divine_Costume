@@ -29,7 +29,7 @@ export class CartService {
         }
     }
 
-    addToCart(item: Omit<CartItem, 'id' | 'quantity'>) {
+    addToCart(item: Omit<CartItem, 'id' | 'quantity'>, quantity: number = 1) {
         const currentItems = this.cartItems.value;
         const existingItemIndex = currentItems.findIndex(
             i => i.productId === item.productId && i.color === item.color && i.size === item.size
@@ -37,11 +37,11 @@ export class CartService {
 
         if (existingItemIndex > -1) {
             // Item already exists, increment quantity
-            currentItems[existingItemIndex].quantity += 1;
+            currentItems[existingItemIndex].quantity += quantity;
             this.cartItems.next([...currentItems]);
         } else {
-            // Add new item with quantity 1
-            const newItem: CartItem = { ...item, id: Date.now(), quantity: 1 };
+            // Add new item with specified quantity
+            const newItem: CartItem = { ...item, id: Date.now(), quantity };
             this.cartItems.next([...currentItems, newItem]);
         }
 
