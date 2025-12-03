@@ -1163,7 +1163,9 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
 
     if (this.selectedCategory) {
       this.variantsLoading = true;
-      const variantSub = this.inventoryService.getVariantsByCategory(this.selectedCategory).subscribe({
+      // Convert string ID to number for API call
+      const categoryId = typeof this.selectedCategory === 'string' ? Number(this.selectedCategory) : this.selectedCategory;
+      const variantSub = this.inventoryService.getVariantsByCategory(categoryId).subscribe({
         next: (variants: VariantDescription[]) => {
           this.filteredVariants = this.inventoryService.dedupeVariantsByDescription(variants);
           this.variantsLoading = false;
@@ -1191,9 +1193,11 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
 
     if (this.selectedVariant) {
       this.sizesLoading = true;
-      const sizeSub = this.inventoryService.getSizeCountsByVariant(this.selectedVariant).subscribe({
+      // Convert string ID to number for API call
+      const variantId = typeof this.selectedVariant === 'string' ? Number(this.selectedVariant) : this.selectedVariant;
+      const sizeSub = this.inventoryService.getSizeCountsByVariant(variantId).subscribe({
         next: (sizeCounts: { [key: string]: number }) => {
-          this.filteredSizes = this.inventoryService.mapSizeCounts(sizeCounts, this.selectedVariant!);
+          this.filteredSizes = this.inventoryService.mapSizeCounts(sizeCounts, variantId!);
           this.sizesLoading = false;
         },
         error: (error: any) => {
@@ -1217,7 +1221,10 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
       const selectedSizeObj = this.filteredSizes.find(s => s.id === selectedSizeId);
       this.maxAvailableCount = selectedSizeObj?.availableCount || 0;
       this.currentAvailableCount = this.maxAvailableCount;
-      this.selectedCount = this.maxAvailableCount;
+
+      // If there are existing costumes, set count to that number
+      // If there are no existing costumes, set count to 1 to allow adding new ones
+      this.selectedCount = this.maxAvailableCount > 0 ? this.maxAvailableCount : 1;
 
       // Load inventory for selected variant and size
       this.refreshInventory();
@@ -1254,10 +1261,19 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
 
   // Enhanced utility methods
   canAddToTable(): boolean {
-    return !!(this.selectedCategory && this.selectedVariant && this.selectedSize && this.selectedCount > 0);
+    const result = !!(this.selectedCategory && this.selectedVariant && this.selectedSize && this.selectedCount > 0);
+    console.log('🔍 canAddToTable check:', {
+      selectedCategory: this.selectedCategory,
+      selectedVariant: this.selectedVariant,
+      selectedSize: this.selectedSize,
+      selectedCount: this.selectedCount,
+      result: result
+    });
+    return result;
   }
 
   addToInventoryTable(): void {
+    // Force recompilation - Updated with type conversion fixes
     console.log('🔵 addToInventoryTable called');
     console.log('Selected values:', {
       category: this.selectedCategory,
@@ -1271,8 +1287,12 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const category = this.categories.find(c => c.id === this.selectedCategory);
-    const variant = this.filteredVariants.find(v => v.id === this.selectedVariant);
+    // Convert string IDs to numbers for comparison (HTML select returns strings)
+    const categoryId = typeof this.selectedCategory === 'string' ? Number(this.selectedCategory) : this.selectedCategory;
+    const variantId = typeof this.selectedVariant === 'string' ? Number(this.selectedVariant) : this.selectedVariant;
+
+    const category = this.categories.find(c => c.id === categoryId);
+    const variant = this.filteredVariants.find(v => v.id === variantId);
     const size = this.filteredSizes.find(s => s.id === this.selectedSize);
 
     console.log('Found objects:', { category, variant, size });
@@ -1281,8 +1301,8 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
       // Check for existing item with same category+variant+size
       const existing = this.inventoryService.findExistingInventoryItem(
         this.inventoryData,
-        this.selectedCategory!,
-        this.selectedVariant!,
+        categoryId!,
+        variantId!,
         size.size
       );
 
@@ -1301,12 +1321,12 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
           // Build ItemRequestDto for batch add API
           const itemRequestDto = {
             category: {
-              id: this.selectedCategory,
+              id: categoryId,
               categoryName: category.categoryName
             },
             variant: {
-              id: this.selectedVariant,
-              categoryId: this.selectedCategory,
+              id: variantId,
+              categoryId: categoryId,
               variantDescription: variant.variantDescription,
               style: variant.style,
               primaryColor: variant.primaryColor,
@@ -1314,7 +1334,7 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
               tertiaryColor: variant.tertiaryColor
             },
             costume: {
-              costumeVariantId: this.selectedVariant,
+              costumeVariantId: variantId,
               numberOfItems: 1,
               size: size.size,
               purchasePrice: 0,
@@ -1373,12 +1393,12 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
         // Create new entries using batch add API
         const itemRequestDto = {
           category: {
-            id: this.selectedCategory,
+            id: categoryId,
             categoryName: category.categoryName
           },
           variant: {
-            id: this.selectedVariant,
-            categoryId: this.selectedCategory,
+            id: variantId,
+            categoryId: categoryId,
             variantDescription: variant.variantDescription,
             style: variant.style,
             primaryColor: variant.primaryColor,
@@ -1386,7 +1406,7 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
             tertiaryColor: variant.tertiaryColor
           },
           costume: {
-            costumeVariantId: this.selectedVariant,
+            costumeVariantId: variantId,
             numberOfItems: 1,
             size: size.size,
             purchasePrice: 0,
@@ -1469,10 +1489,14 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
 
   getCountHint(): string {
     if (this.selectedSize && this.selectedCount > 0) {
+      // Convert string IDs to numbers for comparison
+      const categoryId = typeof this.selectedCategory === 'string' ? Number(this.selectedCategory) : this.selectedCategory;
+      const variantId = typeof this.selectedVariant === 'string' ? Number(this.selectedVariant) : this.selectedVariant;
+
       const existing = this.inventoryService.findExistingInventoryItem(
         this.inventoryData,
-        this.selectedCategory!,
-        this.selectedVariant!,
+        categoryId!,
+        variantId!,
         this.filteredSizes.find(s => s.id === this.selectedSize)?.size || ''
       );
 
@@ -1487,8 +1511,12 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
 
   // Auto-load inventory based on current filters and sort serial numbers
   private refreshInventory(): void {
-    if (this.selectedCategory && !this.selectedVariant) {
-      const sub = this.inventoryService.getInventoryByCategory(this.selectedCategory).subscribe({
+    // Convert string IDs to numbers for API calls
+    const categoryId = typeof this.selectedCategory === 'string' ? Number(this.selectedCategory) : this.selectedCategory;
+    const variantId = typeof this.selectedVariant === 'string' ? Number(this.selectedVariant) : this.selectedVariant;
+
+    if (categoryId && !variantId) {
+      const sub = this.inventoryService.getInventoryByCategory(categoryId).subscribe({
         next: (items: CostumeInventory[]) => this.setInventoryData(items),
         error: (err: any) => {
           console.error('Error loading inventory by category', err);
@@ -1499,8 +1527,8 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.selectedVariant && !this.selectedSize) {
-      const sub = this.inventoryService.getInventoryByVariant(this.selectedVariant).subscribe({
+    if (variantId && !this.selectedSize) {
+      const sub = this.inventoryService.getInventoryByVariant(variantId).subscribe({
         next: (items: CostumeInventory[]) => this.setInventoryData(items),
         error: (err: any) => {
           console.error('Error loading inventory by variant', err);
@@ -1511,11 +1539,11 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.selectedVariant && this.selectedSize) {
+    if (variantId && this.selectedSize) {
       const sizeObj = this.filteredSizes.find(s => s.id === this.selectedSize);
       const size = sizeObj?.size || '';
       if (!size) { return; }
-      const sub = this.inventoryService.getInventoryByVariantAndSize(this.selectedVariant, size).subscribe({
+      const sub = this.inventoryService.getInventoryByVariantAndSize(variantId, size).subscribe({
         next: (items: CostumeInventory[]) => this.setInventoryData(items),
         error: (err: any) => {
           console.error('Error loading inventory by variant and size', err);

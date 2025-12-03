@@ -25,6 +25,7 @@ public class CostumeInventoryServiceImpl implements CostumeInventoryService {
     private final CostumeRepository costumeRepository;
     private final CostumePartRepository costumePartRepository;
     private final CostumeImageRepository imageRepository;
+    private final CostumeItemRepository costumeItemRepository;
 
     @Value("${app.base-url}")
     private String baseUrl; // Used to build full image URL
@@ -360,27 +361,90 @@ public class CostumeInventoryServiceImpl implements CostumeInventoryService {
         
         log.info("Current max serial number: {}, adding {} new entries", maxSerialNumber, additionalCount);
         
+        // Find a reference costume to copy items and prices from
+        // 1. Try to find one with the same size first
+        Costume referenceCostume = existingCostumes.isEmpty() ? null : existingCostumes.get(0);
+        
+        // 2. If no costume of same size, try to find ANY costume of this variant to use as template
+        if (referenceCostume == null) {
+            List<Costume> anyVariantCostumes = costumeRepository.findByVariantId(variantId);
+            if (!anyVariantCostumes.isEmpty()) {
+                // Try to find one that has prices set
+                referenceCostume = anyVariantCostumes.stream()
+                        .filter(c -> c.getRentalPricePerDay() != null && c.getRentalPricePerDay().compareTo(java.math.BigDecimal.ZERO) > 0)
+                        .findFirst()
+                        .orElse(anyVariantCostumes.get(0));
+                
+                log.info("No costume of size {} found. Using costume ID {} (Size: {}) as reference.", 
+                        size, referenceCostume.getId(), referenceCostume.getSize());
+            }
+        }
+
+        List<CostumeItem> referenceItems = new ArrayList<>();
+        if (referenceCostume != null) {
+            // Log the prices we found
+            log.info("Reference Costume Prices - Purchase: {}, Rental: {}, Deposit: {}", 
+                    referenceCostume.getPurchasePrice(), 
+                    referenceCostume.getRentalPricePerDay(), 
+                    referenceCostume.getDeposit());
+
+            // Get all costume items from the reference costume
+            referenceItems = (List<CostumeItem>) costumeItemRepository.findAllByCostumeId(referenceCostume.getId());
+            log.info("Found {} costume items to copy from reference costume ID: {}", referenceItems.size(), referenceCostume.getId());
+        } else {
+            log.info("No existing costume found to copy from. New costumes will be created with provided DTO values.");
+        }
+        
         // Create new costume entries with incremented serial numbers
         List<Costume> newCostumes = new ArrayList<>();
         for (int i = 1; i <= additionalCount; i++) {
-            Costume newCostume = Costume.builder()
+            Costume.CostumeBuilder costumeBuilder = Costume.builder()
                     .costumeVariant(variant)
                     .numberOfItems(itemRequestDto.getCostume().getNumberOfItems())
                     .size(size)
                     .serialNumber(maxSerialNumber + i)
-                    .purchasePrice(itemRequestDto.getCostume().getPurchasePrice())
-                    .rentalPricePerDay(itemRequestDto.getCostume().getRentalPricePerDay())
-                    .deposit(itemRequestDto.getCostume().getDeposit())
                     .isRentable(itemRequestDto.getCostume().getIsRentable() != null ? 
-                               itemRequestDto.getCostume().getIsRentable() : true)
-                    .build();
-            newCostumes.add(newCostume);
+                               itemRequestDto.getCostume().getIsRentable() : true);
+
+            // Use prices from reference costume if available, otherwise use DTO
+            if (referenceCostume != null) {
+                costumeBuilder.purchasePrice(referenceCostume.getPurchasePrice())
+                             .rentalPricePerDay(referenceCostume.getRentalPricePerDay())
+                             .deposit(referenceCostume.getDeposit());
+            } else {
+                costumeBuilder.purchasePrice(itemRequestDto.getCostume().getPurchasePrice())
+                             .rentalPricePerDay(itemRequestDto.getCostume().getRentalPricePerDay())
+                             .deposit(itemRequestDto.getCostume().getDeposit());
+            }
+
+            newCostumes.add(costumeBuilder.build());
         }
         
         // Save all new costumes
         List<Costume> savedCostumes = costumeRepository.saveAll(newCostumes);
         log.info("Successfully created {} new costume entries with serial numbers {} to {}", 
                 savedCostumes.size(), maxSerialNumber + 1, maxSerialNumber + additionalCount);
+        
+        // Copy costume items to each new costume
+        if (!referenceItems.isEmpty()) {
+            List<CostumeItem> newItems = new ArrayList<>();
+            for (Costume savedCostume : savedCostumes) {
+                for (CostumeItem referenceItem : referenceItems) {
+                    CostumeItem newItem = CostumeItem.builder()
+                            .costume(savedCostume)
+                            .itemName(referenceItem.getItemName())
+                            .rentalPricePerDay(referenceItem.getRentalPricePerDay())
+                            .deposit(referenceItem.getDeposit())
+                            .imageUrl(referenceItem.getImageUrl())
+                            .build();
+                    newItems.add(newItem);
+                }
+            }
+            
+            // Save all costume items
+            List<CostumeItem> savedItems = costumeItemRepository.saveAll(newItems);
+            log.info("Successfully copied {} costume items to {} new costumes", savedItems.size(), savedCostumes.size());
+        }
         
         return (long) savedCostumes.size();
     }
