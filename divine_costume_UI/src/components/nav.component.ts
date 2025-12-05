@@ -4,6 +4,7 @@ import { RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/ro
 import { filter } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { AuthService, AuthState } from '../services/auth.service';
+import { CartService } from '../services/cart.service';
 
 @Component({
   selector: 'app-nav',
@@ -22,6 +23,12 @@ import { AuthService, AuthState } from '../services/auth.service';
               <span class="icon">✉</span>
               <span>thedancecostumes&#64;gmail.com</span>
             </a>
+          </div>
+          <div class="contact-right">
+            <button class="btn-auth logout" (click)="onLogout()">
+              <i class="bi bi-box-arrow-right"></i>
+              <span>Logout</span>
+            </button>
           </div>
         </div>
       </div>
@@ -42,14 +49,15 @@ import { AuthService, AuthState } from '../services/auth.service';
             <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeMenu()">Home</a></li>
             <li><a routerLink="/costumes" routerLinkActive="active" (click)="closeMenu()">Costumes</a></li>
             <li><a routerLink="/ornaments" routerLinkActive="active" (click)="closeMenu()">Ornaments</a></li>
-            <li><a routerLink="/" fragment="gallery" (click)="closeMenu()">Divine Gallery</a></li>
+            <li><a routerLink="/" fragment="accessories" (click)="closeMenu()">Accessories</a></li>
             <li><a routerLink="/" fragment="about" (click)="closeMenu()">About Us</a></li>
             <li><a routerLink="/" fragment="contact" (click)="closeMenu()">Contact Us</a></li>
           </ul>
 
           <div class="nav-icons">
-            <a routerLink="/cart" class="icon-btn" title="Cart">
+            <a routerLink="/cart" class="icon-btn cart-icon-wrapper" title="Cart">
               <i class="bi bi-cart3"></i>
+              <span class="cart-badge" *ngIf="cartCount > 0">{{ cartCount }}</span>
             </a>
             <a routerLink="/wishlist" class="icon-btn" title="Wishlist">
               <i class="bi bi-heart"></i>
@@ -64,10 +72,6 @@ import { AuthService, AuthState } from '../services/auth.service';
                   <i class="bi bi-person-circle"></i>
                   <span class="user-email">{{ authState.userEmail }}</span>
                 </div>
-                <button class="btn-auth logout" (click)="onLogout()">
-                  <i class="bi bi-box-arrow-right"></i>
-                  <span>Logout</span>
-                </button>
               </div>
             </div>
           </div>
@@ -91,9 +95,10 @@ import { AuthService, AuthState } from '../services/auth.service';
       padding: 0 .75rem;
       display: flex;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: space-between;
     }
     .contact-left { display: flex; gap: 1rem; align-items: center; }
+    .contact-right { display: flex; gap: 1rem; align-items: center; }
     .top-link { display: inline-flex; align-items: center; gap: .5rem; color: #334155; font-size: .85rem; text-decoration: none; padding: .25rem .5rem; background: rgba(255,255,255,0.6); border-radius: 999px; }
     .top-link .icon { opacity: .7; }
 
@@ -146,7 +151,7 @@ import { AuthService, AuthState } from '../services/auth.service';
       display: flex;
       gap: 1rem;
       align-items: center;
-      margin-left: 1000px;
+      margin-left: 800px;
       padding-right: 1rem;
     }
 
@@ -165,6 +170,36 @@ import { AuthService, AuthState } from '../services/auth.service';
 
     .icon-btn:nth-child(2) {
       color: #dc2626;
+    }
+
+    .cart-icon-wrapper {
+      position: relative;
+    }
+
+    .cart-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: linear-gradient(135deg, #dc2626, #ef4444);
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 700;
+      min-width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      box-shadow: 0 2px 6px rgba(220, 38, 38, 0.4);
+      border: 2px solid white;
+      animation: badge-pop 0.3s ease;
+    }
+
+    @keyframes badge-pop {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
     }
 
     .icon-btn:hover {
@@ -232,14 +267,13 @@ import { AuthService, AuthState } from '../services/auth.service';
     }
 
     .btn-auth.logout {
-      background: linear-gradient(90deg, #fee2e2, #fecaca);
-      color: #dc2626;
+      background: transparent;
+      color: #000000;
     }
 
     .btn-auth.logout:hover {
-      background: linear-gradient(90deg, #fecaca, #fca5a5);
+      background: transparent;
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
     }
 
     @media (max-width: 992px) {
@@ -258,11 +292,14 @@ export class NavComponent implements OnInit, OnDestroy {
   logoOk = true;
   isAdminRoute = false;
   authState$ = this.authService.authState$;
+  cartCount = 0;
   private routerSubscription?: Subscription;
+  private cartSubscription?: Subscription;
 
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private cartService: CartService
   ) {
     // Check initial route
     this.checkAdminRoute(this.router.url);
@@ -275,12 +312,20 @@ export class NavComponent implements OnInit, OnDestroy {
       .subscribe((event: NavigationEnd) => {
         this.checkAdminRoute(event.urlAfterRedirects);
       });
+
+    // Subscribe to cart changes to update badge count
+    this.cartSubscription = this.cartService.cartItems$.subscribe(items => {
+      this.cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
+    });
   }
 
   ngOnDestroy() {
-    // Clean up subscription
+    // Clean up subscriptions
     if (this.routerSubscription) {
       this.routerSubscription.unsubscribe();
+    }
+    if (this.cartSubscription) {
+      this.cartSubscription.unsubscribe();
     }
   }
 

@@ -76,10 +76,33 @@ import { CommonModule } from '@angular/common';
     </footer>
   `,
   styles: [`
-    .footer { background: linear-gradient(180deg, var(--pastel-lavender), var(--pastel-mint)); padding: 3.5rem 0 1.5rem; color: #0f172a; border-top: 1px solid rgba(15,23,42,.08); }
-    .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
-    .single-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1.25rem; backdrop-filter: blur(6px); box-shadow: var(--soft-shadow); }
-    .card-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 2rem; }
+    .footer {
+  background: linear-gradient(180deg, var(--pastel-lavender), var(--pastel-mint));
+  padding: 2rem 0 1rem;        /* reduced top + bottom padding */
+  color: #0f172a;
+  border-top: 1px solid rgba(15,23,42,.08);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;             /* reduced left + right padding */
+}
+
+.single-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;       /* reduced internal padding */
+  backdrop-filter: blur(6px);
+  box-shadow: var(--soft-shadow);
+}
+  
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 1.5rem;                 /* slightly reduced gap */
+}
 
     .footer-heading { font-family: 'Space Grotesk', 'Playfair Display', serif; font-size: 1.15rem; font-weight: 700; margin: 0 0 .75rem; color: #0f172a; }
     .brand-name { font-family: 'Space Grotesk', 'Playfair Display', serif; font-weight: 700; font-size: 1.05rem; color: #111827; margin-bottom: .5rem; }
@@ -95,21 +118,31 @@ import { CommonModule } from '@angular/common';
     .contact-list .icon { display: inline-block; width: 1.2rem; text-align: center; opacity: .7; margin-right: .4rem; }
     .contact-list a { color: #334155; text-decoration: none; }
 
-    .divider { height: 1px; background: rgba(15,23,42,.1); margin: 2rem 0 1rem; }
-
-    .footer-bottom { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
-    .footer-bottom p { font-family: 'Inter','Poppins',sans-serif; font-size: .9rem; color: #475569; margin: .25rem 0 0; }
+.divider {
+  height: 1px;
+  background: rgba(15,23,42,.1);
+  margin: 1.5rem 0 0.75rem;
+}
+.footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  padding-top: 0.5rem;
+}
+      .footer-bottom p { font-family: 'Inter','Poppins',sans-serif; font-size: .9rem; color: #475569; margin: .25rem 0 0; }
     .socials { display: inline-flex; gap: .6rem; }
     .social { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; color: #0f172a; background: var(--glass-bg); border: 1px solid var(--glass-border); transition: transform .2s ease, box-shadow .2s ease; }
     .social:hover { transform: translateY(-2px); box-shadow: var(--soft-shadow); }
 
     @media (max-width: 1024px) { .card-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
     @media (max-width: 640px) {
-      .footer { padding: 2.5rem 0 1rem; }
+      .footer { padding: 1.5rem 0 1rem; }
       .card-grid { grid-template-columns: 1fr; }
-      .single-card { padding: 1rem; }
+      .single-card { padding: 0.75rem; }
       .footer-bottom { flex-direction: column; align-items: flex-start; }
     }
   `]
 })
-export class FooterComponent {}
+export class FooterComponent { }

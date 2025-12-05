@@ -3,28 +3,13 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FooterComponent } from './footer.component';
 import { CartService } from '../services/cart.service';
-import Swal from 'sweetalert2';
+import { WishlistService } from '../services/wishlist.service';
+import { ToastService } from '../services/toast.service';
+import { CostumeService, CostumeDetailModel, CostumeVariantDetail } from '../services/costume.service';
 
 interface VariantSize {
   size: string;
   stock: number;
-}
-
-interface ProductVariant {
-  colorKey: string;
-  displayName: string;
-  thumbnail: string;
-  images: string[];
-  rentPerDay: number;
-  deposit: number;
-  sizes: VariantSize[];
-}
-
-interface ProductDetailModel {
-  id: number;
-  name: string;
-  shortDescription: string;
-  variants: ProductVariant[];
 }
 
 @Component({
@@ -112,26 +97,12 @@ interface ProductDetailModel {
               <span class="btn-icon">🛒</span>
               {{ currentStock > 0 ? 'Add to Cart' : 'Out of Stock' }}
             </button>
-            <button class="btn-wishlist">
+            <button class="btn-wishlist" [class.active]="isInWishlist" (click)="toggleWishlist()">
               <span class="btn-icon">❤️</span>
-              Add to Wishlist
+              {{ isInWishlist ? 'In Wishlist' : 'Add to Wishlist' }}
             </button>
           </div>
           
-          <div class="features">
-            <div class="feature-item">
-              <span class="icon">✨</span>
-              <span>Premium Quality</span>
-            </div>
-            <div class="feature-item">
-              <span class="icon">🧼</span>
-              <span>Dry Cleaned</span>
-            </div>
-            <div class="feature-item">
-              <span class="icon">🚚</span>
-              <span>Home Delivery</span>
-            </div>
-          </div>
         </div>
       </div>
     </section>
@@ -206,7 +177,7 @@ interface ProductDetailModel {
     .main-image {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       transition: transform 0.3s ease;
     }
 
@@ -452,9 +423,19 @@ interface ProductDetailModel {
       border: 2px solid #7A1F2A;
     }
 
+    .btn-wishlist.active {
+      background: #dc2626;
+      color: #fff;
+      border-color: #dc2626;
+    }
+
     .btn-wishlist:hover {
       background: #FFF8EE;
       transform: translateY(-2px);
+    }
+
+    .btn-wishlist.active:hover {
+      background: #b91c1c;
     }
 
     .btn-icon {
@@ -534,73 +515,41 @@ interface ProductDetailModel {
   `]
 })
 export class CostumeDetailComponent implements OnInit {
-  product: ProductDetailModel | null = null;
-  currentVariant: ProductVariant | null = null;
+  product: CostumeDetailModel | null = null;
+  currentVariant: CostumeVariantDetail | null = null;
   currentImages: string[] = [];
   activeImageIndex = 0;
   selectedSize: string | null = null;
   currentStock = 0;
-
-  private catalog: ProductDetailModel[] = [
-    {
-      id: 1,
-      name: 'Bharatanatyam Temple Silk',
-      shortDescription: 'Handwoven silk with zari border, classic temple pattern.',
-      variants: [
-        {
-          colorKey: 'red',
-          displayName: 'Red',
-          thumbnail: 'https://images.pexels.com/photos/16032227/pexels-photo-16032227.jpeg?auto=compress&cs=tinysrgb&w=200',
-          images: [
-            'https://images.pexels.com/photos/16032227/pexels-photo-16032227.jpeg?auto=compress&cs=tinysrgb&w=1200',
-            'https://images.pexels.com/photos/16032233/pexels-photo-16032233.jpeg?auto=compress&cs=tinysrgb&w=1200',
-            'https://images.pexels.com/photos/887353/pexels-photo-887353.jpeg?auto=compress&cs=tinysrgb&w=1200'
-          ],
-          rentPerDay: 799,
-          deposit: 1500,
-          sizes: [
-            { size: '6', stock: 3 },
-            { size: '7', stock: 0 },
-            { size: '8', stock: 2 },
-            { size: '9', stock: 5 },
-            { size: '10', stock: 1 }
-          ]
-        },
-        {
-          colorKey: 'blue',
-          displayName: 'Blue',
-          thumbnail: 'https://images.pexels.com/photos/14443374/pexels-photo-14443374.jpeg?auto=compress&cs=tinysrgb&w=200',
-          images: [
-            'https://images.pexels.com/photos/14443374/pexels-photo-14443374.jpeg?auto=compress&cs=tinysrgb&w=1200',
-            'https://images.pexels.com/photos/14443371/pexels-photo-14443371.jpeg?auto=compress&cs=tinysrgb&w=1200',
-            'https://images.pexels.com/photos/1792214/pexels-photo-1792214.jpeg?auto=compress&cs=tinysrgb&w=1200'
-          ],
-          rentPerDay: 829,
-          deposit: 1600,
-          sizes: [
-            { size: '6', stock: 1 },
-            { size: '7', stock: 4 },
-            { size: '8', stock: 2 },
-            { size: '9', stock: 0 },
-            { size: '10', stock: 3 }
-          ]
-        }
-      ]
-    }
-  ];
+  isInWishlist = false;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private cartService: CartService
+    private cartService: CartService,
+    private wishlistService: WishlistService,
+    private toastService: ToastService,
+    private costumeService: CostumeService
   ) { }
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
     const id = idParam ? Number(idParam) : NaN;
-    this.product = this.catalog.find(p => p.id === id) || this.catalog[0] || null;
-    if (this.product) {
-      this.selectColor(0);
+
+    if (!isNaN(id)) {
+      this.costumeService.getCostumeDetail(id).subscribe({
+        next: (product) => {
+          this.product = product;
+          if (this.product && this.product.variants.length > 0) {
+            this.selectColor(0);
+            this.updateWishlistState();
+          }
+        },
+        error: (error) => {
+          console.error('Error fetching costume detail:', error);
+          this.product = null;
+        }
+      });
     }
   }
 
@@ -616,11 +565,13 @@ export class CostumeDetailComponent implements OnInit {
     const firstInStock = variant?.sizes.find(s => s.stock > 0) || null;
     this.selectedSize = firstInStock?.size || (variant?.sizes[0]?.size ?? null);
     this.updateStock();
+    this.updateWishlistState();
   }
 
   selectSize(size: string) {
     this.selectedSize = size;
     this.updateStock();
+    this.updateWishlistState();
   }
 
   private updateStock() {
@@ -645,16 +596,45 @@ export class CostumeDetailComponent implements OnInit {
       deposit: this.currentVariant.deposit
     });
 
-    // Show success message with SweetAlert2
-    Swal.fire({
-      icon: 'success',
-      title: 'Added to Cart!',
-      text: `${this.product.name} has been added to your cart.`,
-      showConfirmButton: false,
-      timer: 1500,
-      timerProgressBar: true
-    }).then(() => {
-      this.router.navigate(['/cart']);
-    });
+    // Show success toast with View Cart action
+    this.toastService.success(
+      'Added to Cart',
+      'View Cart',
+      () => {
+        this.router.navigate(['/cart']);
+      }
+    );
+  }
+
+  updateWishlistState() {
+    if (this.product) {
+      this.isInWishlist = this.wishlistService.isInWishlist(this.product.id);
+    }
+  }
+
+  toggleWishlist() {
+    if (!this.product || !this.currentVariant || !this.selectedSize) {
+      return;
+    }
+
+    const wishlistId = `${this.product.id}-${this.currentVariant.displayName}-${this.selectedSize}`;
+
+    if (this.isInWishlist) {
+      this.wishlistService.removeFromWishlist(wishlistId);
+      this.isInWishlist = false;
+    } else {
+      this.wishlistService.addToWishlist({
+        id: wishlistId,
+        productId: this.product.id,
+        name: this.product.name,
+        description: this.product.shortDescription,
+        image: this.currentImages[0],
+        color: this.currentVariant.displayName,
+        size: this.selectedSize,
+        rentPerDay: this.currentVariant.rentPerDay,
+        deposit: this.currentVariant.deposit
+      });
+      this.isInWishlist = true;
+    }
   }
 }

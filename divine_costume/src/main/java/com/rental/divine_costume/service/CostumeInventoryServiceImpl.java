@@ -1,6 +1,7 @@
 package com.rental.divine_costume.service;
 
 import com.rental.divine_costume.dto.requestdto.CostumePartRequestDto;
+import com.rental.divine_costume.dto.requestdto.ItemRequestDto;
 import com.rental.divine_costume.dto.responsedto.CostumeInventoryResponseDto;
 import com.rental.divine_costume.entity.items.*;
 import com.rental.divine_costume.repository.*;
@@ -24,6 +25,7 @@ public class CostumeInventoryServiceImpl implements CostumeInventoryService {
     private final CostumeRepository costumeRepository;
     private final CostumePartRepository costumePartRepository;
     private final CostumeImageRepository imageRepository;
+    private final CostumeItemRepository costumeItemRepository;
 
     @Value("${app.base-url}")
     private String baseUrl; // Used to build full image URL
@@ -239,5 +241,232 @@ public class CostumeInventoryServiceImpl implements CostumeInventoryService {
                             .tertiaryColor(variant.getTertiaryColor())
                             .build();
                 }).collect(Collectors.toList());
+    }
+
+    @Override
+    public Long duplicateCostume(Long costumeId, Integer additionalCount) {
+        log.info("Duplicating costume ID: {} with {} additional copies", costumeId, additionalCount);
+        
+        if (additionalCount == null || additionalCount <= 0) {
+            log.warn("Invalid additional count: {}", additionalCount);
+            return 0L;
+        }
+        
+        // Find the source costume
+        Costume sourceCostume = costumeRepository.findById(costumeId)
+                .orElseThrow(() -> new RuntimeException("Costume not found with ID: " + costumeId));
+        
+        CostumeVariant variant = sourceCostume.getCostumeVariant();
+        if (variant == null || variant.getCategory() == null) {
+            throw new RuntimeException("Costume variant or category not found for costume ID: " + costumeId);
+        }
+        
+        // Get the maximum serial number for this variant/size combination
+        Integer maxSerialNumber = costumeRepository.findMaxSerialNumber(
+                variant.getCategory().getCategoryName(),
+                variant.getPrimaryColor(),
+                variant.getSecondaryColor(),
+                variant.getTertiaryColor(),
+                sourceCostume.getSize()
+        );
+        
+        if (maxSerialNumber == null) {
+            maxSerialNumber = 0;
+        }
+        
+        log.info("Current max serial number: {}", maxSerialNumber);
+        
+        // Create duplicate costumes with incremented serial numbers
+        List<Costume> duplicates = new ArrayList<>();
+        for (int i = 1; i <= additionalCount; i++) {
+            Costume duplicate = Costume.builder()
+                    .costumeVariant(variant)
+                    .numberOfItems(sourceCostume.getNumberOfItems())
+                    .size(sourceCostume.getSize())
+                    .serialNumber(maxSerialNumber + i)
+                    .purchasePrice(sourceCostume.getPurchasePrice())
+                    .rentalPricePerDay(sourceCostume.getRentalPricePerDay())
+                    .deposit(sourceCostume.getDeposit())
+                    .isRentable(sourceCostume.getIsRentable())
+                    .build();
+            duplicates.add(duplicate);
+        }
+        
+        // Save all duplicates
+        List<Costume> savedCostumes = costumeRepository.saveAll(duplicates);
+        log.info("Successfully created {} duplicate costume entries", savedCostumes.size());
+        
+        return (long) savedCostumes.size();
+    }
+    
+    @Override
+    public Long addCostumesBatch(ItemRequestDto itemRequestDto, Integer count) {
+        log.info("Adding costumes in batch with count: {}", count);
+        
+        if (count == null || count <= 0) {
+            log.warn("Invalid count: {}", count);
+            return 0L;
+        }
+        
+        if (itemRequestDto == null || itemRequestDto.getVariant() == null || itemRequestDto.getCostume() == null) {
+            throw new RuntimeException("ItemRequestDto, variant, or costume data is missing");
+        }
+        
+        // Extract variant ID from the request
+        Long variantId = itemRequestDto.getVariant().getId();
+        if (variantId == null) {
+            throw new RuntimeException("Variant ID is required");
+        }
+        
+        // Find the variant
+        CostumeVariant variant = variantRepository.findById(variantId)
+                .orElseThrow(() -> new RuntimeException("Variant not found with ID: " + variantId));
+        
+        if (variant.getCategory() == null) {
+            throw new RuntimeException("Variant category not found for variant ID: " + variantId);
+        }
+        
+        // Extract size from costume data
+        String size = itemRequestDto.getCostume().getSize();
+        if (size == null || size.trim().isEmpty()) {
+            throw new RuntimeException("Size is required");
+        }
+        
+        // STEP 1: Find existing costumes with same variant and size to get prices
+        List<Costume> existingCostumes = costumeRepository.findByVariantIdAndSize(variantId, size);
+        int existingCount = existingCostumes.size();
+        
+        log.info("Found {} existing costumes for variant ID: {} and size: {}", existingCount, variantId, size);
+        
+        // Calculate how many new entries to add
+        int additionalCount = count - existingCount;
+        
+        if (additionalCount <= 0) {
+            log.info("No additional costumes needed. Requested: {}, Existing: {}", count, existingCount);
+            return 0L;
+        }
+        
+        // Get the maximum serial number for this variant/size combination
+        Integer maxSerialNumber = costumeRepository.findMaxSerialNumber(
+                variant.getCategory().getCategoryName(),
+                variant.getPrimaryColor(),
+                variant.getSecondaryColor(),
+                variant.getTertiaryColor(),
+                size
+        );
+        
+        if (maxSerialNumber == null) {
+            maxSerialNumber = 0;
+        }
+        
+        log.info("Current max serial number: {}, adding {} new entries", maxSerialNumber, additionalCount);
+        
+        // STEP 2: Find a reference costume to copy prices and items from
+        // Priority 1: Existing costume with same variant and size
+        Costume referenceCostume = null;
+        if (!existingCostumes.isEmpty()) {
+            // Prefer costumes with non-zero prices
+            referenceCostume = existingCostumes.stream()
+                    .filter(c -> c.getRentalPricePerDay() != null && c.getRentalPricePerDay().compareTo(java.math.BigDecimal.ZERO) > 0)
+                    .findFirst()
+                    .orElse(existingCostumes.get(0));
+            log.info("Using existing costume ID {} (same size: {}) as reference for prices.", 
+                    referenceCostume.getId(), size);
+        }
+        
+        // Priority 2: If no costume of same size, try ANY costume of this variant
+        if (referenceCostume == null) {
+            List<Costume> anyVariantCostumes = costumeRepository.findByVariantId(variantId);
+            if (!anyVariantCostumes.isEmpty()) {
+                // Prefer costumes with non-zero prices
+                referenceCostume = anyVariantCostumes.stream()
+                        .filter(c -> c.getRentalPricePerDay() != null && c.getRentalPricePerDay().compareTo(java.math.BigDecimal.ZERO) > 0)
+                        .findFirst()
+                        .orElse(anyVariantCostumes.get(0));
+                
+                log.info("No costume of size {} found. Using costume ID {} (Size: {}) as reference for prices.", 
+                        size, referenceCostume.getId(), referenceCostume.getSize());
+            }
+        }
+
+        // STEP 3: Extract prices and items from reference costume
+        java.math.BigDecimal purchasePrice = null;
+        java.math.BigDecimal rentalPricePerDay = null;
+        java.math.BigDecimal deposit = null;
+        List<CostumeItem> referenceItems = new ArrayList<>();
+        
+        if (referenceCostume != null) {
+            // Use prices from reference costume
+            purchasePrice = referenceCostume.getPurchasePrice();
+            rentalPricePerDay = referenceCostume.getRentalPricePerDay();
+            deposit = referenceCostume.getDeposit();
+            
+            log.info("✅ Using Reference Costume Prices - Purchase: {}, Rental: {}, Deposit: {}", 
+                    purchasePrice, rentalPricePerDay, deposit);
+
+            // Get all costume items from the reference costume
+            referenceItems = (List<CostumeItem>) costumeItemRepository.findAllByCostumeId(referenceCostume.getId());
+            log.info("Found {} costume items to copy from reference costume ID: {}", referenceItems.size(), referenceCostume.getId());
+        } else {
+            // Fallback to DTO values only if no reference costume exists
+            purchasePrice = itemRequestDto.getCostume().getPurchasePrice();
+            rentalPricePerDay = itemRequestDto.getCostume().getRentalPricePerDay();
+            deposit = itemRequestDto.getCostume().getDeposit();
+            
+            log.warn("⚠️ No existing costume found to copy prices from. Using DTO values - Purchase: {}, Rental: {}, Deposit: {}", 
+                    purchasePrice, rentalPricePerDay, deposit);
+        }
+        
+        // STEP 4: Validate prices - prevent storing 0 or null values if possible
+        if ((purchasePrice == null || purchasePrice.compareTo(java.math.BigDecimal.ZERO) == 0) &&
+            (rentalPricePerDay == null || rentalPricePerDay.compareTo(java.math.BigDecimal.ZERO) == 0)) {
+            log.warn("⚠️ WARNING: Both purchase price and rental price are 0 or null. This may indicate missing price data.");
+        }
+        
+        // STEP 5: Create new costume entries with incremented serial numbers
+        List<Costume> newCostumes = new ArrayList<>();
+        for (int i = 1; i <= additionalCount; i++) {
+            Costume newCostume = Costume.builder()
+                    .costumeVariant(variant)
+                    .numberOfItems(itemRequestDto.getCostume().getNumberOfItems())
+                    .size(size)
+                    .serialNumber(maxSerialNumber + i)
+                    .purchasePrice(purchasePrice)
+                    .rentalPricePerDay(rentalPricePerDay)
+                    .deposit(deposit)
+                    .isRentable(itemRequestDto.getCostume().getIsRentable() != null ? 
+                               itemRequestDto.getCostume().getIsRentable() : true)
+                    .build();
+
+            newCostumes.add(newCostume);
+        }
+        
+        // Save all new costumes
+        List<Costume> savedCostumes = costumeRepository.saveAll(newCostumes);
+        log.info("Successfully created {} new costume entries with serial numbers {} to {}", 
+                savedCostumes.size(), maxSerialNumber + 1, maxSerialNumber + additionalCount);
+        
+        // Copy costume items to each new costume
+        if (!referenceItems.isEmpty()) {
+            List<CostumeItem> newItems = new ArrayList<>();
+            for (Costume savedCostume : savedCostumes) {
+                for (CostumeItem referenceItem : referenceItems) {
+                    CostumeItem newItem = CostumeItem.builder()
+                            .costume(savedCostume)
+                            .itemName(referenceItem.getItemName())
+                            .rentalPricePerDay(referenceItem.getRentalPricePerDay())
+                            .deposit(referenceItem.getDeposit())
+                            .imageUrl(referenceItem.getImageUrl())
+                            .build();
+                    newItems.add(newItem);
+                }
+            }
+            
+            // Save all costume items
+            List<CostumeItem> savedItems = costumeItemRepository.saveAll(newItems);
+            log.info("Successfully copied {} costume items to {} new costumes", savedItems.size(), savedCostumes.size());
+        }
+        
+        return (long) savedCostumes.size();
     }
 }

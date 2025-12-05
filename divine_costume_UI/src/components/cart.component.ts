@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { CartService, CartItem } from '../services/cart.service';
+import { WishlistService } from '../services/wishlist.service';
+import { ToastService } from '../services/toast.service';
 import { FooterComponent } from './footer.component';
 
 @Component({
@@ -458,7 +460,11 @@ export class CartComponent implements OnInit {
   totalDeposit = 0;
   grandTotal = 0;
 
-  constructor(private cartService: CartService) { }
+  constructor(
+    private cartService: CartService,
+    private wishlistService: WishlistService,
+    private toastService: ToastService
+  ) { }
 
   ngOnInit() {
     this.cartService.cartItems$.subscribe(items => {
@@ -476,14 +482,45 @@ export class CartComponent implements OnInit {
   }
 
   removeItem(item: CartItem) {
-    if (confirm('Are you sure you want to remove this item?')) {
-      this.cartService.removeItem(item.id);
-    }
+    this.cartService.removeItem(item.id);
+
+    this.toastService.info(
+      'Removed from Cart',
+      'Undo',
+      () => {
+        this.cartService.addToCart({
+          productId: item.productId,
+          name: item.name,
+          description: item.description,
+          color: item.color,
+          size: item.size,
+          image: item.image,
+          rentPerDay: item.rentPerDay,
+          deposit: item.deposit
+        }, item.quantity);
+        this.toastService.success('Item restored to Cart');
+      }
+    );
   }
 
   saveForLater(item: CartItem) {
-    // TODO: Implement save for later functionality
-    alert('Save for later functionality coming soon!');
+    // Convert cart item to wishlist item
+    const wishlistId = `${item.productId}-${item.color}-${item.size}`;
+
+    this.wishlistService.addToWishlist({
+      id: wishlistId,
+      productId: item.productId,
+      name: item.name,
+      description: item.description,
+      image: item.image,
+      color: item.color,
+      size: item.size,
+      rentPerDay: item.rentPerDay,
+      deposit: item.deposit
+    });
+
+    // Remove from cart
+    this.cartService.removeItem(item.id);
   }
 
   getTotalItems(): number {
