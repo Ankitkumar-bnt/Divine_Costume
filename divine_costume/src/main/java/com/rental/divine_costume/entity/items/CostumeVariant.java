@@ -41,4 +41,9 @@ public class CostumeVariant extends BaseEntity {
     @JsonIgnore
     @Builder.Default
     private List<CostumeImage> images = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "costumeVariant", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    @Builder.Default
+    private List<Costume> costumes = new ArrayList<>();
 }

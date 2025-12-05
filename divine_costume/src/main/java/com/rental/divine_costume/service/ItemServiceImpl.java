@@ -795,6 +795,31 @@ public class ItemServiceImpl implements ItemService {
     public void deleteCategory(Long id) {
         CostumeCategory category = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Category not found with ID: " + id));
+        
+        // STEP 1: Find all variants that reference this category
+        List<CostumeVariant> variants = variantRepository.findByCategoryId(id);
+        
+        // STEP 2: For each variant, delete all associated data
+        for (CostumeVariant variant : variants) {
+            // Find all costumes for this variant
+            List<Costume> costumes = costumeRepository.findByVariantId(variant.getId());
+            
+            // Delete all costume items for each costume
+            for (Costume costume : costumes) {
+                itemRepository.deleteAll(itemRepository.findAllByCostumeId(costume.getId()));
+            }
+            
+            // Delete all costumes for this variant
+            costumeRepository.deleteAll(costumes);
+            
+            // Delete all images for this variant
+            imageRepository.deleteAll(imageRepository.findAllByCostumeVariantId(variant.getId()));
+        }
+        
+        // STEP 3: Delete all variants for this category
+        variantRepository.deleteAll(variants);
+        
+        // STEP 4: Now safe to delete the category
         categoryRepository.delete(category);
     }
 
@@ -808,6 +833,22 @@ public class ItemServiceImpl implements ItemService {
     public void deleteVariant(Long id) {
         CostumeVariant variant = variantRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Variant not found with ID: " + id));
+        
+        // STEP 1: Find all costumes that reference this variant
+        List<Costume> costumes = costumeRepository.findByVariantId(id);
+        
+        // STEP 2: Delete all costume items for each costume
+        for (Costume costume : costumes) {
+            itemRepository.deleteAll(itemRepository.findAllByCostumeId(costume.getId()));
+        }
+        
+        // STEP 3: Delete all costumes that reference this variant
+        costumeRepository.deleteAll(costumes);
+        
+        // STEP 4: Delete all images associated with this variant
+        imageRepository.deleteAll(imageRepository.findAllByCostumeVariantId(id));
+        
+        // STEP 5: Now safe to delete the variant
         variantRepository.delete(variant);
     }
 
@@ -822,25 +863,10 @@ public class ItemServiceImpl implements ItemService {
         // Use the existing cascading delete implementation
         Costume costume = costumeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Costume not found with ID: " + id));
-
-        CostumeVariant variant = costume.getCostumeVariant();
-
-        // Delete all dependent data
-        itemRepository.deleteAll(itemRepository.findAllByCostumeId(id));
-
-        if (variant != null) {
-            imageRepository.deleteAll(imageRepository.findAllByCostumeVariantId(variant.getId()));
-            CostumeCategory category = variant.getCategory();
-
-            costumeRepository.delete(costume);
-            variantRepository.delete(variant);
-
-            if (category != null) {
-                categoryRepository.delete(category);
-            }
-        } else {
-            costumeRepository.delete(costume);
-        }
+        
+        // With cascade = CascadeType.ALL on Costume -> CostumeItem relationship,
+        // deleting the costume will automatically delete all associated costume items
+        costumeRepository.delete(costume);
     }
 
     @Override
