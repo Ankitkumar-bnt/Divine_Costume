@@ -239,7 +239,7 @@ import { CostumeService, CostumeProduct } from '../services/costume.service';
     }
 
     .plp {
-      padding: 2rem 0 3rem;
+      padding: 0rem 0 1rem;
     }
 
     .container {
@@ -250,7 +250,7 @@ import { CostumeService, CostumeProduct } from '../services/costume.service';
 
     /* ========== HEADER ========== */
     .plp-header {
-      margin-bottom: 1.5rem;
+      margin-bottom: 0.5rem;
       display: none;
     }
 
@@ -309,7 +309,7 @@ import { CostumeService, CostumeProduct } from '../services/costume.service';
     }
 
     .sidebar-header {
-      padding: 1.5rem 1.25rem 1rem;
+      padding: 1rem 1rem 1rem;
       border-bottom: 1px solid rgba(0, 0, 0, 0.06);
       display: flex;
       align-items: center;
@@ -347,7 +347,7 @@ import { CostumeService, CostumeProduct } from '../services/costume.service';
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 1rem 1.25rem;
+  padding: 0.5rem 1rem;
   position: relative;
   mask-image: linear-gradient(to bottom,
     transparent 0,
@@ -362,7 +362,7 @@ import { CostumeService, CostumeProduct } from '../services/costume.service';
     }
 
     .filter-group {
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.25rem;
     }
 
     .filter-header {
@@ -370,7 +370,7 @@ import { CostumeService, CostumeProduct } from '../services/costume.service';
       align-items: center;
       justify-content: space-between;
       margin: 0;
-      padding: 0.75rem 0;
+      padding: 0.5rem 0;
       font-size: 0.875rem;
       font-weight: 700;
       text-transform: uppercase;
@@ -391,10 +391,10 @@ import { CostumeService, CostumeProduct } from '../services/costume.service';
     }
 
     .filter-body {
-      padding: 0.5rem 0 0.75rem;
+      padding: 0.25rem 0 0.5rem;
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.375rem;
     }
 
     .filter-body label {
@@ -424,7 +424,7 @@ import { CostumeService, CostumeProduct } from '../services/costume.service';
     .filter-divider {
       height: 1px;
       background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.08), transparent);
-      margin: 0.75rem 0;
+      margin: 0.5rem 0;
     }
 
     /* Price Filter */
@@ -432,7 +432,7 @@ import { CostumeService, CostumeProduct } from '../services/costume.service';
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.75rem 0;
+      padding: 0.5rem 0;
     }
 
     .price-title {
@@ -595,7 +595,7 @@ import { CostumeService, CostumeProduct } from '../services/costume.service';
       align-items: center;
       justify-content: space-between;
       margin-bottom: 1.5rem;
-      padding: 1rem 1.5rem;
+      padding: 0.5rem 1rem;
       background: #fff;
       border-radius: 16px;
       box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
@@ -608,7 +608,7 @@ import { CostumeService, CostumeProduct } from '../services/costume.service';
     }
 
     .results-count {
-      font-size: 1.75rem;
+      font-size: 1.4rem;
       font-weight: 700;
       color: #7A1F2A;
     }
@@ -629,10 +629,10 @@ import { CostumeService, CostumeProduct } from '../services/costume.service';
       display: flex;
       align-items: center;
       gap: 0.625rem;
-      padding: 0.625rem 1rem;
+      padding: 0.4em 0.75rem;
       background: #FAFAFA;
       border: 1px solid rgba(0, 0, 0, 0.08);
-      border-radius: 12px;
+      border-radius: 10px;
       transition: all 0.2s;
     }
 
@@ -650,7 +650,7 @@ import { CostumeService, CostumeProduct } from '../services/costume.service';
       border: none;
       background: none;
       outline: none;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: #2C2C2C;
       min-width: 200px;
     }
@@ -660,11 +660,11 @@ import { CostumeService, CostumeProduct } from '../services/costume.service';
     }
 
     .sort {
-      padding: 0.625rem 1rem;
+      padding: 0.4em 0.75rem;
       border: 1px solid rgba(0, 0, 0, 0.08);
-      border-radius: 12px;
+      border-radius: 10px;
       background: #FAFAFA;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-weight: 500;
       color: #2C2C2C;
       cursor: pointer;
@@ -704,7 +704,7 @@ import { CostumeService, CostumeProduct } from '../services/costume.service';
     .card-image {
       position: relative;
       background: #ffffff;
-      height: 320px;
+      height: 280px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -756,7 +756,7 @@ import { CostumeService, CostumeProduct } from '../services/costume.service';
     }
 
     .card-content {
-      padding: 1.25rem 1.5rem 1.5rem;
+      padding: 1rem 1rem 1rem;
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
@@ -786,7 +786,7 @@ import { CostumeService, CostumeProduct } from '../services/costume.service';
     }
 
     .product-price {
-      margin-top: 0.5rem;
+      margin-top: 0rem;
       display: flex;
       align-items: baseline;
       gap: 0.25rem;
@@ -914,7 +914,7 @@ import { CostumeService, CostumeProduct } from '../services/costume.service';
       }
 
       .card-image {
-        height: 280px;
+        height: 220px;
       }
     }
   `]

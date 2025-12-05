@@ -252,7 +252,7 @@ export class CategoriesComponent {
     }
   ];
 
-  constructor(private router: Router) {}
+  constructor(private router: Router) { }
 
   navigateDirect(categoryKey: CategoryKey) {
     const path = categoryKey === 'costumes' ? '/costumes' : '/ornaments';

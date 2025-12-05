@@ -24,6 +24,12 @@ import { CartService } from '../services/cart.service';
               <span>thedancecostumes&#64;gmail.com</span>
             </a>
           </div>
+          <div class="contact-right">
+            <button class="btn-auth logout" (click)="onLogout()">
+              <i class="bi bi-box-arrow-right"></i>
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -44,7 +50,6 @@ import { CartService } from '../services/cart.service';
             <li><a routerLink="/costumes" routerLinkActive="active" (click)="closeMenu()">Costumes</a></li>
             <li><a routerLink="/ornaments" routerLinkActive="active" (click)="closeMenu()">Ornaments</a></li>
             <li><a routerLink="/" fragment="accessories" (click)="closeMenu()">Accessories</a></li>
-            <li><a routerLink="/" fragment="gallery" (click)="closeMenu()">Divine Gallery</a></li>
             <li><a routerLink="/" fragment="about" (click)="closeMenu()">About Us</a></li>
             <li><a routerLink="/" fragment="contact" (click)="closeMenu()">Contact Us</a></li>
           </ul>
@@ -67,10 +72,6 @@ import { CartService } from '../services/cart.service';
                   <i class="bi bi-person-circle"></i>
                   <span class="user-email">{{ authState.userEmail }}</span>
                 </div>
-                <button class="btn-auth logout" (click)="onLogout()">
-                  <i class="bi bi-box-arrow-right"></i>
-                  <span>Logout</span>
-                </button>
               </div>
             </div>
           </div>
@@ -94,9 +95,10 @@ import { CartService } from '../services/cart.service';
       padding: 0 .75rem;
       display: flex;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: space-between;
     }
     .contact-left { display: flex; gap: 1rem; align-items: center; }
+    .contact-right { display: flex; gap: 1rem; align-items: center; }
     .top-link { display: inline-flex; align-items: center; gap: .5rem; color: #334155; font-size: .85rem; text-decoration: none; padding: .25rem .5rem; background: rgba(255,255,255,0.6); border-radius: 999px; }
     .top-link .icon { opacity: .7; }
 
@@ -135,7 +137,7 @@ import { CartService } from '../services/cart.service';
       gap: 1rem;
       align-items: center;
       position: absolute;
-      left: 60%;
+      left: 50%;
       transform: translateX(-50%);
       flex-wrap: nowrap;
       white-space: nowrap;
@@ -149,7 +151,7 @@ import { CartService } from '../services/cart.service';
       display: flex;
       gap: 1rem;
       align-items: center;
-      margin-left: 1000px;
+      margin-left: 800px;
       padding-right: 1rem;
     }
 
@@ -265,14 +267,13 @@ import { CartService } from '../services/cart.service';
     }
 
     .btn-auth.logout {
-      background: linear-gradient(90deg, #fee2e2, #fecaca);
-      color: #dc2626;
+      background: transparent;
+      color: #000000;
     }
 
     .btn-auth.logout:hover {
-      background: linear-gradient(90deg, #fecaca, #fca5a5);
+      background: transparent;
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
     }
 
     @media (max-width: 992px) {
