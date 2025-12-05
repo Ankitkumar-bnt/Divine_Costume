@@ -203,6 +203,7 @@ public class CostumeInventoryController {
             @RequestBody ItemRequestDto itemRequestDto,
             @RequestParam Integer count) {
         log.info("POST /api/costume-inventory/batch-add - Adding costumes in batch with count: {}", count);
+        System.out.println("======================= "+ itemRequestDto);
         try {
             Long createdCount = costumeInventoryService.addCostumesBatch(itemRequestDto, count);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdCount);

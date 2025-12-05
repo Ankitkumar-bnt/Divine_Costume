@@ -332,7 +332,7 @@ public class CostumeInventoryServiceImpl implements CostumeInventoryService {
             throw new RuntimeException("Size is required");
         }
         
-        // Check if costumes already exist for this variant and size
+        // STEP 1: Find existing costumes with same variant and size to get prices
         List<Costume> existingCostumes = costumeRepository.findByVariantIdAndSize(variantId, size);
         int existingCount = existingCostumes.size();
         
@@ -361,63 +361,84 @@ public class CostumeInventoryServiceImpl implements CostumeInventoryService {
         
         log.info("Current max serial number: {}, adding {} new entries", maxSerialNumber, additionalCount);
         
-        // Find a reference costume to copy items and prices from
-        // 1. Try to find one with the same size first
-        Costume referenceCostume = existingCostumes.isEmpty() ? null : existingCostumes.get(0);
+        // STEP 2: Find a reference costume to copy prices and items from
+        // Priority 1: Existing costume with same variant and size
+        Costume referenceCostume = null;
+        if (!existingCostumes.isEmpty()) {
+            // Prefer costumes with non-zero prices
+            referenceCostume = existingCostumes.stream()
+                    .filter(c -> c.getRentalPricePerDay() != null && c.getRentalPricePerDay().compareTo(java.math.BigDecimal.ZERO) > 0)
+                    .findFirst()
+                    .orElse(existingCostumes.get(0));
+            log.info("Using existing costume ID {} (same size: {}) as reference for prices.", 
+                    referenceCostume.getId(), size);
+        }
         
-        // 2. If no costume of same size, try to find ANY costume of this variant to use as template
+        // Priority 2: If no costume of same size, try ANY costume of this variant
         if (referenceCostume == null) {
             List<Costume> anyVariantCostumes = costumeRepository.findByVariantId(variantId);
             if (!anyVariantCostumes.isEmpty()) {
-                // Try to find one that has prices set
+                // Prefer costumes with non-zero prices
                 referenceCostume = anyVariantCostumes.stream()
                         .filter(c -> c.getRentalPricePerDay() != null && c.getRentalPricePerDay().compareTo(java.math.BigDecimal.ZERO) > 0)
                         .findFirst()
                         .orElse(anyVariantCostumes.get(0));
                 
-                log.info("No costume of size {} found. Using costume ID {} (Size: {}) as reference.", 
+                log.info("No costume of size {} found. Using costume ID {} (Size: {}) as reference for prices.", 
                         size, referenceCostume.getId(), referenceCostume.getSize());
             }
         }
 
+        // STEP 3: Extract prices and items from reference costume
+        java.math.BigDecimal purchasePrice = null;
+        java.math.BigDecimal rentalPricePerDay = null;
+        java.math.BigDecimal deposit = null;
         List<CostumeItem> referenceItems = new ArrayList<>();
+        
         if (referenceCostume != null) {
-            // Log the prices we found
-            log.info("Reference Costume Prices - Purchase: {}, Rental: {}, Deposit: {}", 
-                    referenceCostume.getPurchasePrice(), 
-                    referenceCostume.getRentalPricePerDay(), 
-                    referenceCostume.getDeposit());
+            // Use prices from reference costume
+            purchasePrice = referenceCostume.getPurchasePrice();
+            rentalPricePerDay = referenceCostume.getRentalPricePerDay();
+            deposit = referenceCostume.getDeposit();
+            
+            log.info("✅ Using Reference Costume Prices - Purchase: {}, Rental: {}, Deposit: {}", 
+                    purchasePrice, rentalPricePerDay, deposit);
 
             // Get all costume items from the reference costume
             referenceItems = (List<CostumeItem>) costumeItemRepository.findAllByCostumeId(referenceCostume.getId());
             log.info("Found {} costume items to copy from reference costume ID: {}", referenceItems.size(), referenceCostume.getId());
         } else {
-            log.info("No existing costume found to copy from. New costumes will be created with provided DTO values.");
+            // Fallback to DTO values only if no reference costume exists
+            purchasePrice = itemRequestDto.getCostume().getPurchasePrice();
+            rentalPricePerDay = itemRequestDto.getCostume().getRentalPricePerDay();
+            deposit = itemRequestDto.getCostume().getDeposit();
+            
+            log.warn("⚠️ No existing costume found to copy prices from. Using DTO values - Purchase: {}, Rental: {}, Deposit: {}", 
+                    purchasePrice, rentalPricePerDay, deposit);
         }
         
-        // Create new costume entries with incremented serial numbers
+        // STEP 4: Validate prices - prevent storing 0 or null values if possible
+        if ((purchasePrice == null || purchasePrice.compareTo(java.math.BigDecimal.ZERO) == 0) &&
+            (rentalPricePerDay == null || rentalPricePerDay.compareTo(java.math.BigDecimal.ZERO) == 0)) {
+            log.warn("⚠️ WARNING: Both purchase price and rental price are 0 or null. This may indicate missing price data.");
+        }
+        
+        // STEP 5: Create new costume entries with incremented serial numbers
         List<Costume> newCostumes = new ArrayList<>();
         for (int i = 1; i <= additionalCount; i++) {
-            Costume.CostumeBuilder costumeBuilder = Costume.builder()
+            Costume newCostume = Costume.builder()
                     .costumeVariant(variant)
                     .numberOfItems(itemRequestDto.getCostume().getNumberOfItems())
                     .size(size)
                     .serialNumber(maxSerialNumber + i)
+                    .purchasePrice(purchasePrice)
+                    .rentalPricePerDay(rentalPricePerDay)
+                    .deposit(deposit)
                     .isRentable(itemRequestDto.getCostume().getIsRentable() != null ? 
-                               itemRequestDto.getCostume().getIsRentable() : true);
+                               itemRequestDto.getCostume().getIsRentable() : true)
+                    .build();
 
-            // Use prices from reference costume if available, otherwise use DTO
-            if (referenceCostume != null) {
-                costumeBuilder.purchasePrice(referenceCostume.getPurchasePrice())
-                             .rentalPricePerDay(referenceCostume.getRentalPricePerDay())
-                             .deposit(referenceCostume.getDeposit());
-            } else {
-                costumeBuilder.purchasePrice(itemRequestDto.getCostume().getPurchasePrice())
-                             .rentalPricePerDay(itemRequestDto.getCostume().getRentalPricePerDay())
-                             .deposit(itemRequestDto.getCostume().getDeposit());
-            }
-
-            newCostumes.add(costumeBuilder.build());
+            newCostumes.add(newCostume);
         }
         
         // Save all new costumes

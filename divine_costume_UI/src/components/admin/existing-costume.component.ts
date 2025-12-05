@@ -1337,9 +1337,9 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
               costumeVariantId: variantId,
               numberOfItems: 1,
               size: size.size,
-              purchasePrice: 0,
-              rentalPricePerDay: 0,
-              deposit: 0,
+              purchasePrice: null,  // Backend will fetch from DB
+              rentalPricePerDay: null,  // Backend will fetch from DB
+              deposit: null,  // Backend will fetch from DB
               isRentable: true
             },
             items: [],
@@ -1409,9 +1409,9 @@ export class ExistingCostumeComponent implements OnInit, OnDestroy {
             costumeVariantId: variantId,
             numberOfItems: 1,
             size: size.size,
-            purchasePrice: 0,
-            rentalPricePerDay: 0,
-            deposit: 0,
+            purchasePrice: null,  // Backend will fetch from DB
+            rentalPricePerDay: null,  // Backend will fetch from DB
+            deposit: null,  // Backend will fetch from DB
             isRentable: true
           },
           items: [],
