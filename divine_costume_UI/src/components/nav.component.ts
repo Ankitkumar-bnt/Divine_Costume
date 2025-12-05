@@ -1,15 +1,17 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
+import { HttpClientModule } from '@angular/common/http';
 import { filter } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { AuthService, AuthState } from '../services/auth.service';
 import { CartService } from '../services/cart.service';
+import { CustomerService } from '../services/customer.service';
 
 @Component({
   selector: 'app-nav',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterLink, RouterLinkActive, HttpClientModule],
   template: `
     <header class="header-wrapper" *ngIf="!isAdminRoute">
       <div class="topbar">
@@ -25,7 +27,7 @@ import { CartService } from '../services/cart.service';
             </a>
           </div>
           <div class="contact-right">
-            <button class="btn-auth logout" (click)="onLogout()">
+            <button class="btn-auth logout" *ngIf="(authState$ | async)?.isAuthenticated" (click)="onLogout()">
               <i class="bi bi-box-arrow-right"></i>
               <span>Logout</span>
             </button>
@@ -299,7 +301,8 @@ export class NavComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private authService: AuthService,
-    private cartService: CartService
+    private cartService: CartService,
+    private customerService: CustomerService
   ) {
     // Check initial route
     this.checkAdminRoute(this.router.url);
@@ -347,8 +350,34 @@ export class NavComponent implements OnInit, OnDestroy {
 
   onLogout() {
     if (confirm('Are you sure you want to logout?')) {
-      this.authService.logout();
-      this.router.navigate(['/']);
+      const customerId = localStorage.getItem('customerId');
+
+      if (customerId) {
+        // Customer logout - update backend
+        this.customerService.logout(parseInt(customerId)).subscribe({
+          next: () => {
+            console.log('Logout successful - backend updated');
+            // Clear local storage
+            localStorage.removeItem('customerId');
+            localStorage.removeItem('customerEmail');
+            // Update auth service
+            this.authService.logout();
+            this.router.navigate(['/']);
+          },
+          error: (error) => {
+            console.error('Logout error:', error);
+            // Even if backend fails, logout locally
+            localStorage.removeItem('customerId');
+            localStorage.removeItem('customerEmail');
+            this.authService.logout();
+            this.router.navigate(['/']);
+          }
+        });
+      } else {
+        // Admin or no customer ID - just logout locally
+        this.authService.logout();
+        this.router.navigate(['/']);
+      }
     }
   }
 }

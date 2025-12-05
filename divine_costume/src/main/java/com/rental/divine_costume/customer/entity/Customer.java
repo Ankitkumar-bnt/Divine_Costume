@@ -1,4 +1,4 @@
-package com.rental.divine_costume.entity;
+package com.rental.divine_costume.customer.entity;
 
 import com.rental.divine_costume.entity.items.BaseEntity;
 import jakarta.persistence.*;
@@ -7,13 +7,13 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "admin")
+@Table(name = "customers")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-public class Admin extends BaseEntity {
+public class Customer extends BaseEntity {
 
     @Column(name = "name", nullable = false, length = 100)
     private String name;
@@ -32,30 +32,6 @@ public class Admin extends BaseEntity {
 
     @Column(name = "address", columnDefinition = "TEXT")
     private String address;
-
-    @Column(name = "map_address", columnDefinition = "TEXT")
-    private String mapAddress;
-
-    @Column(name = "city", length = 100)
-    private String city;
-
-    @Column(name = "state", length = 100)
-    private String state;
-
-    @Column(name = "pincode", length = 10)
-    private String pincode;
-
-    @Column(name = "description", columnDefinition = "TEXT")
-    private String description;
-
-    @Column(name = "instagram", length = 255)
-    private String instagram;
-
-    @Column(name = "facebook", length = 255)
-    private String facebook;
-
-    @Column(name = "x_twitter", length = 255)
-    private String xTwitter;
 
     @Column(name = "signin_date")
     private LocalDateTime signinDate;

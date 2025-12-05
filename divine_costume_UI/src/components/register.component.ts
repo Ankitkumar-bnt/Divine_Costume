@@ -2,12 +2,14 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { HttpClientModule } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
+import { CustomerService } from '../services/customer.service';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, HttpClientModule],
   template: `
     <div class="register-container">
       <div class="background-decoration">
@@ -103,6 +105,31 @@ import { AuthService } from '../services/auth.service';
               <label for="contact" class="floating-label">Contact Number</label>
             </div>
             <small class="field-hint" *ngIf="registerForm.controls['contact']?.invalid && registerForm.controls['contact']?.touched">
+              Please enter a valid 10-digit phone number
+            </small>
+          </div>
+
+          <div class="form-group">
+            <div class="input-wrapper">
+              <div class="input-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                </svg>
+              </div>
+              <input
+                type="tel"
+                id="alternateContact"
+                name="alternateContact"
+                [(ngModel)]="formData.alternateContact"
+                class="form-control"
+                placeholder=" "
+                (focus)="onInputFocus('alternateContact')"
+                (blur)="onInputBlur('alternateContact')"
+                maxlength="10"
+              />
+              <label for="alternateContact" class="floating-label">Alternate Contact Number (Optional)</label>
+            </div>
+            <small class="field-hint" *ngIf="formData.alternateContact && formData.alternateContact.length > 0 && formData.alternateContact.length !== 10">
               Please enter a valid 10-digit phone number
             </small>
           </div>
@@ -636,6 +663,7 @@ export class RegisterComponent {
     name: '',
     email: '',
     contact: '',
+    alternateContact: '',
     password: '',
     confirmPassword: '',
     address: ''
@@ -647,7 +675,8 @@ export class RegisterComponent {
 
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private customerService: CustomerService
   ) { }
 
   onInputFocus(field: string): void {
@@ -671,43 +700,60 @@ export class RegisterComponent {
       return;
     }
 
-    this.isLoading = true;
-
-    // Simulate registration process
-    setTimeout(() => {
-      // Store user data in localStorage (for demo purposes)
-      const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-
-      // Check if email already exists
-      if (users.some((u: any) => u.email === this.formData.email)) {
-        this.errorMessage = 'Email already registered. Please login.';
+    // Validate alternate contact if provided
+    if (this.formData.alternateContact && this.formData.alternateContact.length > 0) {
+      const phonePattern = /^[0-9]{10}$/;
+      if (!phonePattern.test(this.formData.alternateContact)) {
+        this.errorMessage = 'Alternate contact number must be exactly 10 digits';
         this.showError = true;
-        this.isLoading = false;
         setTimeout(() => this.showError = false, 500);
         return;
       }
+    }
 
-      // Add new user
-      users.push({
-        name: this.formData.name,
-        email: this.formData.email,
-        contact: this.formData.contact,
-        address: this.formData.address,
-        password: this.formData.password,
-        role: 'customer',
-        registeredAt: new Date().toISOString()
-      });
+    this.isLoading = true;
 
-      localStorage.setItem('registeredUsers', JSON.stringify(users));
+    // Prepare customer data
+    const customerData = {
+      name: this.formData.name,
+      email: this.formData.email,
+      password: this.formData.password,
+      contact: this.formData.contact,
+      alternateContact: this.formData.alternateContact || undefined,
+      address: this.formData.address
+    };
 
-      // Show success message
-      this.successMessage = 'Account created successfully! Redirecting to login...';
-      this.isLoading = false;
+    // Call backend API to create customer
+    this.customerService.createCustomer(customerData).subscribe({
+      next: (response) => {
+        // Show success message
+        this.successMessage = 'Account created successfully! Redirecting to login...';
+        this.isLoading = false;
 
-      // Redirect to login after 2 seconds
-      setTimeout(() => {
-        this.router.navigate(['/login']);
-      }, 2000);
-    }, 1000);
+        // Redirect to login after 2 seconds
+        setTimeout(() => {
+          this.router.navigate(['/login']);
+        }, 2000);
+      },
+      error: (error) => {
+        this.isLoading = false;
+        this.showError = true;
+
+        // Check if error message contains "Email already exists"
+        if (error.error && error.error.error) {
+          if (error.error.error.includes('Email already exists')) {
+            this.errorMessage = 'Email already exists. Please use a different email or login.';
+          } else if (error.error.error.includes('Contact already exists')) {
+            this.errorMessage = 'Contact number already exists. Please use a different number.';
+          } else {
+            this.errorMessage = error.error.error;
+          }
+        } else {
+          this.errorMessage = 'Registration failed. Please try again.';
+        }
+
+        setTimeout(() => this.showError = false, 500);
+      }
+    });
   }
 }

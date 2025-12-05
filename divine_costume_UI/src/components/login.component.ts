@@ -1,13 +1,15 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { HttpClientModule } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
+import { CustomerService } from '../services/customer.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, HttpClientModule],
   template: `
     <div class="login-container">
       <div class="background-decoration">
@@ -101,38 +103,6 @@ import { AuthService } from '../services/auth.service';
             Don't have an account?
             <a routerLink="/register" class="create-account-link">Create Account</a>
           </p>
-        </div>
-
-        <div class="login-footer">
-          <div class="divider">
-            <span>Demo Credentials</span>
-          </div>
-          <div class="credentials-info">
-            <div class="credential-card">
-              <div class="credential-icon admin">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-                  <path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path>
-                </svg>
-              </div>
-              <div class="credential-text">
-                <strong>Admin</strong>
-                <span>admin&#64;gmail.com / admin123</span>
-              </div>
-            </div>
-            <div class="credential-card">
-              <div class="credential-icon customer">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-              </div>
-              <div class="credential-text">
-                <strong>Customer</strong>
-                <span>Any email/password</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -386,6 +356,13 @@ import { AuthService } from '../services/auth.service';
       border: 1px solid #fca5a5;
     }
 
+    .alert-info {
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      color: #1d4ed8;
+      border: 1px solid #93c5fd;
+      margin-bottom: 1.5rem;
+    }
+
     .btn-login {
       width: 100%;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -600,7 +577,7 @@ import { AuthService } from '../services/auth.service';
     }
   `]
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   credentials = {
     email: '',
     password: ''
@@ -611,8 +588,18 @@ export class LoginComponent {
 
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private customerService: CustomerService
   ) { }
+
+  ngOnInit() {
+    // Check if user is already authenticated
+    const authState = this.authService.getCurrentAuthState();
+    if (authState.isAuthenticated) {
+      // User is already logged in, redirect to home
+      this.router.navigate(['/']);
+    }
+  }
 
   onInputFocus(field: string): void {
     // Can be used for analytics or additional UX enhancements
@@ -627,34 +614,56 @@ export class LoginComponent {
     this.showError = false;
     this.isLoading = true;
 
-    // Simulate a brief loading state for better UX
-    setTimeout(() => {
-      // Admin login
-      if (this.credentials.email === 'admin@gmail.com' && this.credentials.password === 'admin123') {
-        this.authService.login(this.credentials.email, 'admin');
-        console.log('Admin login successful');
-        this.router.navigate(['/admin/dashboard']);
-        this.isLoading = false;
-        return;
-      }
-
-      // Customer login (any other credentials)
-      if (this.credentials.email && this.credentials.password) {
-        this.authService.login(this.credentials.email, 'customer');
-        console.log('Customer login successful');
-        this.router.navigate(['/']);
-        this.isLoading = false;
-        return;
-      }
-
-      this.errorMessage = 'Please enter valid credentials';
-      this.showError = true;
+    // Admin login (hardcoded)
+    if (this.credentials.email === 'admin@gmail.com' && this.credentials.password === 'admin123') {
+      this.authService.login(this.credentials.email, 'admin');
+      console.log('Admin login successful');
+      this.router.navigate(['/admin/dashboard']);
       this.isLoading = false;
+      return;
+    }
 
-      // Reset shake animation
-      setTimeout(() => {
-        this.showError = false;
-      }, 500);
-    }, 800);
+    // Customer login via backend API
+    this.customerService.login(this.credentials.email, this.credentials.password).subscribe({
+      next: (response) => {
+        console.log('Login response:', response);
+
+        // Check if customer object exists in response
+        if (response.customer) {
+          const customer = response.customer;
+
+          // Login successful - update auth service
+          this.authService.login(customer.email, 'customer');
+
+          // Store customer ID in localStorage for logout
+          localStorage.setItem('customerId', customer.id.toString());
+          localStorage.setItem('customerEmail', customer.email);
+
+          console.log('Customer login successful');
+          this.isLoading = false;
+          this.router.navigate(['/']);
+        } else {
+          this.errorMessage = 'Login failed. Please try again.';
+          this.showError = true;
+          this.isLoading = false;
+          setTimeout(() => this.showError = false, 500);
+        }
+      },
+      error: (error) => {
+        console.error('Login error:', error);
+        this.isLoading = false;
+        this.showError = true;
+
+        if (error.status === 401) {
+          this.errorMessage = 'Invalid email or password.';
+        } else if (error.error && error.error.error) {
+          this.errorMessage = error.error.error;
+        } else {
+          this.errorMessage = 'Login failed. Please try again.';
+        }
+
+        setTimeout(() => this.showError = false, 500);
+      }
+    });
   }
 }
